@@ -1,5 +1,5 @@
 setuptools>=60.2.0
 numpy>=1.23.3
 pandas>=1.4.4
-openpyxl>=3.0.10
 dask>=2022.9.0
+selenium>=4.4.3
