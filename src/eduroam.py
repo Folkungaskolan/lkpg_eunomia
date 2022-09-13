@@ -19,12 +19,12 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from util import update_student_eduroam_password, get_student_user_json_obj
-from util.CustomErrors import LogInFailure, NoUserFoundError
-from util.json_wrappers import load_dict_from_json_path
 from util.web import init_firefox_webdriver
 from util.web.student_interface import get_student_pw, get_single_user_from_web_to_json
 
+from CustomErrors import LogInFailure, NoUserFoundError
 from settings.folders import STUDENT_EDUROAM_GEN_FOLDER
+from utils import load_dict_from_json_path
 
 """
 https://selenium-python.readthedocs.io/installation.html
