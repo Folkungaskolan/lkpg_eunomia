@@ -17,9 +17,9 @@ def write_student_xlsx_from_json(verbose: bool = False):
 
     df_list = []
     filelist_len = len(filelist)
-    print_progress_bar(0, filelist_len, prefix='Elever Export Progress:', suffix='Complete', length=50)
+    print_progress_bar(0, filelist_len, prefix='Elever Export Progress:', suffix='Complete', length=150)
     for i, filepath in enumerate(filelist):
-        print_progress_bar(iteration=i + 1, total=filelist_len, prefix=F'Elever Export Progress:{i}/{filelist_len}', suffix='Complete', length=50)
+        print_progress_bar(iteration=i + 1, total=filelist_len, prefix=F'Elever Export Progress:{i}/{filelist_len}', suffix='Complete', length=150)
 
         try:
             user = load_dict_from_json_path(filepath=filepath)
@@ -64,9 +64,9 @@ def write_staff_xlsx_from_json(verbose: bool = False) -> None:
     # print(STAFF_USER_XLSX_FILEPATH)
     df_list = []
     filelist_len = len(filelist)
-    print_progress_bar(0, filelist_len, prefix='Staff Export Progress:', suffix='Complete', length=50)
+    print_progress_bar(0, filelist_len, prefix='Staff Export Progress:', suffix='Complete', length=150)
     for i, filepath in enumerate(filelist):
-        print_progress_bar(iteration=i + 1, total=filelist_len, prefix=F'Staff Export Progress:{i}/{filelist_len}', suffix='Complete', length=50)
+        print_progress_bar(iteration=i + 1, total=filelist_len, prefix=F'Staff  Export Progress:{i}/{filelist_len}  ', suffix='Complete', length=150)
 
         if verbose:
             print(filepath)
