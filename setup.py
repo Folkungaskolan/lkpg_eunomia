@@ -22,7 +22,7 @@ setup(
                  "Programming Language :: Python :: 3.10",
                  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
                  "Operating System :: Microsoft :: Windows :: Windows 10"],
-    install_requires=["pandas"],  # production run need thees packages
+    install_requires=["pandas, selenium, time"],  # production run need thees packages
     extras_require={
         "dev": ["pytest>=3.7", "check-manifest>=4.8", "twine>=4.0.1"]
     }  # for dev you also need thees packages
