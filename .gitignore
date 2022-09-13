@@ -130,3 +130,7 @@ dmypy.json
 
 # pycharm ide
 .idea/
+
+
+#config files
+src/settings/folders.py
