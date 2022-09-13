@@ -1,4 +1,4 @@
-# eunomia
+# Eunomia
 
 Program demo of webscraping, OOP principles and use case for it tech.
 
