@@ -8,11 +8,11 @@ with open("README.md", "r") as fh:
 
 setup(
     name="helloworld",
-    url="https://github.com/LyamDolk/eunomia",
+    url="https://github.com/Folkungaskolan/lkpg_eunomia",
     author='Lyam Dolk',
     author_email='LyamDolk@gmail.com',
     version="0.0.1",
-    description="codebase for manageing Linköping municipality student records",
+    description="codebase for manageing Linköping municipality student records as demo for programming class",
     long_description=long_description,  # Pull Md from file above
     long_description_content_type="text/markdown",  # specify above docs format
     py_modules=["helloworld"],  # packages i am publishing
