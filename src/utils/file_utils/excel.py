@@ -1,15 +1,12 @@
-import os
-from pathlib import Path
-from settings.folders import STUDENT_USER_FOLDER_PATH, STUDENT_USER_XLSX_FILEPATH, STAFF_USER_XLSX_FILEPATH, STAFF_USER_FOLDER_PATH
 import json
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
-from util.json_wrappers import load_dict_from_json_path
+from settings.folders import STUDENT_USER_FOLDER_PATH, STUDENT_USER_XLSX_FILEPATH, STAFF_USER_XLSX_FILEPATH, STAFF_USER_FOLDER_PATH
 from utils import print_progress_bar
-
-pd.set_option('display.max_columns', 50)
-pd.set_option('display.expand_frame_repr', False)
+from utils.file_utils import load_dict_from_json_path
 
 
 def write_student_xlsx_from_json(verbose: bool = False):
@@ -108,5 +105,7 @@ def write_staff_xlsx_from_json(verbose: bool = False) -> None:
 
 
 if __name__ == '__main__':
+    pd.set_option('display.max_columns', 50)
+    pd.set_option('display.expand_frame_repr', False)
     write_student_xlsx_from_json(verbose=False)
     write_staff_xlsx_from_json(verbose=False)
