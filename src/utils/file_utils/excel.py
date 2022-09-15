@@ -46,10 +46,13 @@ def write_student_xlsx_from_json(verbose: bool = False):
     else:
 
         if verbose:
-            print(dfz)
+            pass
+        print(dfz)
         dfz = dfz.replace(np.nan, "x", regex=True)
         dfz.to_csv(STUDENT_USER_FOLDER_PATH + 'elever.csv', sep=';', encoding='utf-8', index=False)
         dfz.to_excel(STUDENT_USER_XLSX_FILEPATH, sheet_name='data', index=False)
+
+        nyckel_hanterings_df = dfz[[]]
 
         if verbose:
             print(f"dfz {STUDENT_USER_FOLDER_PATH + 'elever.csv'} complete")
@@ -108,4 +111,4 @@ if __name__ == '__main__':
     pd.set_option('display.max_columns', 50)
     pd.set_option('display.expand_frame_repr', False)
     write_student_xlsx_from_json(verbose=False)
-    write_staff_xlsx_from_json(verbose=False)
+    # write_staff_xlsx_from_json(verbose=False)
