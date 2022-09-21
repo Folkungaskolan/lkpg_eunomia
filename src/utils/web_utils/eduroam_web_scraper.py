@@ -5,20 +5,22 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
 from CustomErrors import LogInFailure
-from Student import Student
 from .general_web import init_firefox_webdriver
 
 
-def get_single_student_user_from_web_to_json(account_user_name: str) -> None:
+def get_single_student_user_from_web_to_json(account_user_name: str, verbose: str = False) -> None:
+    if verbose:
+        print(F"start {account_user_name=}")
     # TODO write get_single_student_user_from_web_to_json method
-    pass
 
 
-def generate_and_save_eduroam_for_user(loc_account_user_name: str, headless_input_bool: bool = True) -> None:
+def generate_and_save_eduroam_for_user(account_user_name: str = None, google_pw: str = None, headless_input_bool: bool = True) -> None:
     """    Skapar eduroam användare    """
-    print(F"start {loc_account_user_name=} ")
-
-    student = Student(account_user_name=loc_account_user_name)
+    print(F"start generate_and_save_eduroam_for_user for {account_user_name=} ")
+    if account_user_name is None:
+        raise ValueError("account_user_name is None")
+    if google_pw is None:
+        raise ValueError("google_pw is None")
 
     # initiera drivaren
     # behöver vara firefox för att kringgå problem med redan inloggad användare
@@ -28,10 +30,10 @@ def generate_and_save_eduroam_for_user(loc_account_user_name: str, headless_inpu
     # Fyll i uppgifterna
     user_input = driver.find_element(By.NAME, "name")  # hitta vart användarnamnet ska in
     user_input.clear()  # töm rutan
-    user_input.send_keys(student.get_account_user_name())  # fyll i användarnamnet
+    user_input.send_keys(account_user_name)  # fyll i användarnamnet
     pass_input = driver.find_element(By.NAME, "pswd")  # hitta vart lösenordet ska in
     pass_input.clear()  # töm rutan
-    pass_input.send_keys(student.get_google_pw())  # fyll i lösenordet
+    pass_input.send_keys(google_pw)  # fyll i lösenordet
     user_input.send_keys(Keys.RETURN)  # tryck på "enter" när allt är ifyllt
 
     # inloggning klar

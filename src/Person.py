@@ -2,10 +2,14 @@ from abc import abstractmethod
 
 
 class Person:
+    """
+    @abstractmethod
+    bygger skelett åt Student och Staff
+    """
+
     def __init__(self, account_user_name: str, verbose: bool = False):
-        self.account_user_name = account_user_name
         self.verbose = verbose
-        self.json_folder_path = None
+        self.account_user_name = account_user_name
         self.first_name = None
         self.last_name = None
 

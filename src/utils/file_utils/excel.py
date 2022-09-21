@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from settings.folders import STUDENT_USER_FOLDER_PATH, STUDENT_USER_XLSX_FILEPATH, STAFF_USER_XLSX_FILEPATH, STAFF_USER_FOLDER_PATH
+from settings.folders import STUDENT_USER_FOLDER_PATH, STUDENT_USER_XLSX_FILEPATH, STAFF_USER_XLSX_FILEPATH, STAFF_USER_FOLDER_PATH, KLASSLISTA_CSV_FILEPATH, STUDENT_PW_CSV_FILEPATH
 from utils import print_progress_bar
 from utils.file_utils import load_dict_from_json_path
 
@@ -34,30 +34,34 @@ def write_student_xlsx_from_json(verbose: bool = False):
             if verbose:
                 print(df)
             df_list.append(df[:1])
-            # print(".", end="")
-            # if i % 100 == 0:
-            #     print(".")
-            #     print(f"{i}", end="")
-
     try:
         dfz = pd.concat(df_list, ignore_index=True, sort=False)
     except ValueError as e:
         raise ValueError(e)
     else:
-
         if verbose:
-            pass
-        print(dfz)
+            print(dfz)
         dfz = dfz.replace(np.nan, "x", regex=True)
         dfz.to_csv(STUDENT_USER_FOLDER_PATH + 'elever.csv', sep=';', encoding='utf-8', index=False)
-        dfz.to_excel(STUDENT_USER_XLSX_FILEPATH, sheet_name='data', index=False)
-
-        nyckel_hanterings_df = dfz[[]]
-
         if verbose:
             print(f"dfz {STUDENT_USER_FOLDER_PATH + 'elever.csv'} complete")
+
+        # avänds som underlag för etiketter som jag skriver ut
+        dfz.to_excel(STUDENT_USER_XLSX_FILEPATH, sheet_name='data', index=False)
         if verbose:
             print(f"dfz {STUDENT_USER_XLSX_FILEPATH} complete")
+
+        # används i nyckelhanteringen för att uppdatera klasslistorna på vilka elever som finns på skolan.
+        nyckel_hanterings_df = dfz[["account_1_user_name", "account_2_first_name", "account_2_last_name", "klass"]]
+        nyckel_hanterings_df.to_csv(KLASSLISTA_CSV_FILEPATH, sep=';', encoding='utf-8', index=False)
+        if verbose:
+            print(f"dfz {KLASSLISTA_CSV_FILEPATH} complete")
+
+        # används i hanteringen för generering av QR koder för att uppdatera klasslistorna på vilka elever som finns på skolan.
+        nyckel_hanterings_df = dfz[["account_1_user_name", "account_2_first_name", "account_2_last_name", "account_3_eduroam_pw", "account_3_google_pw", "klass"]]
+        nyckel_hanterings_df.to_csv(STUDENT_PW_CSV_FILEPATH, sep=';', encoding='utf-8', index=False)
+        if verbose:
+            print(f"dfz {KLASSLISTA_CSV_FILEPATH} complete")
         return dfz
 
 
