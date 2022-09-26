@@ -4,7 +4,8 @@ from pathlib import Path
 from CustomErrors import NoUserFoundError
 from Person import Person
 from settings.folders import STUDENT_USER_FOLDER_PATH
-from utils import load_dict_from_json_path
+from utils import import_student_from_web
+from utils import load_dict_from_json_path, generate_eduroam_for_user
 from utils.file_utils.excel import write_student_xlsx_from_json
 
 
@@ -41,6 +42,7 @@ class Student(Person):
             raise ValueError("account_user_name must be given")
         else:
             self.account_user_name: str = account_user_name
+        self.verbose: bool = verbose
         self._email: str = F"{account_user_name}@edu.linkoping.se"
         self._klass: str = None
         self._google_pw: str = None
@@ -51,18 +53,21 @@ class Student(Person):
         self._user_json_path = None
 
         try:
-            self.find_student_filepath(account_user_name=self.account_user_name)  # set self._user_json_path
+            self.find_student_json_filepath(account_user_name=self.account_user_name)  # set self._user_json_path
         except (FileNotFoundError, NoUserFoundError) as e:
-            print("                                                                               2022-09-16 09:05:27")
-            # print(e)
-            # self._user_json_path = None
-            # if auto_fetch_from_web:
-            #     self.get_user_from_web()
-            # else:
-            #     respons = input(f"User:{self.account_user_name} not found in {self._json_folder_path} do you wish to try web fetch? (y/n)")
-            #     print(respons)
-            #     print("                                                                               2022-09-16 09:05:34")
-            #     raise NoUserFoundError("User Json not found")
+            print("   FileNotFoundError, NoUserFoundError                                             2022-09-16 09:05:27")
+            self._user_json_path = None
+            if auto_fetch_from_web:
+                self.get_user_from_web()
+            else:
+                respons = input(f"User:{self.account_user_name} not found in {self._json_folder_path} do you wish to try web fetch? (y/n)")
+                print(F"respons: {respons}                                                    2022-09-26 14:44:36")
+                if respons == "y":
+                    print(F"respons: {respons}                                                    2022-09-26 14:44:36")
+                    self.get_user_from_web()
+                else:
+                    print("                                                                               2022-09-26 14:44:14")
+                    raise NoUserFoundError("User Json not found")
 
         super().__init__(account_user_name=account_user_name, verbose=verbose)
         try:
@@ -73,20 +78,25 @@ class Student(Person):
         else:
             self.unpack_user_json_obj()
 
-    def find_student_filepath(self, account_user_name: str) -> None:
+    def find_student_json_filepath(self, account_user_name: str) -> None:
         try:
             filelist = list(Path(STUDENT_USER_FOLDER_PATH).rglob('*.[Jj][Ss][Oo][Nn]'))
-            print(F"filelist len = {len(filelist)}                                 2022-09-16 09:04:47")
+            if self.verbose:
+                print(F"filelist len = {len(filelist)}                                 2022-09-16 09:04:47")
             for i, filepath in enumerate(filelist):
-                print(F"{i}:{filepath}")
+                if self.verbose:
+                    print(F"{i}:{filepath}")
                 if account_user_name in str(filepath.stem):
-                    print(F"hittad : {filepath}                                     2022-09-16 09:04:54")
-                self._user_json_path = str(filepath)
+                    if self.verbose:
+                        print(F"hittad : {filepath}                                     2022-09-16 09:04:54")
+                    self._user_json_path = str(filepath)
+                    return
         except Exception as e:
             print(e)
-            print("2022-09-16 09:04:00")
-            print(account_user_name)
-            print(filepath)
+            if self.verbose:
+                print("2022-09-16 09:04:00")
+                print(account_user_name)
+                print(filepath)
             raise
         raise NoUserFoundError(F"User Json  for {self.account_user_name} not found")
 
@@ -100,12 +110,13 @@ class Student(Person):
             print(F"gen excel files for {self.account_user_name}                      2022-09-16 09:05:17")
         write_student_xlsx_from_json()  # utils.file_utils.excel.write_student_xlsx_from_json
 
-    def gen_eduroam_pw(self) -> str:
+    def gen_eduroam_pw(self) -> None:
         """ generate a new eduroam pw """
         if self.verbose:
             print(F"gen eduroam pw for {self.account_user_name}                      2022-09-16 09:05:24")
-        # TODO write gen_eduroam_pw method
-        return self._eduroam_pw
+        self._eduroam_pw = generate_eduroam_for_user(account_user_name=self.account_user_name, verbose=self.verbose)
+        self._eduroam_pw_gen_datetime = datetime.now()
+        self.save()
 
     @staticmethod
     def get_json_filepath() -> str:
@@ -114,6 +125,10 @@ class Student(Person):
         return STUDENT_USER_FOLDER_PATH
 
     def get_account_user_name(self) -> str:
+        """
+        return the account_user_name
+        :return:
+        """
         if self.verbose:
             print(F"get account user name for {self.account_user_name}                     2022-09-16 09:08:00")
         return self.account_user_name
@@ -130,22 +145,22 @@ class Student(Person):
         if self.verbose:
             print(F"unpack user obj for {self.account_user_name}                             2022-09-16 09:08:22")
         try:
-            self.first_name = self.json_user_obj['account_2_first_name']
+            self._first_name = self.json_user_obj['account_2_first_name']
         except KeyError as e:
             print(e)
 
         try:
-            self.last_name = self.json_user_obj['account_2_last_name']
+            self._last_name = self.json_user_obj['account_2_last_name']
         except KeyError as e:
             print(e)
 
         try:
-            self._google_pw = self.json_user_obj['google_pw']
+            self._google_pw = self.json_user_obj['account_3_google_pw']
         except KeyError as e:
             print(e)
 
         try:
-            self._eduroam_pw = self.json_user_obj['eduroam_pw']
+            self._eduroam_pw = self.json_user_obj['account_3_eduroam_pw']
         except KeyError as e:
             print(e)
 
@@ -160,14 +175,10 @@ class Student(Person):
             print(e)
 
         try:
-            self.name = self.json_user_obj['name']
-        except KeyError as e:
-            print(e)
-
-        try:
             self._email = self.json_user_obj['email']
         except KeyError as e:
-            print(e)
+            self._email = self.account_user_name + "@edu.linkoping.se"
+        pass
 
     def set_eduroam_pw(self, eduroam_pw: str) -> None:
         """ set the eduroam pw """
@@ -191,18 +202,23 @@ class Student(Person):
         return user
 
     @classmethod
-    def update_student_eduroam_password(cls, account_user_name, new_eduroam_password) -> None:
+    def update_student_eduroam_password(cls, account_user_name: str, new_eduroam_password: str) -> None:
         """ update the student eduroam password """
-        pass  # TODO write update_student_eduroam_password
+        # TODO write update_student_eduroam_password
+        print(F"update student eduroam password for {account_user_name}                      2022-09-26 15:16:49")
+        print(F"update student eduroam password for {new_eduroam_password}                   2022-09-26 15:16:43")
 
     def get_user_from_web(self):
-        """
-        get the user from the web
-        """
-        # TODO write get_user_from_web method
-        pass
+        """ get the user from the web       """
+        if self.verbose:
+            print(F"get user from web for {self.account_user_name}                           2022-09-26 14:12:59")
+            import_student_from_web(account_user_name=self.account_user_name)
+
+    def __str__(self):
+        return F"{self.account_user_name} {self._first_name} {self._last_name} {self._klass} {self._email} {self._google_pw} {self._eduroam_pw}"
 
 
 if __name__ == "__main__":
     # s = Student(account_user_name="knudat421")
-    s = Student(account_user_name="abcdef123")
+    s = Student(account_user_name="abcdef123", verbose=True)
+    print(s)

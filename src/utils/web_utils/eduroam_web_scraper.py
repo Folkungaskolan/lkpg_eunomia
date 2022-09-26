@@ -14,7 +14,7 @@ def get_single_student_user_from_web_to_json(account_user_name: str, verbose: st
     # TODO write get_single_student_user_from_web_to_json method
 
 
-def generate_and_save_eduroam_for_user(account_user_name: str = None, google_pw: str = None, headless_input_bool: bool = True) -> None:
+def generate_eduroam_for_user(account_user_name: str = None, google_pw: str = None, headless_input_bool: bool = True) -> str:
     """    Skapar eduroam användare    """
     print(F"start generate_and_save_eduroam_for_user for {account_user_name=} ")
     if account_user_name is None:
@@ -50,8 +50,8 @@ def generate_and_save_eduroam_for_user(account_user_name: str = None, google_pw:
         WebDriverWait(driver, 4 * 60).until(expected_conditions.presence_of_element_located(
             (By.XPATH, "/html/body/div/div[2]/p[7]/span")))  # vänta på eduroam användaren
         eduroam_pass = driver.find_element(By.XPATH, "/html/body/div/div[2]/p[8]/span")  # hämta Lösen
-        student.set_eduroam_pw(eduroam_pass)
         driver.close()  # Stäng fönstret
+        return eduroam_pass.text
 
 
 if __name__ == "__main__":

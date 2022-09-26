@@ -1,3 +1,6 @@
+"""
+Funktioner för att hantera skrivning av excel filer
+"""
 import json
 from pathlib import Path
 
@@ -10,6 +13,11 @@ from utils.file_utils import load_dict_from_json_path
 
 
 def write_student_xlsx_from_json(verbose: bool = False):
+    """
+    Skriver om Json filer för eleverna till en csv och excel fil
+    :param verbose:
+    :return:
+    """
     if verbose:
         print("write_student_xlsx_from_json start")
 
@@ -22,10 +30,10 @@ def write_student_xlsx_from_json(verbose: bool = False):
         print_progress_bar(iteration=i + 1, total=filelist_len, prefix=F'Elever Export Progress:{i}/{filelist_len}', suffix='Complete', length=150)
 
         try:
-            user = load_dict_from_json_path(filepath=filepath)
+            user = load_dict_from_json_path(filepath=str(filepath))
         except json.decoder.JSONDecodeError:
             print(f" error on filepath : {filepath}                         2022-09-07 15:04:48")
-            raise json.decoder.JSONDecodeError(filepath)
+            raise json.decoder.JSONDecodeError(msg=filepath)
         except Exception as e:
             print(f" error on filepath : {filepath}                         2022-09-07 15:04:51")
             raise Exception(e)
@@ -46,7 +54,7 @@ def write_student_xlsx_from_json(verbose: bool = False):
         if verbose:
             print(f"dfz {STUDENT_USER_FOLDER_PATH + 'elever.csv'} complete")
 
-        # avänds som underlag för etiketter som jag skriver ut
+        # används som underlag för etiketter som jag skriver ut
         dfz.to_excel(STUDENT_USER_XLSX_FILEPATH, sheet_name='data', index=False)
         if verbose:
             print(f"dfz {STUDENT_USER_XLSX_FILEPATH} complete")
@@ -66,6 +74,11 @@ def write_student_xlsx_from_json(verbose: bool = False):
 
 
 def write_staff_xlsx_from_json(verbose: bool = False) -> None:
+    """
+    Skriver om Json filer för personalen till en csv och excel fil
+    :param verbose:
+    :return:
+    """
     filelist = list(Path(STAFF_USER_FOLDER_PATH).rglob('*.[Jj][Ss][Oo][Nn]'))
     # print(STAFF_USER_FOLDER_PATH)
     # print(STAFF_USER_XLSX_FILEPATH)
@@ -78,7 +91,7 @@ def write_staff_xlsx_from_json(verbose: bool = False) -> None:
         if verbose:
             print(filepath)
         try:
-            user = load_dict_from_json_path(filepath=filepath)
+            user = load_dict_from_json_path(filepath=str(filepath))
         except json.decoder.JSONDecodeError:
             print(f" error on filepath : {filepath}                         2022-09-07 15:02:33")
             raise json.decoder.JSONDecodeError(filepath)
@@ -114,5 +127,5 @@ def write_staff_xlsx_from_json(verbose: bool = False) -> None:
 if __name__ == '__main__':
     pd.set_option('display.max_columns', 50)
     pd.set_option('display.expand_frame_repr', False)
-    write_student_xlsx_from_json(verbose=False)
-    # write_staff_xlsx_from_json(verbose=False)
+    write_student_xlsx_from_json()
+    write_staff_xlsx_from_json()
