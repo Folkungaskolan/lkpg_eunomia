@@ -8,15 +8,15 @@ import numpy as np
 import pandas as pd
 
 from settings.folders import STUDENT_USER_FOLDER_PATH, STUDENT_USER_XLSX_FILEPATH, STAFF_USER_XLSX_FILEPATH, STAFF_USER_FOLDER_PATH, KLASSLISTA_CSV_FILEPATH, STUDENT_PW_CSV_FILEPATH
-from utils import print_progress_bar
 from utils.file_utils import load_dict_from_json_path
+from utils.print_progress_bar import print_progress_bar
 
 
-def write_student_xlsx_from_json(verbose: bool = False):
+def write_student_xlsx_from_json(verbose: bool = False) -> None:
     """
     Skriver om Json filer för eleverna till en csv och excel fil
-    :param verbose:
-    :return:
+    :param verbose: bool om det ska skrivas ut mer info i consolen
+    :return: None
     """
     if verbose:
         print("write_student_xlsx_from_json start")

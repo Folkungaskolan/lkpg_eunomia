@@ -8,12 +8,6 @@ from CustomErrors import LogInFailure
 from .general_web import init_firefox_webdriver
 
 
-def get_single_student_user_from_web_to_json(account_user_name: str, verbose: str = False) -> None:
-    if verbose:
-        print(F"start {account_user_name=}")
-    # TODO write get_single_student_user_from_web_to_json method
-
-
 def generate_eduroam_for_user(account_user_name: str = None, google_pw: str = None, headless_input_bool: bool = True) -> str:
     """    Skapar eduroam användare    """
     print(F"start generate_and_save_eduroam_for_user for {account_user_name=} ")

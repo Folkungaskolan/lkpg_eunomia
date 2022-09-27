@@ -1,3 +1,6 @@
+""" skriver ut en progress bar i terminalen om den går i consloe mode i pycharm"""
+
+
 # Print iterations progress
 def print_progress_bar(iteration: int, total: int, prefix: object = '', suffix: object = '', decimals: object = 1, length: object = 100, fill: object = '█', printEnd: object = "\r") -> object:
     """
