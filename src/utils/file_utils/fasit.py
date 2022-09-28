@@ -1,5 +1,4 @@
 """ funktioner för att hantera FASIT information"""
-
 import pandas as pd
 
 from settings.folders import FASIT_CSV_FILEPATH
@@ -7,7 +6,7 @@ from settings.folders import FASIT_CSV_FILEPATH
 
 def load_fasit_csv() -> pd.DataFrame:
     """ Ladda in csv filen med fasit informationen från disk"""
-    df = pd.read_csv(FASIT_CSV_FILEPATH, encoding="latin-1", sep="\t", skiprows=1)
+    df = pd.read_csv(FASIT_CSV_FILEPATH, encoding="latin-1", sep="\t", skiprows=1, dtype=str)
     # print(df.columns)
     # print(df)
     return df
@@ -32,7 +31,9 @@ def get_fasit_staff_users() -> pd.DataFrame:
                    "tag.användare"
                    ]]
     # print(staff_df)
-    staff_df = staff_df[staff_df["tag.användare"] == 1]
+    staff_df = staff_df[staff_df["tag.användare"] == "1"]
+    staff_df.reset_index(drop=True, inplace=True)
+    staff_df.set_index("attribute.användarnamn", inplace=True)
     print(staff_df)
     return staff_df
 
