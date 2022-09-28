@@ -3,3 +3,4 @@ numpy>=1.23.3
 pandas>=1.4.4
 dask>=2022.9.0
 selenium>=4.4.3
+requests>=2.28.1
