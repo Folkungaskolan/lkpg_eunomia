@@ -30,32 +30,15 @@ def get_fasit_staff_users() -> pd.DataFrame:
                    "attribute.kundnummer",
                    "tag.användare"
                    ]]
+    # print(staff_df)
     staff_df = staff_df[staff_df["tag.användare"] == "1"]
     staff_df.reset_index(drop=True, inplace=True)
     staff_df.set_index("attribute.användarnamn", inplace=True)
+    print(staff_df)
     return staff_df
-
-
-def get_fasit_projectors() -> pd.DataFrame:
-    """ Hämta alla projektorer från fasit"""
-    df = load_fasit_csv()
-    proj_df = df[["name",
-                  "attribute.faktura",
-                  "attribute.modell",
-                  "attribute.kundnummer",
-                  "attribute.plats",
-                  "tag.videoprojektor",
-                  "attribute.tillverkare"
-                  ]]
-
-    proj_df = proj_df[proj_df["tag.videoprojektor"] == "1"]
-    proj_df.reset_index(drop=True, inplace=True)
-    proj_df.set_index("name", inplace=True)
-    print(proj_df)
-    return proj_df
 
 
 if __name__ == "__main__":
     pd.set_option('display.max_columns', 50)
     pd.set_option('display.expand_frame_repr', False)
-    get_fasit_projectors()
+    get_fasit_staff_users()
