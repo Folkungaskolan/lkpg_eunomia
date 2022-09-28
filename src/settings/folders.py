@@ -4,7 +4,7 @@ STUDENT_USER_FOLDER_PATH = MAIN_INTALL_SAVE_FOLER + "Students/2.students/"
 
 CRED_FOLDER_PATH = MAIN_INTALL_SAVE_FOLER + "creds/"
 
-STAFF_USER_FOLDER_PATH = MAIN_INTALL_SAVE_FOLER + "Python Staff/"
+STAFF_USER_FOLDER_PATH = MAIN_INTALL_SAVE_FOLER + "Staff/"
 
 STAFF_USER_XLSX_FILEPATH = "H:/Min enhet/odbc_source/Personal.xlsx"
 STUDENT_USER_XLSX_FILEPATH = "H:/Min enhet/odbc_source/Elever.xlsx"
