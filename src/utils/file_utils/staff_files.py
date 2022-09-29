@@ -44,6 +44,8 @@ def save_staff_as_json(account_user_name: str = None,
                        personnummer: str = None,
                        slutdatum: str = None,
                        titel: str = None,
+                       user_created: str = None,
+                       user_last_changed: str = None,
                        do_not_retain_old_info: bool = False,
                        verbose: bool = False, ) -> None:
     """ Sparar ny information, tar inte bort gamla värden
@@ -58,6 +60,8 @@ def save_staff_as_json(account_user_name: str = None,
     :type titel: str
     :type do_not_retain_old_info: bool
     :type verbose: bool
+    :type user_created: str
+    :type user_last_changed: str
     :return: None
 
     :param account_user_name: användarens användarnamn
@@ -69,6 +73,8 @@ def save_staff_as_json(account_user_name: str = None,
     :param personnummer: personnummer för använd
     :param slutdatum: slutdatum för användaren
     :param titel: titel för användaren
+    :param user_last_changed: str
+    :param user_created: str
     :param do_not_retain_old_info: bool om vi inte vill behålla gamla värden
     :param verbose: bool skriv ut mer info i terminalen
     :return: None
@@ -83,13 +89,15 @@ def save_staff_as_json(account_user_name: str = None,
         "account_3_email": email,
         "mobil": mobil,
         "telefon": telefon,
-        "personnummer": personnummer,
+        "personnummer": personnummer,  # YYYYMMDD-XXXX
         "email": email,
-        "born_year": personnummer[:4],
+        "born_year": personnummer[:4],  # året i personnumret
         "born_month": str(int(personnummer[4:6])),  # tar bort ledande nolla om den finns
-        "born_day": personnummer[6:8],
-        "slutdatum": slutdatum,
+        "born_day": str(int(personnummer[6:8])),  # tar bort ledande nolla om den finns
         "titel": titel,
+        "user_created": user_created,
+        "user_last_changed": user_last_changed,
+        "slutdatum": slutdatum
     }
 
     try:
