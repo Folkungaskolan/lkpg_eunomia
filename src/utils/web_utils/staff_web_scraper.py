@@ -21,7 +21,7 @@ def load_staff_webpage() -> webdriver:
     return driver
 
 
-def load_user_page(account_user_name: str) -> webdriver:
+def open_staff_user_page(account_user_name: str, save_info_to_json_on_load: bool = False) -> webdriver:
     """
     Hämta första sidan.
     :param account_user_name:
@@ -32,18 +32,20 @@ def load_user_page(account_user_name: str) -> webdriver:
     driver.find_element(By.XPATH, "//input[@type='submit']").click()
     driver.find_element(By.LINK_TEXT, account_user_name).click()
     # account_user_name = extract_dt_info(driver, "Användarnamn")
-    save_staff_as_json(account_user_name=extract_dt_info(driver, "Användarnamn"),
-                       first_name=extract_dt_info(driver, "Förnamn"),
-                       last_name=extract_dt_info(driver, "Efternamn"),
-                       email=extract_dt_info(driver, "E-post"),
-                       mobil=extract_dt_info(driver, "Mobil"),
-                       telefon=extract_dt_info(driver, "Telefon"),
-                       personnummer=extract_dt_info(driver, "Personnummer"),
-                       slutdatum=extract_dt_info(driver, "Slutdatum"),
-                       titel=extract_dt_info(driver, "Titel"),
-                       )
-
-    return
+    if save_info_to_json_on_load
+        save_staff_as_json(account_user_name=extract_dt_info(driver, "Användarnamn"),
+                           first_name=extract_dt_info(driver, "Förnamn"),
+                           last_name=extract_dt_info(driver, "Efternamn"),
+                           email=extract_dt_info(driver, "E-post"),
+                           mobil=extract_dt_info(driver, "Mobil"),
+                           telefon=extract_dt_info(driver, "Telefon"),
+                           personnummer=extract_dt_info(driver, "Personnummer"),
+                           user_created=extract_dt_info(driver, "Skapad"),
+                           user_last_changed=extract_dt_info(driver, "Senast ändrad"),
+                           slutdatum=extract_dt_info(driver, "Slutdatum"),
+                           titel=extract_dt_info(driver, "Titel"),
+                           )
+    return webdriver
 
 
 def extract_dt_info(driver: webdriver, element_name: str) -> webdriver:
@@ -52,5 +54,10 @@ def extract_dt_info(driver: webdriver, element_name: str) -> webdriver:
         return desc_list.find_element(By.XPATH, f"./dt[.='{element_name}']/following-sibling::dd").text
 
 
+def update_staff_info(account_user_name: str, titel: str = None, telefon: str = None, ):
+    driver = open_staff_user_page(account_user_name=account_user_name, save_info_to_json_on_load=True)
+    driver.close()
+
+
 if __name__ == "__main__":
-    load_user_page(account_user_name="lyadol")
+    open_staff_user_page(account_user_name="lyadol")
