@@ -1,16 +1,18 @@
+""" Data bas filer för via SQLAlchemy för Eunomia faktura hanterings delar av systemet. """
 # https://www.youtube.com/watch?v=NuDSWGOcvtg&t=10s
 
+from sqlalchemy import Column, String
 from sqlalchemy import create_engine
-from sqlalchemy import Column, String, Integer
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 
-engine = create_engine('sqlite:///db.sqlite3', echo=True)
 base = declarative_base()
 
 
 class Student(base):
-    __tablename__ = 'users'
+    """
+    test som hanterar en fiktiv student databas
+    """
+    __tablename__ = 'students'
     anv_namn = Column(String, primary_key=True)
     first_name = Column(String)
     last_name = Column(String)
@@ -28,4 +30,6 @@ class Student(base):
         return f"User(name='{self.name}', fullname='{self.fullname}', password='{self.password}')"
 
 
-base.metadata.create_all(engine)
+if __name__ == '__main__':
+    engine = create_engine('sqlite:///sqlite3.db', echo=True)
+    base.metadata.create_all(engine)
