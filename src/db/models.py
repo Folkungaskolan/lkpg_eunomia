@@ -1,14 +1,9 @@
-from sqlalchemy import create_engine, Column, String, Integer
+from sqlalchemy import Column, String, Integer, DateTime, Float, Boolean, SmallInteger, create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 
 from utils.creds import get_cred
 
-creds = get_cred(account_file_name="mysql_root_local")
-engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/eunomia", echo=True)
 Base = declarative_base()
-Session = sessionmaker(bind=engine)
-session = Session()
 
 
 class Staff(Base):
@@ -16,52 +11,107 @@ class Staff(Base):
     __tablename__ = 'staff'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(String(length=9))
+    user_id = Column(String(length=10))
     first_name = Column(String(length=50))
     last_name = Column(String(length=50))
+    domain = Column(String(length=50))
     pnr = Column(String(length=12))
-
-    # def __init__(self, user_id: str = None, first_name: str = "", last_name: str = "", pnr: str = ""):
-    #     if user_id is None:
-    #         raise ValueError("user_id must be set")
+    email = Column(String(length=50))
 
     def __repr__(self):
         return f"Staff(id:{self.id}|user_id='{self.user_id}', first_name='{self.first_name}', last_name='{self.last_name}', pnr='{self.pnr}')"
 
 
-def insert_user(user_id: str, first_name: str, last_name: str, pnr: str):
-    """ Insert a user into the db. """
-    staff = Staff(user_id=user_id, first_name=first_name, last_name=last_name, pnr=pnr)
-    session.add(staff)
-    session.commit()
+class tjf(Base):
+    """ db model for tjf. """
+    __tablename__ = 'tjf'
+    id = Column(Integer, primary_key=True)
+    pnr = Column(String(length=12))
+    user_id = Column(String(length=6))
+    month = Column(SmallInteger)
+    year = Column(SmallInteger)
+    aktivitet_s = Column(String(length=1))
+    aktivitet = Column(
+        String(length=50))  # TODO sträng men vilken ? hämta från beställnings dokumentet när linnea fyllt i
+    tjf_655119 = Column(Float)
+    tjf_655123 = Column(Float)
+    tjf_655122 = Column(Float)
+    tjf_655125 = Column(Float)
+    tjf_656510 = Column(Float)
+    tjf_656520 = Column(Float)
+    tjf_656310 = Column(Float)
+    tjf_654100 = Column(Float)
+    tjf_654200 = Column(Float)
+    tjf_654300 = Column(Float)
+    tjf_654400 = Column(Float)
 
 
-def update_user(user_id: str, first_name: str, last_name: str, pnr: str):
-    """ Update a user in the db. """
-    staff = session.query(Staff).filter_by(user_id=user_id).first()
-    staff.first_name = first_name
-    staff.last_name = last_name
-    staff.pnr = pnr
-    session.commit()
+class Student(Base):
+    __tablename__ = 'student'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(String(length=9))
+    first_name = Column(String(length=50))
+    last_name = Column(String(length=50))
+    pnr = Column(String(length=12))
+    google_pw = Column(String(length=50))
+    eduroam_pw = Column(String(length=10))
+    eduroam_pw_gen_date = Column(DateTime(timezone=True))
 
 
-def print_user(user_id: str):
-    """ Print a user from the db. """
-    staff = session.query(Staff).filter_by(user_id=user_id).first()
-    print(staff)
-    print(type(staff))
+class FakturaRad(Base):
+    __tablename__ = 'faktura_rader'
+    id = Column(Integer, primary_key=True)
+    tjanst = Column(String(length=50))
+    kundnummer = Column(Integer)
+    fakturamarkning = Column(String(length=50))
+    fakturakod = Column(String(length=50))
+    anvandare = Column(String(length=50))
+    avser = Column(String(length=50))
+    period = Column(String(length=6))
+    antal = Column(Integer)
+    pris = Column(Float)
+    Summa = Column(Float)  # fakturans summans rad
+    split_done = Column(Boolean)  # Has row been split into sub sums?
+    split_654_e = Column(Float)
+    split_655_e = Column(Float)
+    split_656_e = Column(Float)
+
+    split_654_a = Column(Float)
+    split_655_a = Column(Float)
+    split_656_a = Column(Float)
+
+    split_654_p = Column(Float)
+    split_655_p = Column(Float)
+    split_656_p = Column(Float)
+    split_method_used = Column(String(length=50))
+    split_sum = Column(Float)  # sum of all split sums, controll for errors
+    split_sum_error = Column(Float)  # sum of all split sums, controll for errors   sum - split_sum_e = error in sum
 
 
-def delete_user(user_id: str):
-    """ Delete a user from the db. """
-    staff = session.query(Staff).filter_by(user_id=user_id).first()
-    session.delete(staff)
-    session.commit()
+class SplitMethods(Base):
+    __tablename__ = 'split_methods'
+    """ db model for split methods.
+     Specifikation för hur en viss typ av utrustning ska delas upp i olika kostnads kategorier."""
+    id = Column(Integer, primary_key=True)
+    tjanst = Column(String(length=50))
+    method_to_use = Column(String(length=50))
+
+
+def create_all_tables():
+    """ create all tables in db. """
+    creds = get_cred(account_file_name="mysql_root_local")
+    engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/eunomia", echo=True)
+    Base.metadata.create_all(engine)
+
+
+def drop_all_tables():
+    """ drop all tables in db. """
+    creds = get_cred(account_file_name="mysql_root_local")
+    engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/eunomia", echo=True)
+    Base.metadata.drop_all(engine)
 
 
 if __name__ == '__main__':
+    drop_all_tables()
+    create_all_tables()
     pass
-    # print_user("lyadol")
-    delete_user("lyadol2")
-    # insert_user(user_id="lyadol2", first_name="Lyam2", last_name="Dolk2", pnr="0000000000")
-    # Base.metadata.create_all(engine)

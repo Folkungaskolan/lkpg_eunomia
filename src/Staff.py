@@ -7,13 +7,9 @@ class Staff:
         self.last_name = last_name
         self.password = password
 
-    def init_db():
-
+    def init_db(self):
         """ Create the database connection. """
-    if self.db is None:
-        self.db = sqlite3.connect(self.db_name)
-    else:
-        return self.db
+        pass
 
     def __repr__(self):
         return f"Staff(user_id='{self.user_id}', first_name='{self.first_name}', last_name='{self.last_name}', password='{self.password}')"
