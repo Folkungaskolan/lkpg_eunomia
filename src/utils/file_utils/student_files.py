@@ -1,12 +1,11 @@
 """ student relaterade funktioner """
-import json
 from datetime import datetime
 from pathlib import Path
 
 from CustomErrors import NoUserFoundError
+from json_wrapper import save_dict_to_json, load_dict_from_json_path
 from settings.folders import STUDENT_USER_FOLDER_PATH
-from utils.file_utils.json_wrapper import save_dict_to_json, load_dict_from_json_path
-from utils.path_utils import delete_file, split_student_klass_from_filepath
+from utils.path_utils import delete_file
 
 
 def find_student_json_filepath(account_user_name: str, verbose: bool = False) -> str:
@@ -88,27 +87,8 @@ def save_student_as_json(account_user_name: str = None,
             delete_file(student_json_filepath)
             save_dict_to_json(data=student_dict, filepath=STUDENT_USER_FOLDER_PATH + klass + "_" + account_user_name + ".json")
             return
-        new_dict = {}
-        try:
-            old_student = load_dict_from_json_path(student_json_filepath)
-        except json.decoder.JSONDecodeError:
-            old_student = {}
-        for old_key in old_student.keys():
-            if verbose:
-                print(f"old dict key {old_key} = {old_student[old_key]}")
-            new_dict[old_key] = old_student[old_key]
-        for new_key in student_dict.keys():
-            if verbose:
-                print(f"update key {new_key} = {student_dict[new_key]}")
-            new_dict[new_key] = student_dict[new_key]
-        if verbose:
-            print(new_dict)
-        if student_dict["klass"] != split_student_klass_from_filepath(filepath=student_json_path):
-            delete_file(filepath=student_json_filepath)
-        # save file with updated keys
-        save_student_as_json(student_dict=new_dict)
-
-        save_dict_to_json(data=new_dict, filepath=STUDENT_USER_FOLDER_PATH + klass + "_" + account_user_name + ".json")
+        old_dict = load_dict_from_json_path(student_json_filepath)
+        save_dict_to_json(data=old_dict | student_dict, filepath=STUDENT_USER_FOLDER_PATH + klass + "_" + account_user_name + ".json")
 
 
 if __name__ == '__main__':
