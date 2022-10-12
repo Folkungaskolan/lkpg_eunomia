@@ -1,4 +1,4 @@
-""" funktioner för decorators """
+""" Funktioner för decorators """
 from time import time
 
 

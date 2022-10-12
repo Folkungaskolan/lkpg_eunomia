@@ -1,3 +1,4 @@
+""" Funktioner som hanterar databas kopplingen """
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
@@ -17,6 +18,8 @@ def init_db(echo: bool = False) -> Session:
 if __name__ == '__main__':
     pass
     # print_user("lyadol")
+    from utils.file_utils.staff_db import delete_user
+
     delete_user("lyadol2")
     # insert_user(user_id="lyadol2", first_name="Lyam2", last_name="Dolk2", pnr="0000000000")
     # Base.metadata.create_all(engine)
