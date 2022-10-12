@@ -6,7 +6,7 @@ from utils.creds import get_cred
 Base = declarative_base()
 
 
-class Staff(Base):
+class Staff_dbo(Base):
     """ db model for staff members. """
     __tablename__ = 'staff'
 
@@ -14,6 +14,11 @@ class Staff(Base):
     user_id = Column(String(length=10))
     first_name = Column(String(length=50))
     last_name = Column(String(length=50))
+    full_name = Column(String(length=70))
+    telefon = Column(String(length=20))
+    skapad = Column(DateTime)
+    last_change = Column(DateTime)
+    titel = Column(String(length=30))
     domain = Column(String(length=50))
     pnr = Column(String(length=12))
     email = Column(String(length=50))
@@ -22,7 +27,7 @@ class Staff(Base):
         return f"Staff(id:{self.id}|user_id='{self.user_id}', first_name='{self.first_name}', last_name='{self.last_name}', pnr='{self.pnr}')"
 
 
-class tjf(Base):
+class tjf_dbo(Base):
     """ db model for tjf. """
     __tablename__ = 'tjf'
     id = Column(Integer, primary_key=True)
@@ -46,7 +51,7 @@ class tjf(Base):
     tjf_654400 = Column(Float)
 
 
-class Student(Base):
+class Student_dbo(Base):
     __tablename__ = 'student'
     id = Column(Integer, primary_key=True)
     user_id = Column(String(length=9))
@@ -58,7 +63,7 @@ class Student(Base):
     eduroam_pw_gen_date = Column(DateTime(timezone=True))
 
 
-class FakturaRad(Base):
+class FakturaRad_dbo(Base):
     __tablename__ = 'faktura_rader'
     id = Column(Integer, primary_key=True)
     tjanst = Column(String(length=50))
@@ -88,7 +93,7 @@ class FakturaRad(Base):
     split_sum_error = Column(Float)  # sum of all split sums, controll for errors   sum - split_sum_e = error in sum
 
 
-class SplitMethods(Base):
+class SplitMethods_dbo(Base):
     __tablename__ = 'split_methods'
     """ db model for split methods.
      Specifikation för hur en viss typ av utrustning ska delas upp i olika kostnads kategorier."""
@@ -97,21 +102,27 @@ class SplitMethods(Base):
     method_to_use = Column(String(length=50))
 
 
-def create_all_tables():
+def create_all_tables(echo: bool = False):
     """ create all tables in db. """
     creds = get_cred(account_file_name="mysql_root_local")
-    engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/eunomia", echo=True)
+    engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/eunomia", echo=False)
     Base.metadata.create_all(engine)
 
 
-def drop_all_tables():
+def drop_all_tables(echo: bool = False):
     """ drop all tables in db. """
     creds = get_cred(account_file_name="mysql_root_local")
-    engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/eunomia", echo=True)
+    engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/eunomia", echo=False)
     Base.metadata.drop_all(engine)
 
 
+def reset_mysql_db(echo=False):
+    """reset database """
+    drop_all_tables(echo=echo)
+    create_all_tables(echo=echo)
+    print("MySql DB reset done.")
+
+
 if __name__ == '__main__':
-    drop_all_tables()
-    create_all_tables()
+    reset_mysql_db()
     pass

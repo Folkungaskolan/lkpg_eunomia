@@ -5,10 +5,10 @@ from sqlalchemy.orm.session import Session
 from utils.creds import get_cred
 
 
-def init_db() -> Session:
+def init_db(echo: bool = False) -> Session:
     """ skapar databas kopplingen """
     creds = get_cred(account_file_name="mysql_root_local")
-    engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/eunomia", echo=True)
+    engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/eunomia", echo=echo)
     Session = sessionmaker(bind=engine)
     session = Session()
     return session

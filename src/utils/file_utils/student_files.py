@@ -3,8 +3,8 @@ from datetime import datetime
 from pathlib import Path
 
 from CustomErrors import NoUserFoundError
-from json_wrapper import save_dict_to_json, load_dict_from_json_path
 from settings.folders import STUDENT_USER_FOLDER_PATH
+from utils.file_utils.json_wrapper import save_dict_to_json, load_dict_from_json_path
 from utils.path_utils import delete_file
 
 

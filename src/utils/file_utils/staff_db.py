@@ -1,8 +1,28 @@
 from sqlalchemy.orm import Session
 
 from CustomErrors import DBUnableToCrateUser
-from db.models import Staff
+from db.models import Staff_dbo
 from db.mysql_db import init_db
+
+
+def get_staff_user_from_db(user_id: str, session: Session = None, create_on_missing: bool = False) \
+        -> (Staff_dbo, Session):
+    """ Get a user from the db. """
+    if session is None:
+        local_session = init_db()
+    else:
+        local_session = session
+
+    staff = local_session.query(Staff_dbo).filter_by(user_id=user_id).first()
+    if staff is None and create_on_missing:  # if user does not exist, create it
+        session = create_staff_user(user_id=user_id, session=local_session)
+        staff = local_session.query(Staff_dbo).filter_by(user_id=user_id).first()
+        if staff is None:
+            raise DBUnableToCrateUser("Could not create user                            2022-10-11 10:59:36")
+
+    if session is not None:
+        return staff, local_session
+    return staff, local_session
 
 
 def create_staff_user(user_id: str, session: Session = None) -> Session:
@@ -12,7 +32,7 @@ def create_staff_user(user_id: str, session: Session = None) -> Session:
     else:
         local_session = session
 
-    staff = Staff(user_id=user_id)
+    staff = Staff_dbo(user_id=user_id)
     local_session.add(staff)
     local_session.commit()
     if session is not None:
@@ -26,7 +46,7 @@ def print_user(user_id: str, session: Session = None) -> Session:
     else:
         local_session = session
 
-    staff = local_session.query(Staff).filter_by(user_id=user_id).first()
+    staff = local_session.query(Staff_dbo).filter_by(user_id=user_id).first()
     print(staff)
     print(type(staff))
     if session is not None:
@@ -40,7 +60,7 @@ def delete_user(user_id: str, session: Session = None) -> Session:
     else:
         local_session = session
 
-    staff = local_session.query(Staff).filter_by(user_id=user_id).first()
+    staff = local_session.query(Staff_dbo).filter_by(user_id=user_id).first()
     local_session.delete(staff)
     local_session.commit()
 
@@ -48,23 +68,23 @@ def delete_user(user_id: str, session: Session = None) -> Session:
         return local_session
 
 
-def update_user(user_id: str,
-                first_name: str = None,
-                last_name: str = None,
-                pnr: str = None,
-                email: str = None,
-                domain: str = "linkom",
-                session: Session = None) -> Session:
+def update_staff_user(user_id: str,
+                      first_name: str = None,
+                      last_name: str = None,
+                      pnr: str = None,
+                      email: str = None,
+                      domain: str = "linkom",
+                      session: Session = None) -> Session:
     """ Update a user in the db. """
     if session is None:
         local_session = init_db()
     else:
         local_session = session
 
-    staff = local_session.query(Staff).filter_by(user_id=user_id).first()
+    staff = local_session.query(Staff_dbo).filter_by(user_id=user_id).first()
     if staff is None:  # if user does not exist, create it
         session = create_staff_user(user_id=user_id, session=local_session)
-        staff = local_session.query(Staff).filter_by(user_id=user_id).first()
+        staff = local_session.query(Staff_dbo).filter_by(user_id=user_id).first()
         if staff is None:
             raise DBUnableToCrateUser("Could not create user                            2022-10-11 10:59:36")
 
@@ -84,4 +104,4 @@ def update_user(user_id: str,
 
 if __name__ == '__main__':
     pass
-    update_user(user_id="lyadol2", first_name="Lyam2", last_name="Dolk2", pnr="0000000000")
+    update_staff_user(user_id="lyadol2", first_name="Lyam2", last_name="Dolk2", pnr="0000000000")
