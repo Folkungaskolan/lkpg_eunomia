@@ -4,7 +4,7 @@ from
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from db.models import Staff_dbo, reset_mysql_db
+from db.models import Staff_dbo
 from db.mysql_db import init_db
 from settings.folders import STAFF_USER_FOLDER_PATH
 from utils.creds import get_cred
@@ -33,6 +33,10 @@ session = Session()
 
 @function_timer
 def move_staff_json_to_db_one_write(echo: bool = False):
+    """
+    Move staff json to db.
+    one write on the sql side
+    """
     local_session = init_db(echo=echo)
     filelist = list(Path(STAFF_USER_FOLDER_PATH).rglob('*.[Jj][Ss][Oo][Nn]'))
     for file in filelist:
@@ -55,5 +59,6 @@ def move_staff_json_to_db_one_write(echo: bool = False):
 if __name__ == '__main__':
     # reset_mysql_db()
     # move_staff_json_to_db_1by1(echo=False)
-    reset_mysql_db()
+
+    # reset_mysql_db()
     move_staff_json_to_db_one_write(echo=False)
