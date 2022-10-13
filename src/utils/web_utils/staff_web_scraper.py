@@ -41,8 +41,8 @@ def update_single_staff_info_from_web(user_id: str,
     staff.titel = driver.find_element(By.XPATH, "//dt[text()='Titel']/following-sibling::dd").text
     staff.email = driver.find_element(By.XPATH, "//dt[text()='E-post']/following-sibling::dd").text
     staff.telefon = driver.find_element(By.XPATH, "//dt[text()='Telefon']/following-sibling::dd").text
-    staff.skapad = driver.find_element(By.XPATH, "//dt[text()='Skapad']/following-sibling::dd").text
-    staff.last_change = driver.find_element(By.XPATH, "//dt[text()='Senast ändrad']/following-sibling::dd").text
+    staff.u_created_date = driver.find_element(By.XPATH, "//dt[text()='Skapad']/following-sibling::dd").text
+    staff.u_changed_date = driver.find_element(By.XPATH, "//dt[text()='Senast ändrad']/following-sibling::dd").text
     local_session.commit()
     if session is not None:
         return local_session

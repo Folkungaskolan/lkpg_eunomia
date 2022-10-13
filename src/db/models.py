@@ -16,8 +16,8 @@ class Staff_dbo(Base):
     last_name = Column(String(length=50))
     full_name = Column(String(length=70))
     telefon = Column(String(length=20))
-    skapad = Column(DateTime)
-    last_change = Column(DateTime)
+    u_created_date = Column(DateTime)
+    u_changed_date = Column(DateTime)
     titel = Column(String(length=30))
     domain = Column(String(length=50))
     pnr = Column(String(length=12))
@@ -25,6 +25,39 @@ class Staff_dbo(Base):
 
     def __repr__(self):
         return f"Staff(id:{self.id}|user_id='{self.user_id}', first_name='{self.first_name}', last_name='{self.last_name}', pnr='{self.pnr}')"
+
+    def get_as_dict(self) -> dict[str:str]:
+        """ get staff as dict. """
+        if self.u_created_date is None:
+            u_create = ""
+        else:
+            u_create = self.u_created_date.strftime("%Y-%m-%d %H:%M:%S")
+        if self.u_changed_date is None:
+            u_change = ""
+        else:
+            u_change = self.u_changed_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        return {"id": self.id,
+                "user_id": self.user_id,
+                "first_name": self.first_name,
+                "last_name": self.last_name,
+                "full_name": self.full_name,
+                "telefon": self.telefon,
+                "u_created": u_create,
+                "u_changed": u_change,
+                "titel": self.titel,
+                "domain": self.domain,
+                "pnr": self.pnr,
+                "email": self.email}
+
+    def get_birth_year(self) -> int:
+        return int(self.pnr[0:4])
+
+    def get_birth_month(self) -> int:
+        return int(self.pnr[4:6])
+
+    def get_birth_day(self) -> int:
+        return int(self.pnr[6:8])
 
 
 class tjf_dbo(Base):
@@ -61,6 +94,7 @@ class Student_dbo(Base):
     google_pw = Column(String(length=50))
     eduroam_pw = Column(String(length=10))
     eduroam_pw_gen_date = Column(DateTime(timezone=True))
+    klass = Column(String(length=50))
 
 
 class FakturaRad_dbo(Base):
@@ -124,5 +158,14 @@ def reset_mysql_db(echo=False):
 
 
 if __name__ == '__main__':
-    reset_mysql_db()
     pass
+    # reset_mysql_db()
+
+    # # Test
+    from db.mysql_db import init_db
+
+    session = init_db()
+    lyam_staff = session.query(Staff_dbo).filter(Staff_dbo.user_id == "lyadol").first()
+    print(lyam_staff.get_birth_year())
+    print(lyam_staff.get_birth_month())
+    print(lyam_staff.get_birth_day())

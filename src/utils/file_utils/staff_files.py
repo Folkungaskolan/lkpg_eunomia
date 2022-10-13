@@ -4,8 +4,7 @@ from pathlib import Path
 
 from CustomErrors import NoUserFoundError
 from settings.folders import STAFF_USER_FOLDER_PATH
-from utils.file_utils import load_dict_from_json_path
-from utils.file_utils.json_wrapper import save_dict_to_json
+from utils.file_utils.json_wrapper import save_dict_to_json, load_dict_from_json_path
 
 
 def find_staff_json_filepath(account_user_name: str, verbose: bool = False) -> str:
@@ -46,6 +45,7 @@ def save_staff_as_json(account_user_name: str = None,
                        titel: str = None,
                        user_created: str = None,
                        user_last_changed: str = None,
+                       domain: str = "",
                        do_not_retain_old_info: bool = False,
                        verbose: bool = False, ) -> None:
     """ Sparar ny information, tar inte bort gamla värden
@@ -97,6 +97,7 @@ def save_staff_as_json(account_user_name: str = None,
         "titel": titel,
         "user_created": user_created,
         "user_last_changed": user_last_changed,
+        "domain": domain,
         "slutdatum": slutdatum
     }
 
