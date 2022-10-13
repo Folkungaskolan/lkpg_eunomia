@@ -86,6 +86,7 @@ class tjf_dbo(Base):
     okt = Column(Float)
     dec = Column(Float)
     kommentar = Column(String(length=150))
+    personalkategori = Column(String(length=50))
 
 
 class Student_dbo(Base):
