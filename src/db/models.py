@@ -21,8 +21,12 @@ class Staff_dbo(Base):
     titel: str = Column(String(length=30))
     domain: str = Column(String(length=50))
     pnr12: str = Column(String(length=15))
-    pnr10: str = Column(String(length=15))
     email: str = Column(String(length=50))
+
+    @property
+    def pnr10(self) -> str:
+        """ get pnr10. """
+        return self.pnr12[2:]
 
     def __repr__(self):
         return f"Staff(id:{self.id}|user_id='{self.user_id}', first_name='{self.first_name}', last_name='{self.last_name}', pnr12='{self.pnr12}'), , pnr10='{self.pnr10}')"
@@ -96,7 +100,7 @@ class Tjf_dbo(Base):
 class Student_dbo(Base):
     """ db model for students. """
     __tablename__ = 'student'
-    id = Column(Integer, primary_key=True)
+    id: int = Column(Integer, primary_key=True)
     user_id: str = Column(String(length=9))
     first_name: str = Column(String(length=50))
     last_name: str = Column(String(length=50))
@@ -105,6 +109,11 @@ class Student_dbo(Base):
     eduroam_pw: str = Column(String(length=10))
     eduroam_pw_gen_date = Column(DateTime(timezone=True))
     klass: str = Column(String(length=50))
+
+    @property
+    def email(self):
+        """ get student email """
+        return self.user_id + "@edu.linkoping.se"
 
 
 class FakturaRad_dbo(Base):

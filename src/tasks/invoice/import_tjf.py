@@ -9,7 +9,6 @@ from db.models import Tjf_dbo, Staff_dbo
 from db.mysql_db import init_db
 from settings.folders import FAKTURA_EXCEL_TJF_FOLDER
 from utils.decorators import function_timer
-from utils.file_utils.staff_db import calculate_missing_staff_pnr10
 
 
 def find_enhets_tjf_file(enhet: str) -> str:
@@ -67,10 +66,6 @@ def import_tjf_alla_enheter(enheter: list = ["654", "655", "656"]) -> None:
 def match_tjf_pnr_to_staff():
     """ Matchar tjf pnr till staff pnr """
     local_session = init_db()
-
-    # Kör för att uppdatera staff pnr10 om det saknas
-    local_session = calculate_missing_staff_pnr10(session=local_session)
-
     tjf_rows_without_user_id = local_session.query(Tjf_dbo).filter(Tjf_dbo.user_id == None).all()
     for row in tjf_rows_without_user_id:
         print(row.pnr10)
