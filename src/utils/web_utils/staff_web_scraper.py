@@ -8,6 +8,7 @@ from db.models import Staff_dbo
 from db.mysql_db import init_db
 from utils.decorators import function_timer
 from utils.file_utils.staff_db import get_staff_user_from_db_based_on_user_id, update_staff_user
+from utils.pnr_utils import calc_pnr12
 from utils.web_utils.general_web import init_chrome_webdriver
 
 
@@ -60,11 +61,16 @@ def update_single_staff_info_from_web_based_on_pnr12(pnr12: str,
                                                      headless_input_bool: bool = False,
                                                      session: Session = None) -> Session:
     """ Hämtar personal information från webbplatsen """
+    pnr12 = pnr12.lower().strip()
+    if len(pnr12) == 10:
+        pnr12 = calc_pnr12(pnr12)
+    elif len(pnr12) != 12:
+        raise ValueError("Felaktigt personnummer längd ")
+
     if session is None:
         local_session = init_db()
     else:
         local_session = session
-    pnr12 = pnr12.lower().strip()
 
     driver = init_chrome_webdriver(headless_bool=headless_input_bool)
     kontohanterar_url = "https://kontohantering.linkoping.se/search/users"
