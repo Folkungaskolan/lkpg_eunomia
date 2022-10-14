@@ -2,6 +2,7 @@ from sqlalchemy import Column, String, Integer, DateTime, Float, Boolean, SmallI
 from sqlalchemy.ext.declarative import declarative_base
 
 from utils.creds import get_cred
+from utils.pnr_utils import calc_pnr12
 
 Base = declarative_base()
 
@@ -20,16 +21,20 @@ class Staff_dbo(Base):
     u_changed_date = Column(DateTime)
     titel: str = Column(String(length=30))
     domain: str = Column(String(length=50))
-    pnr12: str = Column(String(length=15))
+    _pnr12: str = Column(String(length=15))
     email: str = Column(String(length=50))
 
     @property
     def pnr10(self) -> str:
         """ get pnr10. """
-        return self.pnr12[2:]
+        return self._pnr12[2:]
+
+    def set_pnr12_with_pnr10(self, pnr10: str) -> None:
+        """ set pnr12 with pnr10. """
+        self._pnr12 = calc_pnr12(pnr10)
 
     def __repr__(self):
-        return f"Staff(id:{self.id}|user_id='{self.user_id}', first_name='{self.first_name}', last_name='{self.last_name}', pnr12='{self.pnr12}'), , pnr10='{self.pnr10}')"
+        return f"Staff(id:{self.id}|user_id='{self.user_id}', first_name='{self.first_name}', last_name='{self.last_name}', pnr12='{self._pnr12}'), , pnr10='{self.pnr10}')"
 
     def get_as_dict(self) -> dict[str:str]:
         """ get staff as dict. """
@@ -52,20 +57,20 @@ class Staff_dbo(Base):
                 "u_changed": u_change,
                 "titel": self.titel,
                 "domain": self.domain,
-                "pnr": self.pnr12,
+                "pnr": self._pnr12,
                 "email": self.email}
 
     def get_birth_year(self) -> int:
         """ get birth year. """
-        return int(self.pnr12[0:4])
+        return int(self._pnr12[0:4])
 
     def get_birth_month(self) -> int:
         """ get birth month. """
-        return int(self.pnr12[4:6])
+        return int(self._pnr12[4:6])
 
     def get_birth_day(self) -> int:
         """ get birth day. """
-        return int(self.pnr12[6:8])
+        return int(self._pnr12[6:8])
 
 
 class Tjf_dbo(Base):

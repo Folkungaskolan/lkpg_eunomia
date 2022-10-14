@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from CustomErrors import DBUnableToCrateUser
 from db.models import Staff_dbo
 from db.mysql_db import init_db
+from utils.pnr_utils import calc_pnr12
 
 
 def get_staff_user_from_db_based_on_user_id(user_id: str, session: Session = None, create_on_missing: bool = False) \
@@ -94,8 +95,9 @@ def update_staff_user(user_id: str,
     if last_name is not None:  # om värde skickas in uppdatera
         staff.last_name = last_name
     if pnr12 is not None:  # om värde skickas in uppdatera
-        staff.pnr12 = pnr12
-        staff.pnr10 = pnr12[2:]
+        if len(pnr12) == 10:
+            pnr12 = calc_pnr12(pnr10=pnr12)
+        staff._pnr12 = pnr12
     if email is not None:  # om värde skickas in uppdatera
         staff.email = email
     if titel is not None:  # om värde skickas in uppdatera
@@ -108,7 +110,6 @@ def update_staff_user(user_id: str,
 
 if __name__ == '__main__':
     pass
-    calculate_missing_staff_pnr10()
 
     # update_staff_user(user_id="sarqva",
     #                   first_name="Sara",

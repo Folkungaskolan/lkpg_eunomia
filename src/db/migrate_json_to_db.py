@@ -51,7 +51,7 @@ def move_staff_json_to_db_one_write(echo: bool = False):
         if 'email' in staff_user.keys():
             staff.email = staff_user['email']
         if 'pnr' in staff_user.keys():
-            staff.pnr12 = staff_user['pnr']
+            staff._pnr12 = staff_user['pnr']
         local_session.add(staff)
     local_session.commit()
 

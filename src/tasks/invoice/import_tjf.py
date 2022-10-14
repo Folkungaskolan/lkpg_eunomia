@@ -9,6 +9,7 @@ from db.models import Tjf_dbo, Staff_dbo
 from db.mysql_db import init_db
 from settings.folders import FAKTURA_EXCEL_TJF_FOLDER
 from utils.decorators import function_timer
+from utils.web_utils.staff_web_scraper import update_single_staff_info_from_web_based_on_pnr12
 
 
 def find_enhets_tjf_file(enhet: str) -> str:
@@ -70,6 +71,9 @@ def match_tjf_pnr_to_staff():
     for row in tjf_rows_without_user_id:
         print(row.pnr10)
         staff_reference = local_session.query(Staff_dbo).filter(Staff_dbo.pnr10 == row.pnr10).first()
+        if staff_reference is None:
+            print("No match found")
+            update_single_staff_info_from_web_based_on_pnr12(pnr12=row.pnr10)
         row.user_id = staff_reference.user_id
         local_session.commit()
 

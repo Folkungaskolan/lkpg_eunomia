@@ -28,7 +28,7 @@ def move_staff_db_to_json() -> None:
                            last_name=staff.last_name,
                            email=staff.email,
                            telefon=staff.telefon,
-                           personnummer=staff.pnr12,
+                           personnummer=staff._pnr12,
                            user_created=u_create,
                            user_last_changed=u_change,
                            domain=staff.domain,
