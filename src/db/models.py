@@ -70,10 +70,10 @@ class tjf_dbo(Base):
     year = Column(SmallInteger)
     month = Column(SmallInteger)
     aktivitet_s = Column(String(length=1))
-    aktivitet = Column(
-        String(length=50))  # TODO sträng men vilken ? hämta från beställnings dokumentet när linnea fyllt i
+    aktivitet = Column(String(length=50))
     namn = Column(String(length=50))
     yrke = Column(String(length=50))
+
     jan = Column(Float)
     feb = Column(Float)
     mar = Column(Float)

@@ -1,12 +1,14 @@
 """ Utveckling av tjänstefördelningarna """
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from sqlalchemy.sql.elements import and_
 
 from db.models import tjf_dbo
 from db.mysql_db import init_db
 from settings.folders import FAKTURA_EXCEL_TJF_FOLDER
+from utils.decorators import function_timer
 
 
 def find_enhets_tjf_file(enhet: str) -> str:
@@ -17,20 +19,22 @@ def find_enhets_tjf_file(enhet: str) -> str:
             return filepath
 
 
+@function_timer
 def import_tjf_for_enhet(enhet: str) -> None:
     """ Importerar tjänstefördelningarna för en enhet från tjf filen """
     tjf_filepath = find_enhets_tjf_file(enhet)
     print(tjf_filepath)
     df = pd.read_excel(tjf_filepath, skiprows=1, usecols="A:S", sheet_name="Hämtningsflik LINQ", dtype=str)
     df = df.dropna(subset=["Personnr"])
+    df = df.replace(np.nan, "")
     df = df[df["Personnr"] != "7501010101"]
-    print(df)
     session = init_db()
     for index, row in df.iterrows():
-        tjf = session.query(tjf_dbo).filter(and_(tjf_dbo.enhet == enhet,
-                                                 tjf_dbo.personnr == row["Personnr"])).first()
+        # print(row)
+        tjf = session.query(tjf_dbo).filter(and_(tjf_dbo.id_komplement_pa == row["ID/Komplement/PA"],
+                                                 tjf_dbo.pnr == row["Personnr"])).first()
         if tjf is None:
-            tjf = tjf_dbo(enhet=enhet, personnr=row["Personnr"])
+            tjf = tjf_dbo(pnr=row["Personnr"], id_komplement_pa=row["ID/Komplement/PA"])
         tjf.id_komplement_pa = row["ID/Komplement/PA"]
         tjf.year = "2022"
         tjf.jan = row["Jan"]
