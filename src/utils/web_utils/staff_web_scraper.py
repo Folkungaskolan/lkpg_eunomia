@@ -65,7 +65,7 @@ def update_all_staff_info_from_web(headless_input_bool: bool = False) -> None:
             local_session = update_staff_user(user_id=staff.user_id,
                                               email="error",
                                               domain="slutat?",
-                                              pnr="000000000000",
+                                              pnr12="000000000000",
                                               session=local_session)
             continue
 

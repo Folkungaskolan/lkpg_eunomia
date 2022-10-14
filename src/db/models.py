@@ -10,22 +10,22 @@ class Staff_dbo(Base):
     """ db model for staff members. """
     __tablename__ = 'staff'
 
-    id = Column(Integer, primary_key=True)
-    user_id = Column(String(length=10))
-    first_name = Column(String(length=50))
-    last_name = Column(String(length=50))
-    full_name = Column(String(length=70))
-    telefon = Column(String(length=20))
+    id: int = Column(Integer, primary_key=True)
+    user_id: str = Column(String(length=10))
+    first_name: str = Column(String(length=50))
+    last_name: str = Column(String(length=50))
+    full_name: str = Column(String(length=70))
+    telefon: str = Column(String(length=20))
     u_created_date = Column(DateTime)
     u_changed_date = Column(DateTime)
-    titel = Column(String(length=30))
-    domain = Column(String(length=50))
-    pnr12 = Column(String(length=15))
-    pnr10 = Column(String(length=15))
-    email = Column(String(length=50))
+    titel: str = Column(String(length=30))
+    domain: str = Column(String(length=50))
+    pnr12: str = Column(String(length=15))
+    pnr10: str = Column(String(length=15))
+    email: str = Column(String(length=50))
 
     def __repr__(self):
-        return f"Staff(id:{self.id}|user_id='{self.user_id}', first_name='{self.first_name}', last_name='{self.last_name}', pnr='{self.pnr12}')"
+        return f"Staff(id:{self.id}|user_id='{self.user_id}', first_name='{self.first_name}', last_name='{self.last_name}', pnr12='{self.pnr12}'), , pnr10='{self.pnr10}')"
 
     def get_as_dict(self) -> dict[str:str]:
         """ get staff as dict. """
@@ -52,94 +52,101 @@ class Staff_dbo(Base):
                 "email": self.email}
 
     def get_birth_year(self) -> int:
+        """ get birth year. """
         return int(self.pnr12[0:4])
 
     def get_birth_month(self) -> int:
+        """ get birth month. """
         return int(self.pnr12[4:6])
 
     def get_birth_day(self) -> int:
+        """ get birth day. """
         return int(self.pnr12[6:8])
 
 
-class tjf_dbo(Base):
+class Tjf_dbo(Base):
     """ db model for tjf. """
     __tablename__ = 'tjf'
-    id = Column(Integer, primary_key=True)
-    pnr = Column(String(length=12))
-    user_id = Column(String(length=6))
-    id_komplement_pa = Column(String(length=6))
-    year = Column(SmallInteger)
-    month = Column(SmallInteger)
-    aktivitet_s = Column(String(length=1))
-    aktivitet = Column(String(length=50))
-    namn = Column(String(length=50))
-    yrke = Column(String(length=50))
+    id: int = Column(Integer, primary_key=True)
+    pnr10: str = Column(String(length=12))
+    user_id: str = Column(String(length=6))
+    id_komplement_pa: str = Column(String(length=6))
+    year: int = Column(SmallInteger)
+    month: int = Column(SmallInteger)
+    aktivitet_s: str = Column(String(length=1))
+    aktivitet: str = Column(String(length=50))
+    namn: str = Column(String(length=50))
+    yrke: str = Column(String(length=50))
 
-    jan = Column(Float)
-    feb = Column(Float)
-    mar = Column(Float)
-    apr = Column(Float)
-    maj = Column(Float)
-    jun = Column(Float)
-    jul = Column(Float)
-    aug = Column(Float)
-    sep = Column(Float)
-    okt = Column(Float)
-    dec = Column(Float)
-    kommentar = Column(String(length=150))
-    personalkategori = Column(String(length=50))
+    jan: float = Column(Float)
+    feb: float = Column(Float)
+    mar: float = Column(Float)
+    apr: float = Column(Float)
+    maj: float = Column(Float)
+    jun: float = Column(Float)
+    jul: float = Column(Float)
+    aug: float = Column(Float)
+    sep: float = Column(Float)
+    okt: float = Column(Float)
+    dec: float = Column(Float)
+    kommentar: str = Column(String(length=150))
+    personalkategori: str = Column(String(length=50))
 
 
 class Student_dbo(Base):
+    """ db model for students. """
     __tablename__ = 'student'
     id = Column(Integer, primary_key=True)
-    user_id = Column(String(length=9))
-    first_name = Column(String(length=50))
-    last_name = Column(String(length=50))
-    pnr = Column(String(length=12))
-    google_pw = Column(String(length=50))
-    eduroam_pw = Column(String(length=10))
+    user_id: str = Column(String(length=9))
+    first_name: str = Column(String(length=50))
+    last_name: str = Column(String(length=50))
+    pnr: str = Column(String(length=12))
+    google_pw: str = Column(String(length=50))
+    eduroam_pw: str = Column(String(length=10))
     eduroam_pw_gen_date = Column(DateTime(timezone=True))
-    klass = Column(String(length=50))
+    klass: str = Column(String(length=50))
 
 
 class FakturaRad_dbo(Base):
+    """ db model for faktura rad. """
     __tablename__ = 'faktura_rader'
-    id = Column(Integer, primary_key=True)
-    tjanst = Column(String(length=50))
-    kundnummer = Column(Integer)
-    fakturamarkning = Column(String(length=50))
-    fakturakod = Column(String(length=50))
-    anvandare = Column(String(length=50))
-    avser = Column(String(length=50))
-    period = Column(String(length=6))
-    antal = Column(Integer)
-    pris = Column(Float)
-    Summa = Column(Float)  # fakturans summans rad
-    split_done = Column(Boolean)  # Has row been split into sub sums?
-    split_654_e = Column(Float)
-    split_655_e = Column(Float)
-    split_656_e = Column(Float)
+    id: int = Column(Integer, primary_key=True)
+    tjanst: str = Column(String(length=50))
+    kundnummer: int = Column(Integer)
+    fakturamarkning: str = Column(String(length=50))
+    fakturakod: str = Column(String(length=50))
+    anvandare: str = Column(String(length=50))
+    avser: str = Column(String(length=50))
+    period: str = Column(String(length=6))
+    antal: int = Column(Integer)
+    pris: float = Column(Float)
+    Summa: float = Column(Float)  # fakturans summans rad
+    split_done: bool = Column(Boolean)  # Has row been split into sub sums?
+    split_654_e: float = Column(Float)
+    split_655_e: float = Column(Float)
+    split_656_e: float = Column(Float)
 
-    split_654_a = Column(Float)
-    split_655_a = Column(Float)
-    split_656_a = Column(Float)
+    split_654_a: float = Column(Float)
+    split_655_a: float = Column(Float)
+    split_656_a: float = Column(Float)
 
-    split_654_p = Column(Float)
-    split_655_p = Column(Float)
-    split_656_p = Column(Float)
-    split_method_used = Column(String(length=50))
-    split_sum = Column(Float)  # sum of all split sums, controll for errors
-    split_sum_error = Column(Float)  # sum of all split sums, controll for errors   sum - split_sum_e = error in sum
+    split_654_p: float = Column(Float)
+    split_655_p: float = Column(Float)
+    split_656_p: float = Column(Float)
+    split_method_used: str = Column(String(length=50))
+    split_sum: float = Column(Float)  # sum of all split sums, controll for errors
+    split_sum_error: float = Column(
+        Float)  # sum of all split sums, controll for errors   sum - split_sum_e = error in sum
 
 
 class SplitMethods_dbo(Base):
+    """ db model for split methods. """
     __tablename__ = 'split_methods'
     """ db model for split methods.
      Specifikation för hur en viss typ av utrustning ska delas upp i olika kostnads kategorier."""
-    id = Column(Integer, primary_key=True)
-    tjanst = Column(String(length=50))
-    method_to_use = Column(String(length=50))
+    id: int = Column(Integer, primary_key=True)
+    tjanst: str = Column(String(length=50))
+    method_to_use: str = Column(String(length=50))
 
 
 def create_all_tables(echo: bool = False):
@@ -171,7 +178,8 @@ if __name__ == '__main__':
     from db.mysql_db import init_db
 
     session = init_db()
-    lyam_staff = session.query(Staff_dbo).filter(Staff_dbo.user_id == "lyadol").first()
-    print(lyam_staff.get_birth_year())
-    print(lyam_staff.get_birth_month())
-    print(lyam_staff.get_birth_day())
+    Staff_dbo.create(session, user_id="test", first_name="test", last_name="test", pnr="test", email="test")
+    # lyam_staff = session.query(Staff_dbo).filter(Staff_dbo.user_id == "lyadol").first()
+    # print(lyam_staff.get_birth_year())
+    # print(lyam_staff.get_birth_month())
+    # print(lyam_staff.get_birth_day())
