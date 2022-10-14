@@ -93,7 +93,7 @@ def update_staff_user(user_id: str,
     if last_name is not None:  # om värde skickas in uppdatera
         staff.last_name = last_name
     if pnr is not None:  # om värde skickas in uppdatera
-        staff.pnr = pnr
+        staff.pnr12 = pnr
     if email is not None:  # om värde skickas in uppdatera
         staff.email = email
     staff.domain = domain  # har alltid ett värde

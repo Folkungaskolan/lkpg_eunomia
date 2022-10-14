@@ -20,11 +20,12 @@ class Staff_dbo(Base):
     u_changed_date = Column(DateTime)
     titel = Column(String(length=30))
     domain = Column(String(length=50))
-    pnr = Column(String(length=12))
+    pnr12 = Column(String(length=15))
+    pnr10 = Column(String(length=15))
     email = Column(String(length=50))
 
     def __repr__(self):
-        return f"Staff(id:{self.id}|user_id='{self.user_id}', first_name='{self.first_name}', last_name='{self.last_name}', pnr='{self.pnr}')"
+        return f"Staff(id:{self.id}|user_id='{self.user_id}', first_name='{self.first_name}', last_name='{self.last_name}', pnr='{self.pnr12}')"
 
     def get_as_dict(self) -> dict[str:str]:
         """ get staff as dict. """
@@ -47,17 +48,17 @@ class Staff_dbo(Base):
                 "u_changed": u_change,
                 "titel": self.titel,
                 "domain": self.domain,
-                "pnr": self.pnr,
+                "pnr": self.pnr12,
                 "email": self.email}
 
     def get_birth_year(self) -> int:
-        return int(self.pnr[0:4])
+        return int(self.pnr12[0:4])
 
     def get_birth_month(self) -> int:
-        return int(self.pnr[4:6])
+        return int(self.pnr12[4:6])
 
     def get_birth_day(self) -> int:
-        return int(self.pnr[6:8])
+        return int(self.pnr12[6:8])
 
 
 class tjf_dbo(Base):

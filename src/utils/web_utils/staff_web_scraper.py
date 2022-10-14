@@ -34,7 +34,7 @@ def update_single_staff_info_from_web(user_id: str,
     # Hämtar nu sidan med all information
     staff, session = get_staff_user_from_db(user_id=user_id, session=local_session)
 
-    staff.pnr = driver.find_element(By.XPATH, "//dt[text()='Personnummer']/following-sibling::dd").text
+    staff.pnr12 = driver.find_element(By.XPATH, "//dt[text()='Personnummer']/following-sibling::dd").text
     staff.first_name = driver.find_element(By.XPATH, "//dt[text()='Förnamn']/following-sibling::dd").text
     staff.last_name = driver.find_element(By.XPATH, "//dt[text()='Efternamn']/following-sibling::dd").text
     staff.full_name = driver.find_element(By.XPATH, "//dt[text()='Visningsnamn']/following-sibling::dd").text
@@ -52,7 +52,7 @@ def update_single_staff_info_from_web(user_id: str,
 def update_all_staff_info_from_web(headless_input_bool: bool = False) -> None:
     """ Hämtar personal information från webbplatsen till databasen"""
     local_session = init_db()
-    staff_list = local_session.query(Staff_dbo).filter(Staff_dbo.pnr == None).all()
+    staff_list = local_session.query(Staff_dbo).filter(Staff_dbo.pnr12 == None).all()
     # print(staff_list.count())
     for staff in staff_list:
         print(F"Updating {staff.user_id}")
