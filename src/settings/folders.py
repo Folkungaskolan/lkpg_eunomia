@@ -16,3 +16,9 @@ KLASSLISTA_CSV_FILEPATH = "H:/Delade enheter/F - Folkungaskolan Vaktmästeri/lon
 
 BASE_OBSIDIAN_PATH = r"H:/Min enhet/Obsidian Vault/FASIT Dev/FASIT/"
 OBSIDIAN_LINX_SEPARATOR = "§"
+
+FASIT_CSV_FILEPATH = MAIN_INTALL_SAVE_FOLER + "fasit.csv"
+
+# /---------------------------------- FATURA HANTERING ----------------------------------/
+
+FAKTURA_EXCEL_TJF_FOLDER = "H:/Min enhet/Månadsuppföljning Tjänstefördelnings källa/"

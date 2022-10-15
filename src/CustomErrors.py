@@ -194,3 +194,6 @@ class TjansteFordelningSaknasError(Exception):    pass
 
 
 class UserAlreadyExistsError(Exception):    pass
+
+
+class DBUnableToCrateUser(Exception):    pass
