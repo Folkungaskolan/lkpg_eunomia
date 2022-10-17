@@ -71,20 +71,6 @@ def import_tjf_for_enhet(enhet: str) -> None:
         session.add(tjf)
     session.commit()
 
-
-#
-# def fetch_missing_staff():
-#     """ hämtar personnummer i tjf som inte vi har personaldata för.
-#     pnr(tjf)->pnr(staff)?->pnr(web)->pnr(staff) """
-#     session = init_db(echo=True)
-#     # result = session.query(Tjf_dbo, Staff_dbo).filter(Tjf_dbo.pnr12 == Staff_dbo.pnr12).filter(
-#     #     Staff_dbo.pnr12 == None).all()
-#     result = session.query(Tjf_dbo).joint(Staff_dbo Tjf_dbo.pnr12 == Staff_dbo.pnr12, isouter=True).filter(
-#         Staff_dbo.pnr12 == None).all()
-#     # for tjf, staff in result:
-#     #     print(tjf.id_komplement_pa, tjf.jan, staff.first_namem, staff.last_name)
-#
-
 if __name__ == '__main__':
     # pd.set_option('display.max_columns', 50)
     # pd.set_option('display.expand_frame_repr', False)

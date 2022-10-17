@@ -37,20 +37,42 @@ def init_chrome_webdriver(headless_bool: bool = True, file_download_redirect_to_
     return driver
 
 
-SCREEN_POSITIONS = {1: {"x": 2560,
-                        "y": 1920 - 1440,
-                        "width": 1080,
-                        "height": 1920 / 2},
-                    2: {"x": 2560,
-                        "y": 1440 - (1080 / 2),
-                        "width": 1080,
-                        "height": 1920 / 2},
-                    3: {"x": 2560 + 1080,
-                        "y": 1440 - 1080,
-                        "width": 1920 / 2,
-                        "height": 1080},
-                    4: {"x": 2560 + 1080 + (1920 / 2),
-                        "y": 1440 - 1080 + (1920 / 2),
-                        "width": 1920 / 2,
-                        "height": 1080}
-                    }
+def position_windows(driver: webdriver, position_nr):
+    """
+    Positionerar fönstret på skärmen
+    :param driver:
+    :param position_nr: 1 till 4
+    :return:
+    """
+    SCREEN_POSITIONS = {1: {"x": 2560,
+                            "y": int(-(1920 - 1440)),
+                            "width": 1080,
+                            "height": int(1920 / 2)},
+                        2: {"x": 2560,
+                            "y": int(1440 - (1920 / 2)),
+                            "width": 1080,
+                            "height": 900},
+                        3: {"x": int(2560 + 1080),
+                            "y": int(1440 - 1080),
+                            "width": int(1920 / 2),
+                            "height": 1000},
+                        4: {"x": int(2560 + 1080 + (1920 / 2)),
+                            "y": int(1440 - 1080),
+                            "width": int(1920 / 2),
+                            "height": 1000}
+                        }
+    driver.set_window_position(SCREEN_POSITIONS[position_nr]["x"], SCREEN_POSITIONS[position_nr]["y"])
+    driver.set_window_size(SCREEN_POSITIONS[position_nr]["width"], SCREEN_POSITIONS[position_nr]["height"])
+    return driver
+
+
+if __name__ == '__main__':
+    driver1 = init_chrome_webdriver(headless_bool=False)
+    position_windows(driver1, 1)
+    driver2 = init_chrome_webdriver(headless_bool=False)
+    position_windows(driver2, 2)
+    driver3 = init_chrome_webdriver(headless_bool=False)
+    position_windows(driver3, 3)
+    driver4 = init_chrome_webdriver(headless_bool=False)
+    position_windows(driver4, 4)
+    pass

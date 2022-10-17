@@ -39,6 +39,7 @@ def move_staff_json_to_db_one_write(echo: bool = False):
             staff = Staff_dbo(user_id=staff_user['account_1_user_name'],
                               pnr12=staff_user['personnummer'])
             created_locally = True
+        staff.user_id = staff_user['account_1_user_name']
         if 'account_2_first_name' in staff_user.keys():
             staff.first_name = staff_user['account_2_first_name']
         if 'account_2_last_name' in staff_user.keys():

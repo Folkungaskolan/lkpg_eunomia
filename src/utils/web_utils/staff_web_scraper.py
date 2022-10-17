@@ -11,7 +11,7 @@ from db.mysql_db import init_db
 from utils.decorators import function_timer
 from utils.file_utils.staff_db import get_staff_user_from_db_based_on_user_id, update_staff_user
 from utils.pnr_utils import pnr10_to_pnr12
-from utils.web_utils.general_web import init_chrome_webdriver
+from utils.web_utils.general_web import init_chrome_webdriver, SCREEN_POSITIONS
 
 
 @function_timer
@@ -27,9 +27,10 @@ def update_single_staff_info_from_web_based_on_userid(user_id: str,
     user_id = user_id.lower().strip()
 
     if driver is None:
+        screen_pos = 1
         local_driver = init_chrome_webdriver(headless_bool=headless_input_bool)
-        local_driver.set_window_position(2560, 0)
-        local_driver.set_window_size(1000, 900)
+        local_driver.set_window_position(SCREEN_POSITIONS[screen_pos]["x"], SCREEN_POSITIONS[screen_pos]["y"])
+        local_driver.set_window_size(SCREEN_POSITIONS[screen_pos]["width"], SCREEN_POSITIONS[screen_pos]["height"])
     else:
         local_driver = driver
 
@@ -55,7 +56,7 @@ def update_single_staff_info_from_web_based_on_userid(user_id: str,
                                                      "//dt[text()='Senast ändrad']/following-sibling::dd").text
     local_session.commit()
     if session is not None:
-        return local_session, local_driverer
+        return local_session, local_driver
 
 
 def update_staff_from_pnr12_list(pnr12_list: list) -> None:
