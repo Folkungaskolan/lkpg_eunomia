@@ -35,3 +35,22 @@ def init_chrome_webdriver(headless_bool: bool = True, file_download_redirect_to_
     driver.set_window_size(1000, 900)
     driver.implicitly_wait(10)  # seconds
     return driver
+
+
+SCREEN_POSITIONS = {1: {"x": 2560,
+                        "y": 1920 - 1440,
+                        "width": 1080,
+                        "height": 1920 / 2},
+                    2: {"x": 2560,
+                        "y": 1440 - (1080 / 2),
+                        "width": 1080,
+                        "height": 1920 / 2},
+                    3: {"x": 2560 + 1080,
+                        "y": 1440 - 1080,
+                        "width": 1920 / 2,
+                        "height": 1080},
+                    4: {"x": 2560 + 1080 + (1920 / 2),
+                        "y": 1440 - 1080 + (1920 / 2),
+                        "width": 1920 / 2,
+                        "height": 1080}
+                    }
