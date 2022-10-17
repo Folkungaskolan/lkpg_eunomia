@@ -9,15 +9,22 @@ from db.models import Tjf_dbo, Staff_dbo
 from db.mysql_db import init_db
 from settings.folders import FAKTURA_EXCEL_TJF_FOLDER
 from utils.decorators import function_timer
-from utils.web_utils.staff_web_scraper import update_single_staff_info_from_web_based_on_pnr12
+from utils.pnr_utils import pnr10_to_pnr12
 
 
-def find_enhets_tjf_file(enhet: str) -> str:
+def find_enhets_tjf_file(enhet: str) -> Path:
     """ Hittar tjf filen för en enhet """
     filelist = list(Path(FAKTURA_EXCEL_TJF_FOLDER).rglob('*.[Xx][Ll][Ss][Mm]'))
     for filepath in filelist:
         if enhet in str(filepath.stem):
             return filepath
+
+
+def import_tjf_alla_enheter(enheter: list = ["654", "655", "656"]) -> None:
+    """ Importerar tjänstefördelningarna för alla enheter """
+    for enhet in enheter:
+        import_tjf_for_enhet(enhet)
+    pass
 
 
 @function_timer
@@ -32,10 +39,17 @@ def import_tjf_for_enhet(enhet: str) -> None:
     session = init_db()
     for index, row in df.iterrows():
         # print(row)
+        staff = session.query(Staff_dbo).filter(Staff_dbo.pnr12 == pnr10_to_pnr12(row["Personnr"])).first()
+        if staff is None:  # om vi inte har en användare så skapas en.
+            staff = Staff_dbo(pnr12=pnr10_to_pnr12(row["Personnr"]))
+            staff.full_name = row["Namn"]
+            staff.domain = "update_from_web"
+            staff.titel = row["Yrke"]
         tjf = session.query(Tjf_dbo).filter(and_(Tjf_dbo.id_komplement_pa == row["ID/Komplement/PA"],
-                                                 Tjf_dbo.pnr == row["Personnr"])).first()
+                                                 Tjf_dbo.pnr12 == pnr10_to_pnr12(row["Personnr"]))).first()
         if tjf is None:
-            tjf = Tjf_dbo(pnr=row["Personnr"], id_komplement_pa=row["ID/Komplement/PA"])
+            tjf = Tjf_dbo(pnr12=pnr10_to_pnr12(row["Personnr"]),
+                          id_komplement_pa=row["ID/Komplement/PA"])
         tjf.id_komplement_pa = row["ID/Komplement/PA"]
         tjf.year = "2022"
         tjf.jan = row["Jan"]
@@ -53,33 +67,26 @@ def import_tjf_for_enhet(enhet: str) -> None:
         tjf.kommentar = row["Kommentar"]
         tjf.yrke = row["Yrke"]
         tjf.personalkategori = row["Personalkategori"]
+        session.add(staff)
         session.add(tjf)
     session.commit()
 
 
-def import_tjf_alla_enheter(enheter: list = ["654", "655", "656"]) -> None:
-    """ Importerar tjänstefördelningarna för alla enheter """
-    for enhet in enheter:
-        import_tjf_for_enhet(enhet)
-    pass
-
-
-def match_tjf_pnr_to_staff():
-    """ Matchar tjf pnr till staff pnr """
-    local_session = init_db()
-    tjf_rows_without_user_id = local_session.query(Tjf_dbo).filter(Tjf_dbo.user_id == None).all()
-    for row in tjf_rows_without_user_id:
-        print(row.pnr10)
-        staff_reference = local_session.query(Staff_dbo).filter(Staff_dbo.pnr10 == row.pnr10).first()
-        if staff_reference is None:
-            print("No match found")
-            update_single_staff_info_from_web_based_on_pnr12(pnr12=row.pnr10)
-        row.user_id = staff_reference.user_id
-        local_session.commit()
-
+#
+# def fetch_missing_staff():
+#     """ hämtar personnummer i tjf som inte vi har personaldata för.
+#     pnr(tjf)->pnr(staff)?->pnr(web)->pnr(staff) """
+#     session = init_db(echo=True)
+#     # result = session.query(Tjf_dbo, Staff_dbo).filter(Tjf_dbo.pnr12 == Staff_dbo.pnr12).filter(
+#     #     Staff_dbo.pnr12 == None).all()
+#     result = session.query(Tjf_dbo).joint(Staff_dbo Tjf_dbo.pnr12 == Staff_dbo.pnr12, isouter=True).filter(
+#         Staff_dbo.pnr12 == None).all()
+#     # for tjf, staff in result:
+#     #     print(tjf.id_komplement_pa, tjf.jan, staff.first_namem, staff.last_name)
+#
 
 if __name__ == '__main__':
-    pd.set_option('display.max_columns', 50)
-    pd.set_option('display.expand_frame_repr', False)
-    # import_tjf_alla_enheter()
-    match_tjf_pnr_to_staff()
+    # pd.set_option('display.max_columns', 50)
+    # pd.set_option('display.expand_frame_repr', False)
+    import_tjf_alla_enheter()
+    # fetch_missing_staff()

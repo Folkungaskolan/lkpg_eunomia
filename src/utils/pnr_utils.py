@@ -39,7 +39,7 @@ def check_pnr_control_digit(pnr10: str) -> bool:
     return True
 
 
-def calc_pnr12(pnr10: str) -> str:
+def pnr10_to_pnr12(pnr10: str) -> str:
     """Beräknar ett 12-siffrigt personnummer från ett 10-siffrigt"""
     # if not is_valid_pnr10(pnr10):
     #     raise ValueError("Felaktigt personnummer")
@@ -60,12 +60,12 @@ def calc_pnr12(pnr10: str) -> str:
 
 
 if __name__ == "__main__":
-    print(calc_pnr12("0109269034"))
-    print(calc_pnr12("0209269034"))
-    print(calc_pnr12("0309269034"))
-    print(calc_pnr12("0409269034"))
-    print(calc_pnr12("0509269034"))
-    print(calc_pnr12("0609269034"))
-    print(calc_pnr12("7709269034"))
+    print(pnr10_to_pnr12("0109269034"))
+    print(pnr10_to_pnr12("0209269034"))
+    print(pnr10_to_pnr12("0309269034"))
+    print(pnr10_to_pnr12("0409269034"))
+    print(pnr10_to_pnr12("0509269034"))
+    print(pnr10_to_pnr12("0609269034"))
+    print(pnr10_to_pnr12("7709269034"))
 
     pass
