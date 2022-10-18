@@ -7,8 +7,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from settings.folders import STUDENT_USER_FOLDER_PATH, STUDENT_USER_XLSX_FILEPATH, STAFF_USER_XLSX_FILEPATH, STAFF_USER_FOLDER_PATH, KLASSLISTA_CSV_FILEPATH, STUDENT_PW_CSV_FILEPATH
-from utils.file_utils import load_dict_from_json_path
+from settings.folders import STUDENT_USER_FOLDER_PATH, STUDENT_USER_XLSX_FILEPATH, STAFF_USER_XLSX_FILEPATH, \
+    STAFF_USER_FOLDER_PATH, KLASSLISTA_CSV_FILEPATH, STUDENT_PW_CSV_FILEPATH
+from utils.file_utils.json_wrapper import load_dict_from_json_path
 from utils.print_progress_bar import print_progress_bar
 
 
@@ -99,7 +100,7 @@ def write_staff_xlsx_from_json(verbose: bool = False) -> None:
             print(f" error on filepath : {filepath}                         2022-09-07 15:02:27")
             raise Exception(e)
         else:
-            if len(user["account_user_name"]) != 6:
+            if len(user["account_1_user_name"]) != 6:
                 continue
             df = pd.DataFrame(user, index=range(1, len(user.keys())))
             # if verbose:
