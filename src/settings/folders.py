@@ -22,3 +22,4 @@ FASIT_CSV_FILEPATH = MAIN_INTALL_SAVE_FOLER + "fasit.csv"
 # /---------------------------------- FATURA HANTERING ----------------------------------/
 
 FAKTURA_EXCEL_TJF_FOLDER = "H:/Min enhet/Månadsuppföljning Tjänstefördelnings källa/"
+FAKTURA_EXCEL_FAKTURA_RADER_FOLDER = MAIN_INTALL_SAVE_FOLER + "Fakturor/"

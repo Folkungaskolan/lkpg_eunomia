@@ -135,10 +135,11 @@ class FakturaRad_dbo(Base):
     fakturakod: str = Column(String(length=50))
     anvandare: str = Column(String(length=50))
     avser: str = Column(String(length=50))
-    period: str = Column(String(length=6))
+    faktura_year: int = Column(SmallInteger)
+    faktura_month: int = Column(SmallInteger)
     antal: int = Column(Integer)
     pris: float = Column(Float)
-    Summa: float = Column(Float)  # fakturans summans rad
+    summa: float = Column(Float)  # fakturans summans rad
     split_done: bool = Column(Boolean)  # Has row been split into sub sums?
     split_654_e: float = Column(Float)
     split_655_e: float = Column(Float)
@@ -155,6 +156,12 @@ class FakturaRad_dbo(Base):
     split_sum: float = Column(Float)  # sum of all split sums, controll for errors
     split_sum_error: float = Column(
         Float)  # sum of all split sums, controll for errors   sum - split_sum_e = error in sum
+
+    def __str__(self):
+        return f"Tjänst:{self.tjanst},Kundnummer{self.kundnummer},Fakturamärkning{self.fakturamarkning},Fakturakod{self.fakturakod},Användare{self.anvandare},Avser{self.avser},Period{self.faktura_year + self.faktura_month},Antal{self.antal},Pris{self.pris},Summa{self.summa}"
+
+    def __repr__(self):
+        return F"FakturaRad_dbo(tjanst={self.tjanst},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod},anvandare={self.anvandare},avser={self.avser},faktura_year={self.faktura_year},faktura_month={self.faktura_month},antal={self.antal},pris={self.pris},summa={self.summa},split_done={self.split_done},split_654_e={self.split_654_e},split_655_e={self.split_655_e},split_656_e={self.split_656_e},split_654_a={self.split_654_a},split_655_a={self.split_655_a},split_656_a={self.split_656_a},split_654_p={self.split_654_p},split_655_p={self.split_655_p},split_656_p={self.split_656_p},split_method_used={self.split_method_used},split_sum={self.split_sum},split_sum_error={self.split_sum_error})"
 
 
 class SplitMethods_dbo(Base):

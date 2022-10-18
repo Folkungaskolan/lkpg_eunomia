@@ -1,4 +1,6 @@
 """ funktioner för att hantera FASIT information"""
+from functools import cache
+
 import pandas as pd
 
 from settings.folders import FASIT_CSV_FILEPATH
@@ -36,6 +38,31 @@ def get_fasit_staff_users() -> pd.DataFrame:
     staff_df.set_index("attribute.användarnamn", inplace=True)
     print(staff_df)
     return staff_df
+
+
+class Fasit():
+    """ Class for fasit information """
+
+    def __init__(self):
+        self.df = load_fasit_csv()
+
+    @cache
+    def get_staff_users(self) -> pd.DataFrame:
+        """ Hämta alla användare från fasit"""
+        staff_df = self.df[["name",
+                            "attribute.användarnamn",
+                            "attribute.epost",
+                            "attribute.faktura",
+                            "attribute.jobbtitel",
+                            "attribute.kund",
+                            "attribute.kundnummer",
+                            "tag.användare"
+                            ]]
+        # print(staff_df)
+        staff_df = staff_df[staff_df["tag.användare"] == "1"]
+        staff_df.reset_index(drop=True, inplace=True)
+        staff_df.set_index("attribute.användarnamn", inplace=True)
+        return staff_df
 
 
 if __name__ == "__main__":
