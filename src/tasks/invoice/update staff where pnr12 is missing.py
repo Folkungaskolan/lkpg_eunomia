@@ -7,8 +7,8 @@ import numpy as np
 from selenium.common import NoSuchElementException
 from sqlalchemy.sql.elements import or_
 
-from db.models import Staff_dbo
-from db.mysql_db import init_db
+from database.models import Staff_dbo
+from database.mysql_db import init_db
 from utils.web_utils.general_web import init_chrome_webdriver, position_windows
 from utils.web_utils.staff_web_scraper import update_single_staff_info_from_web_based_on_userid
 

@@ -35,14 +35,14 @@ class Child(Base):
 
 
 def create_all_tables(echo: bool = False):
-    """ create all tables in db. """
+    """ create all tables in database. """
     creds = get_cred(account_file_name="mysql_root_local")
     engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/{db_name}", echo=False)
     Base.metadata.create_all(engine)
 
 
 def drop_all_tables(echo: bool = False):
-    """ drop all tables in db. """
+    """ drop all tables in database. """
     creds = get_cred(account_file_name="mysql_root_local")
     engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/{db_name}", echo=False)
     Base.metadata.drop_all(engine)

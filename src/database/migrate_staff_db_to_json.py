@@ -1,12 +1,12 @@
-""" flytta medarbetare från db till json. """
+""" flytta medarbetare från database till json. """
 
-from db.models import Staff_dbo
-from db.mysql_db import init_db
+from database.models import Staff_dbo
+from database.mysql_db import init_db
 from utils.file_utils.staff_files import save_staff_as_json
 
 
 def move_staff_db_to_json() -> None:
-    """ Move staff db in MySql to json. """
+    """ Move staff database in MySql to json. """
     session = init_db()
     all_staff = session.query(Staff_dbo).all()
     # all_staff = session.query(Staff_dbo).filter(or_(Staff_dbo.user_id == "janbor", Staff_dbo.user_id == "lyadol")).all()

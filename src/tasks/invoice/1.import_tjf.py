@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from sqlalchemy.sql.elements import and_
 
-from db.models import Tjf_dbo, Staff_dbo
-from db.mysql_db import init_db
+from database.models import Tjf_dbo, Staff_dbo
+from database.mysql_db import init_db
 from settings.folders import FAKTURA_EXCEL_TJF_FOLDER
 from utils.decorators import function_timer
 from utils.pnr_utils import pnr10_to_pnr12
@@ -70,6 +70,29 @@ def import_tjf_for_enhet(enhet: str) -> None:
         session.add(staff)
         session.add(tjf)
     session.commit()
+
+
+def fill_numeric_aktivitet() -> None:
+    """ Fyller i aktivitet med korrekt numerisk aktivivitet om det är tomt """
+    aktivitet_str_to_int: dict = {}
+    pass
+
+
+def determine_aktivitet(id_pa: str, aktivitet_s: str) -> str:
+    """ Avgör aktivitet baserat på id_pa och aktivitet_s """
+    stlars = ["654100", "654200", "654300", "654400"]
+    GRU = ["656510", "656520", "656310"]
+    GY_p = ["655119", "655123", "655122"]
+
+    GY = ["655119", "655123", "655122"]
+    # GY
+    if id_pa in GY and aktivitet_s == "p":  # GY p
+        return "410200"
+    if id_pa in GY and aktivitet_s == "e":  # GY e
+        return "410600"
+    if id_pa in GY and aktivitet_s == "a":  # GY a
+        return "410800"
+
 
 if __name__ == '__main__':
     # pd.set_option('display.max_columns', 50)

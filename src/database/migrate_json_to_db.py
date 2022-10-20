@@ -3,8 +3,8 @@ from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from db.models import Staff_dbo
-from db.mysql_db import init_db
+from database.models import Staff_dbo
+from database.mysql_db import init_db
 from settings.folders import STAFF_USER_FOLDER_PATH
 from utils.creds import get_cred
 from utils.file_utils.json_wrapper import load_dict_from_json_path
@@ -17,7 +17,7 @@ session = Session()
 
 def move_staff_json_to_db_one_write(echo: bool = False):
     """
-    Move staff json to db.
+    Move staff json to database.
     one write on the sql side
     """
     local_session = init_db(echo=echo)

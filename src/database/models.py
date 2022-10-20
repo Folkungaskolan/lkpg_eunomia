@@ -8,7 +8,7 @@ Base = declarative_base()
 
 
 class Staff_dbo(Base):
-    """ db model for staff members. """
+    """ database model for staff members. """
     __tablename__ = 'staff'
 
     id: int = Column(Integer, primary_key=True)
@@ -78,7 +78,7 @@ class Staff_dbo(Base):
 
 
 class Tjf_dbo(Base):
-    """ db model for tjf. """
+    """ database model for tjf. """
     __tablename__ = 'tjf'
     id: int = Column(Integer, primary_key=True)
     pnr12: str = Column(String(length=12))
@@ -107,7 +107,7 @@ class Tjf_dbo(Base):
 
 
 class Student_dbo(Base):
-    """ db model for students. """
+    """ database model for students. """
     __tablename__ = 'student'
     id: int = Column(Integer, primary_key=True)
     user_id: str = Column(String(length=9))
@@ -126,17 +126,17 @@ class Student_dbo(Base):
 
 
 class FakturaRad_dbo(Base):
-    """ db model for faktura rad. """
+    """ database model for faktura rad. """
     __tablename__ = 'faktura_rader'
     id: int = Column(Integer, primary_key=True)
-    tjanst: str = Column(String(length=50))
+    faktura_year: int = Column(SmallInteger)
+    faktura_month: int = Column(SmallInteger)
+    tjanst: str = Column(String(length=150))
+    avser: str = Column(String(length=150))
+    anvandare: str = Column(String(length=150))
     kundnummer: int = Column(Integer)
     fakturamarkning: str = Column(String(length=50))
     fakturakod: str = Column(String(length=50))
-    anvandare: str = Column(String(length=50))
-    avser: str = Column(String(length=50))
-    faktura_year: int = Column(SmallInteger)
-    faktura_month: int = Column(SmallInteger)
     antal: int = Column(Integer)
     pris: float = Column(Float)
     summa: float = Column(Float)  # fakturans summans rad
@@ -158,16 +158,16 @@ class FakturaRad_dbo(Base):
         Float)  # sum of all split sums, controll for errors   sum - split_sum_e = error in sum
 
     def __str__(self):
-        return f"Tjänst:{self.tjanst},Kundnummer{self.kundnummer},Fakturamärkning{self.fakturamarkning},Fakturakod{self.fakturakod},Användare{self.anvandare},Avser{self.avser},Period{self.faktura_year + self.faktura_month},Antal{self.antal},Pris{self.pris},Summa{self.summa}"
+        return F"FakturaRad_dbo(tjanst={self.tjanst},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod},anvandare={self.anvandare},avser={self.avser},faktura_year={self.faktura_year},faktura_month={self.faktura_month},antal={self.antal},pris={self.pris},summa={self.summa},split_done={self.split_done},split_654_e={self.split_654_e},split_655_e={self.split_655_e},split_656_e={self.split_656_e},split_654_a={self.split_654_a},split_655_a={self.split_655_a},split_656_a={self.split_656_a},split_654_p={self.split_654_p},split_655_p={self.split_655_p},split_656_p={self.split_656_p},split_method_used={self.split_method_used},split_sum={self.split_sum},split_sum_error={self.split_sum_error})"
 
     def __repr__(self):
         return F"FakturaRad_dbo(tjanst={self.tjanst},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod},anvandare={self.anvandare},avser={self.avser},faktura_year={self.faktura_year},faktura_month={self.faktura_month},antal={self.antal},pris={self.pris},summa={self.summa},split_done={self.split_done},split_654_e={self.split_654_e},split_655_e={self.split_655_e},split_656_e={self.split_656_e},split_654_a={self.split_654_a},split_655_a={self.split_655_a},split_656_a={self.split_656_a},split_654_p={self.split_654_p},split_655_p={self.split_655_p},split_656_p={self.split_656_p},split_method_used={self.split_method_used},split_sum={self.split_sum},split_sum_error={self.split_sum_error})"
 
 
 class SplitMethods_dbo(Base):
-    """ db model for split methods. """
+    """ database model for split methods. """
     __tablename__ = 'split_methods'
-    """ db model for split methods.
+    """ database model for split methods.
      Specifikation för hur en viss typ av utrustning ska delas upp i olika kostnads kategorier."""
     id: int = Column(Integer, primary_key=True)
     tjanst: str = Column(String(length=50))
@@ -175,14 +175,14 @@ class SplitMethods_dbo(Base):
 
 
 def create_all_tables(echo: bool = False):
-    """ create all tables in db. """
+    """ create all tables in database. """
     creds = get_cred(account_file_name="mysql_root_local")
     engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/eunomia", echo=False)
     Base.metadata.create_all(engine)
 
 
 def drop_all_tables(echo: bool = False):
-    """ drop all tables in db. """
+    """ drop all tables in database. """
     creds = get_cred(account_file_name="mysql_root_local")
     engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/eunomia", echo=False)
     Base.metadata.drop_all(engine)
@@ -200,7 +200,7 @@ if __name__ == '__main__':
     reset_mysql_db()
 
     # # Test
-    # from db.mysql_db import init_db
+    # from database.mysql_db import init_db
 
     # session = init_db()
     # Staff_dbo.create(session, user_id="test", first_name="test", last_name="test", pnr="test", email="test")

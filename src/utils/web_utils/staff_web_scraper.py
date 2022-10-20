@@ -6,8 +6,8 @@ from selenium.webdriver.common.by import By
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import or_
 
-from db.models import Staff_dbo
-from db.mysql_db import init_db
+from database.models import Staff_dbo
+from database.mysql_db import init_db
 from utils.decorators import function_timer
 from utils.file_utils.staff_db import get_staff_user_from_db_based_on_user_id, update_staff_user
 from utils.pnr_utils import pnr10_to_pnr12

@@ -1,14 +1,14 @@
 from sqlalchemy.orm import Session
 
 from CustomErrors import DBUnableToCrateUser
-from db.models import Staff_dbo
-from db.mysql_db import init_db
+from database.models import Staff_dbo
+from database.mysql_db import init_db
 from utils.pnr_utils import pnr10_to_pnr12
 
 
 def get_staff_user_from_db_based_on_user_id(user_id: str, session: Session = None, create_on_missing: bool = False) \
         -> (Staff_dbo, Session):
-    """ Get a user from the db. """
+    """ Get a user from the database. """
     if session is None:
         local_session = init_db()
     else:
@@ -27,7 +27,7 @@ def get_staff_user_from_db_based_on_user_id(user_id: str, session: Session = Non
 
 
 def create_staff_user_from_user_id(user_id: str, session: Session = None) -> Session:
-    """ Insert a user into the db. """
+    """ Insert a user into the database. """
     if session is None:
         local_session = init_db()
     else:
@@ -41,7 +41,7 @@ def create_staff_user_from_user_id(user_id: str, session: Session = None) -> Ses
 
 
 def print_user(user_id: str, session: Session = None) -> Session:
-    """ Print a user from the db. """
+    """ Print a user from the database. """
     if session is None:
         local_session = init_db()
     else:
@@ -55,7 +55,7 @@ def print_user(user_id: str, session: Session = None) -> Session:
 
 
 def delete_user(user_id: str, session: Session = None) -> Session:
-    """ Delete a user from the db. """
+    """ Delete a user from the database. """
     if session is None:
         local_session = init_db()
     else:
@@ -77,7 +77,7 @@ def update_staff_user(user_id: str,
                       domain: str = "linkom",
                       session: Session = None,
                       titel: str = None) -> Session:
-    """ Update a user in the db. """
+    """ Update a user in the database. """
     if session is None:
         local_session = init_db()
     else:
