@@ -115,5 +115,5 @@ def generate_aktivitet_from_tjf() -> None:  # Done
 if __name__ == '__main__':
     pd.set_option('display.max_columns', 50)
     pd.set_option('display.expand_frame_repr', False)
-    # import_tjf_alla_enheter()  # importerar tjänstefördelningarna för alla enheter
+    import_tjf_alla_enheter()  # importerar tjänstefördelningarna för alla enheter
     generate_aktivitet_from_tjf()  # kontrollerar aktiviteter för personalens idn så de är redo för rad delningar
