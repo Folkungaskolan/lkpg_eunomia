@@ -47,7 +47,9 @@ def import_tjf_for_enhet(enhet: str) -> None:
             staff.domain = "update_from_web"
             staff.titel = row["Yrke"]
         tjf = session.query(Tjf_dbo).filter(and_(Tjf_dbo.id_komplement_pa == row["ID/Komplement/PA"],
-                                                 Tjf_dbo.pnr12 == pnr10_to_pnr12(row["Personnr"]))).first()
+                                                 Tjf_dbo.pnr12 == pnr10_to_pnr12(row["Personnr"])
+                                                 )
+                                            ).first()
         if tjf is None:
             tjf = Tjf_dbo(pnr12=pnr10_to_pnr12(row["Personnr"]),
                           id_komplement_pa=row["ID/Komplement/PA"])
@@ -71,12 +73,6 @@ def import_tjf_for_enhet(enhet: str) -> None:
         session.add(staff)
         session.add(tjf)
     session.commit()
-
-
-def fill_numeric_aktivitet() -> None:
-    """ Fyller i aktivitet med korrekt numerisk aktivivitet om det är tomt """
-    aktivitet_str_to_int: dict = {}
-    pass
 
 
 @cache
