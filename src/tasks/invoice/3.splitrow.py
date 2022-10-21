@@ -1,4 +1,5 @@
 """ Hanterar uppdelning av fakturarader """
+from typing import Union
 
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.elements import and_
@@ -58,21 +59,46 @@ def dela_enl_total_tjf(faktura_rad: FakturaRad_dbo, session: Session) -> None:
 
 
 # @cache
-def generate_total_tjf_for_month(month: int, session: Session = None) -> dict[str, float]:
+def generate_total_tjf_for_month(month: int, session: Session = None) -> Union[dict[str:dict[str, float]], tuple[dict[str:dict[str, float]], Session]]:
     """ sum and create a proportion for each tjanstcode in a month """
     if session is None:
         local_session = init_db()
     else:
         local_session = session
-    empty_aktivitet = local_session.query(Tjf_dbo.aktivitet).filter(Tjf_dbo.aktivitet == None).all()
-    if empty_aktivitet is not None:
-        raise ValueError("There are empty numeric aktivitet in tjf")
-        raise ValueError("fix !!!")
-    id_komplement_pas = local_session.query(Tjf_dbo.id_komplement_pa).distinct().all()
-    id_komplement_pas = local_session.query(Tjf_dbo.aktivitet_s).distinct().all()
-    for id_komplement_pa in id_komplement_pas:
-        id_komplement_pa: str = id_komplement_pa[0]
-        print(id_komplement_pa)
+    id_komplement_pas_aktivitet_combos = local_session.query(Tjf_dbo.id_komplement_pa, Tjf_dbo.aktivitet).distinct().all()
+    try:
+        return process_tjf_totals(combo_list=id_komplement_pas_aktivitet_combos, month=month, session=local_session)
+    except ValueError as error:
+        for id_komplement_pa, aktivitet in id_komplement_pas_aktivitet_combos:
+            if aktivitet is None:
+                print(f"id_komplement_pa: {id_komplement_pa}, aktivitet: {aktivitet}")
+        raise ValueError from error
+
+
+def process_tjf_totals(combo_list: list[list[str]], month: int, session: Session = None) -> Union[dict[str:dict[str, float]], tuple[dict[str:dict[str, float]], Session]]:
+    """ process tjf """
+    if session is None:
+        local_session = init_db()
+    else:
+        local_session = session
+    abs_total_tjf = {}
+    abs_sum_tjf = 0
+    MONTHS = {1: "jan", 2: "feb", 3: "mar", 4: "apr", 5: "maj", 6: "jun",
+              7: "jul", 8: "aug", 9: "sep", 10: "okt", 11: "nov", 12: "dec"}
+    for id_komplement_pa, aktivitet in combo_list:
+        if aktivitet is None:
+            raise ValueError("There are empty numeric aktivitet in tjf")
+    tjfs = local_session.query(Tjf_dbo).filter(and_(Tjf_dbo.id_komplement_pa == id_komplement_pa,
+                                                    Tjf_dbo.id_komplement_pa == aktivitet)).all()
+    combo_tjf_sum = 0
+    for tjf in tjfs:
+        combo_tjf_sum += getattr(tjf, MONTHS[month])
+        abs_sum_tjf += getattr(tjf, MONTHS[month])
+    abs_total_tjf[id_komplement_pa] = {aktivitet: combo_tjf_sum}
+    rel_tjf = {}
+    for id_komplement_pa, aktivitet in combo_list:
+        rel_tjf[id_komplement_pa][aktivitet] = abs_total_tjf[id_komplement_pa][aktivitet] / abs_sum_tjf
+    return rel_tjf, local_session
 
 
 if __name__ == "__main__":

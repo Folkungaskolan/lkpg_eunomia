@@ -1,4 +1,5 @@
 """ Utveckling av tjänstefördelningarna """
+from functools import cache
 from pathlib import Path
 
 import numpy as np
@@ -78,24 +79,40 @@ def fill_numeric_aktivitet() -> None:
     pass
 
 
-def determine_aktivitet(id_pa: str, aktivitet_s: str) -> str:
+@cache
+def determine_aktivitet_from_id(id_pa: str, aktivitet_str: str) -> str:
     """ Avgör aktivitet baserat på id_pa och aktivitet_s """
-    stlars = ["654100", "654200", "654300", "654400"]
     GRU = ["656510", "656520", "656310"]
-    GY_p = ["655119", "655123", "655122"]
-
-    GY = ["655119", "655123", "655122"]
-    # GY
-    if id_pa in GY and aktivitet_s == "p":  # GY p
+    GY = ["655119", "655123", "655122", "654100", "654200", "654300", "654400"]
+    #     EK      , ES      , SA      , stlars ESmus,ESbild, NA     , IMA
+    if id_pa in GY and aktivitet_str == "p":  # GY p
         return "410200"
-    if id_pa in GY and aktivitet_s == "e":  # GY e
+    if id_pa in GY and aktivitet_str == "e":  # GY e
         return "410600"
-    if id_pa in GY and aktivitet_s == "a":  # GY a
+    if id_pa in GY and aktivitet_str == "a":  # GY a
         return "410800"
+
+    if id_pa in GRU and aktivitet_str == "p":  # GRU p
+        return "310200"
+    if id_pa in GRU and aktivitet_str == "e":  # GRU e
+        return "310600"
+    if id_pa in GRU and aktivitet_str == "a":  # GRU a
+        return "310800"
+
+
+def generate_aktivitet_from_tjf() -> None:
+    """ Genererar aktivitet baserat på tjf """
+    session = init_db()
+    tjf_list = session.query(Tjf_dbo, Staff_dbo.aktivitet_char).join(Staff_dbo, Tjf_dbo.pnr12 == Staff_dbo.pnr12) \
+        .filter(Tjf_dbo.aktivitet == None).all()
+    for tjf in tjf_list:
+        Tjf_dbo.aktivitet = determine_aktivitet_from_id(id_pa=tjf.id_komplement_pa,
+                                                        aktivitet_str=Staff_dbo.aktivitet_char)
+    session.commit()
 
 
 if __name__ == '__main__':
-    # pd.set_option('display.max_columns', 50)
-    # pd.set_option('display.expand_frame_repr', False)
-    import_tjf_alla_enheter()
-    # fetch_missing_staff()
+    pd.set_option('display.max_columns', 50)
+    pd.set_option('display.expand_frame_repr', False)
+    import_tjf_alla_enheter()  # importerar tjänstefördelningarna för alla enheter
+    generate_aktivitet_from_tjf()  # kontrollerar aktiviteter för personalens idn så de är redo för rad delningar

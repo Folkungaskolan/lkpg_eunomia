@@ -23,7 +23,7 @@ class Staff_dbo(Base):
     domain: str = Column(String(length=50))
     pnr12: str = Column(String(length=15))
     email: str = Column(String(length=50))
-    aktivitet: str = Column(String(length=1))
+    aktivitet_char: str = Column(String(length=1))
 
     @property
     def pnr10(self) -> str:
@@ -82,13 +82,12 @@ class Tjf_dbo(Base):
     __tablename__ = 'tjf'
     id: int = Column(Integer, primary_key=True)
     pnr12: str = Column(String(length=12))
-    user_id: str = Column(String(length=6))
+    # user_id: str = Column(String(length=6))
     id_komplement_pa: str = Column(String(length=6))
     year: int = Column(SmallInteger)
-    month: int = Column(SmallInteger)
-    aktivitet_s: str = Column(String(length=1))
-    aktivitet: str = Column(String(length=50))
-    namn: str = Column(String(length=50))
+    # month: int = Column(SmallInteger)
+    aktivitet: str = Column(String(length=10))
+    # namn: str = Column(String(length=50))
     yrke: str = Column(String(length=50))
 
     jan: float = Column(Float)
@@ -105,6 +104,8 @@ class Tjf_dbo(Base):
     kommentar: str = Column(String(length=150))
     personalkategori: str = Column(String(length=50))
 
+    def __repr__(self):
+        return F"Tjf(id:{self.id}|pnr12='{self.pnr12}', user_id='{self.user_id}', id_komplement_pa='{self.id_komplement_pa}', year={self.year}, month={self.month}, aktivitet_s='{self.aktivitet_s}', aktivitet='{self.aktivitet}', namn='{self.namn}', yrke='{self.yrke}', jan={self.jan}, feb={self.feb}, mar={self.mar}, apr={self.apr}, maj={self.maj}, jun={self.jun}, jul={self.jul}, aug={self.aug}, sep={self.sep}, okt={self.okt}, dec={self.dec}, kommentar='{self.kommentar}', personalkategori='{self.personalkategori}')"
 
 class Student_dbo(Base):
     """ database model for students. """
