@@ -1,5 +1,4 @@
 """ Hanterar uppdelning av fakturarader """
-from typing import Union
 
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.elements import and_
@@ -59,7 +58,7 @@ def dela_enl_total_tjf(faktura_rad: FakturaRad_dbo, session: Session) -> None:
 
 
 # @cache
-def generate_total_tjf_for_month(month: int, session: Session = None) -> Union[dict[str:dict[str, float]], tuple[dict[str:dict[str, float]], Session]]:
+def generate_total_tjf_for_month(month: int, session: Session = None) -> dict[str:dict[str, float]] | tuple[dict[str:dict[str, float]], Session]:
     """ sum and create a proportion for each tjanstcode in a month """
     if session is None:
         local_session = init_db()
@@ -75,7 +74,7 @@ def generate_total_tjf_for_month(month: int, session: Session = None) -> Union[d
         raise ValueError from error
 
 
-def process_tjf_totals(combo_list: list[list[str]], month: int, session: Session = None) -> Union[dict[str:dict[str, float]], tuple[dict[str:dict[str, float]], Session]]:
+def process_tjf_totals(combo_list: list[list[str]], month: int, session: Session = None) -> dict[str:dict[str, float]] | tuple[dict[str:dict[str, float]], Session]:
     """ process tjf """
     if session is None:
         local_session = init_db()
