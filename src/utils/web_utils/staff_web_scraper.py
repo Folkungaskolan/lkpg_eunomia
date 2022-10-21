@@ -11,7 +11,7 @@ from database.mysql_db import init_db
 from utils.decorators import function_timer
 from utils.file_utils.staff_db import get_staff_user_from_db_based_on_user_id, update_staff_user
 from utils.pnr_utils import pnr10_to_pnr12
-from utils.web_utils.general_web import init_chrome_webdriver, SCREEN_POSITIONS
+from utils.web_utils.general_web import init_chrome_webdriver, position_windows
 
 
 @function_timer
@@ -29,8 +29,7 @@ def update_single_staff_info_from_web_based_on_userid(user_id: str,
     if driver is None:
         screen_pos = 1
         local_driver = init_chrome_webdriver(headless_bool=headless_input_bool)
-        local_driver.set_window_position(SCREEN_POSITIONS[screen_pos]["x"], SCREEN_POSITIONS[screen_pos]["y"])
-        local_driver.set_window_size(SCREEN_POSITIONS[screen_pos]["width"], SCREEN_POSITIONS[screen_pos]["height"])
+        local_driver = position_windows(local_driver, position_nr=screen_pos)
     else:
         local_driver = driver
 
@@ -83,9 +82,9 @@ def update_single_staff_info_from_web_based_on_pnr12(pnr12: str,
         local_session = session  # annars används den som skickas in
 
     driver = init_chrome_webdriver(headless_bool=headless_input_bool)
+    driver = position_windows(driver=driver)
     kontohanterar_url = "https://kontohantering.linkoping.se/search/users"
-    driver.set_window_position(2560 + 1080, 1440 - 1080)
-    driver.set_window_size(1920 / 2, 1080 - 40)
+
     driver.get(url=kontohanterar_url)
     pnr_input = driver.find_element(By.NAME, "PersonNo")  # hitta vart användarnamnet ska in
     pnr_input.send_keys(pnr12)  # fyll i användarnamnet
@@ -136,5 +135,5 @@ def update_all_staff_info_from_web_where_pnr12_is_missing(headless_input_bool: b
 if __name__ == "__main__":
     # update_single_staff_info_from_web(user_id="lyadol", headless_input_bool=False)
     # update_all_staff_info_from_web_where_pnr12_is_missing(headless_input_bool=True)
-    # update_single_staff_info_from_web_based_on_pnr12(pnr12="199302243879", headless_input_bool=False)
+    # update_single_staff_info_from_web_based_on_pnr12(pnr12="198908292637", headless_input_bool=False)
     pass

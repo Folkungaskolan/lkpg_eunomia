@@ -37,7 +37,7 @@ def init_chrome_webdriver(headless_bool: bool = True, file_download_redirect_to_
     return driver
 
 
-def position_windows(driver: webdriver, position_nr):
+def position_windows(driver: webdriver, position_nr: int = 1) -> webdriver:
     """
     Positionerar fönstret på skärmen
     :param driver:

@@ -1,4 +1,5 @@
 """ Hanterar uppdelning av fakturarader """
+from functools import cache
 
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.elements import and_
@@ -82,8 +83,7 @@ def process_tjf_totals(combo_list: list[list[str]], month: int, session: Session
         local_session = session
     abs_total_tjf = {}
     abs_sum_tjf = 0
-    MONTHS = {1: "jan", 2: "feb", 3: "mar", 4: "apr", 5: "maj", 6: "jun",
-              7: "jul", 8: "aug", 9: "sep", 10: "okt", 11: "nov", 12: "dec"}
+    MONTHS = {1: "jan", 2: "feb", 3: "mar", 4: "apr", 5: "maj", 6: "jun", 7: "jul", 8: "aug", 9: "sep", 10: "okt", 11: "nov", 12: "dec"}
     for id_komplement_pa, aktivitet in combo_list:
         if aktivitet is None:
             raise ValueError("There are empty numeric aktivitet in tjf")
@@ -100,6 +100,35 @@ def process_tjf_totals(combo_list: list[list[str]], month: int, session: Session
     return rel_tjf, local_session
 
 
+@cache
+def gen_split_by_elevantal(enheter=None, month: int = None) -> dict[str:dict[str, float]]:
+    """ generate split by elevantal """
+    split = {}
+    STUDENT_COUNT = {
+        "655119": 3 * 2 * 32,  # GY EK
+        "655123": 3 * 1 * 32,  # GY ES
+        "655122": 3 * 4 * 32,  # GY SA
+        "656510": 3 * 2 * 30,  # GRU 4-6 ?
+        "656520": 3 * 7 * 30,  # GRU 7-9
+        "656310": 1,  # Fritids
+        "654100": 1,  # StLars ES-musik
+        "654200": 1,  # StLars ES-bild
+        "654300": 1,  # StLars NA
+        "654400": 1  # StLars IMA
+    }
+    if month <= 7:  # om före sommaren så inkluderas ims
+        STUDENT_COUNT["655125"] = 30  # IMS
+    if enheter is not None:
+        STUDENT_COUNT = {key: value for key, value in STUDENT_COUNT.items() if key in enheter}
+    total_sum = sum(STUDENT_COUNT.values())
+    print(total_sum)
+
+    for enhet in STUDENT_COUNT.keys():
+        split[enhet] = STUDENT_COUNT[enhet] / total_sum
+    return split
+
+
 if __name__ == "__main__":
-    generate_total_tjf_for_month(1)
-    # split_row()
+    gen_split_by_elevantal(enheter=["654300", "654400"])
+# generate_total_tjf_for_month(1)
+# split_row()
