@@ -110,7 +110,7 @@ def gen_split_by_elevantal(enheter=None, month: int = None) -> dict[str:dict[str
         "655122": 3 * 4 * 32,  # GY SA
         "656510": 3 * 2 * 30,  # GRU 4-6 ?
         "656520": 3 * 7 * 30,  # GRU 7-9
-        "656310": 1,  # Fritids
+        "656310": 1,  # Fritids TODO hämta rätt siffor -> uppdatera student webscrapern
         "654100": 1,  # StLars ES-musik
         "654200": 1,  # StLars ES-bild
         "654300": 1,  # StLars NA
