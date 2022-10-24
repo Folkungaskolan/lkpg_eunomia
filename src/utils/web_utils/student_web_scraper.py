@@ -4,8 +4,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
-from utils import init_chrome_webdriver
 from utils.creds import get_cred
+from utils.file_utils import save_student_as_json
+from utils.web_utils.general_web import init_chrome_webdriver
 
 
 def import_student_from_web(account_user_name: str, headless_input_bool: bool = False) -> None:
@@ -56,6 +57,13 @@ def import_student_from_web(account_user_name: str, headless_input_bool: bool = 
 
 
 def login_student_accounts_page(driver):
+    """
+    login to the student accounts page  https://elevkonto.linkoping.se/
+    :param driver:
+    :type driver:
+    :return:
+    :rtype:
+    """
     driver.get(url="https://elevkonto.linkoping.se/")
     creds = get_cred(account_file_name="lyam_windows_user")
     user_name = creds["usr"]
