@@ -20,6 +20,9 @@ def split_filename_from_filepath(filepath: str) -> str:
     """
     return os.path.basename(filepath)
 
+def split_file_name_no_suffix_from_filepath(filepath: str) -> str:
+    """ Returnera filnamnet utan suffix """
+    return os.path.splitext(os.path.basename(filepath))[0]
 
 def split_student_klass_from_filepath(filepath: str) -> str:
     """

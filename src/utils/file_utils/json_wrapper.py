@@ -37,4 +37,5 @@ def save_dict_to_json(data: dict, filepath: str, verbose: bool = False) -> None:
 
 
 if __name__ == '__main__':
-    print(load_dict_from_json_path(filepath=r"H:\Min enhet\Python Students\2.students\test4_test1.json", verbose=True))
+    # print(load_dict_from_json_path(filepath=r"H:\Min enhet\Python Students\2.students\test4_test1.json", verbose=True))
+    pass

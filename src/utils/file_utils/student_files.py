@@ -45,9 +45,10 @@ def save_student_as_json(account_user_name: str = None,
                          eduroam_pw: str = None,
                          eduroam_pw_gen_datetime: datetime = None,
                          verbose: bool = False,
-                         do_not_retain_old_info: bool = False) -> None:
+                         do_not_retain_old_info: bool = False,
+                         this_is_a_web_import: bool = False
+                         ) -> None:
     """ Sparar ny information, tar inte bort gamla värden
-    :param verbose: visa mer info i terminalen
     :param account_user_name: användarens användarnamn
     :param first_name: förnamn för användaren
     :param last_name: efternamn för användaren
@@ -57,6 +58,12 @@ def save_student_as_json(account_user_name: str = None,
     :param google_pw: google lösenord användaren
     :param eduroam_pw: eduroam lösenord användaren
     :param eduroam_pw_gen_datetime: när genererades detta eduroam lösenord
+    :param verbose: visa mer info i terminalen
+    :param do_not_retain_old_info:
+    :param this_is_a_web_import:
+
+    :type this_is_a_web_import:
+    :type do_not_retain_old_info: bool
     :return: funktionen skriver en fil till disk. Inget returneras.
     """
     if account_user_name is None:
@@ -74,13 +81,15 @@ def save_student_as_json(account_user_name: str = None,
         "account_3_eduroam_pw": eduroam_pw,
         "account_3_eduroam_pw_gen_date": eduroam_pw_gen_datetime
     }
+    if this_is_a_web_import:
+        student_dict["student_last_import_datetime"] = datetime.now().strftime("%Y-%m-%d")
 
     try:
         student_json_filepath = find_student_json_filepath(account_user_name=account_user_name)
         if verbose:
             print(F"student_json_path|{student_json_filepath}")
     except NoUserFoundError:
-        save_student_as_json()  # No old info avaliable, make new file
+        save_dict_to_json(data=student_dict, filepath=STUDENT_USER_FOLDER_PATH + klass + "_" + account_user_name + ".json")
 
     else:
         if do_not_retain_old_info:  # save file without updating, aka forget old keys
@@ -88,6 +97,10 @@ def save_student_as_json(account_user_name: str = None,
             save_dict_to_json(data=student_dict, filepath=STUDENT_USER_FOLDER_PATH + klass + "_" + account_user_name + ".json")
             return
         old_dict = load_dict_from_json_path(student_json_filepath)
+        if old_dict["klass"] != student_dict["klass"]:
+            delete_file(student_json_filepath)
+        if old_dict["account_3_eduroam_pw"] != None:
+            pass
         save_dict_to_json(data=old_dict | student_dict, filepath=STUDENT_USER_FOLDER_PATH + klass + "_" + account_user_name + ".json")
 
 
