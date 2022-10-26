@@ -4,7 +4,7 @@ import json
 import math
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import selenium
@@ -20,6 +20,7 @@ from settings.threadsettings import THREADCOUNT
 from utils.creds import get_cred
 from utils.decorators import function_timer
 from utils.file_utils import save_student_as_json
+from utils.file_utils.json_wrapper import load_dict_from_json_path
 from utils.path_utils.path_helpers import split_file_name_no_suffix_from_filepath, split_student_account_user_name_from_filepath
 from utils.web_utils.general_web import init_chrome_webdriver, position_windows
 
@@ -249,25 +250,30 @@ def import_all_student_from_web() -> None:
 
 
 @function_timer
-def check_old_files():
+def check_old_files(new_file_within_days_limit: int = None) -> None:
     """ Kolla om det finns gamla filer kvar i mappen """
     filelist = list(Path(STUDENT_USER_FOLDER_PATH).rglob('*.[Jj][Ss][Oo][Nn]'))
     old_files = []
-    NOW = datetime.now()
+    if new_file_within_days_limit is None:
+        NOW = datetime.now()
+    else:
+        NOW = datetime.now() - timedelta(days=new_file_within_days_limit)
     for file in filelist:
         change_date: datetime = datetime.fromtimestamp(os.path.getmtime(file))
         if change_date.date() != NOW.date():
             old_files.append(file)  # files older than today
-
+    fetched_students = {}
+    print(f"{len(old_files)} old files found")
     for filepath in old_files:
-        if "vikjon742" not in filepath:
+        if "vikjon742" not in str(filepath):
             continue
-        print(f"Old files: {filepath}")
+        print(f"processing file: {filepath}")
         user_name = split_student_account_user_name_from_filepath(filepath)
         duplicate_files = []
         try:
-            user = fetch_single_student_from_web(account_user_name=user_name)
-            print(user)
+            if user_name in fetched_students.keys():
+                user = fetch_single_student_from_web(account_user_name=user_name)
+                print(user)
         except NoUserFoundError as e:
             print(F"user not found {user_name}")
             os.rename(filepath, F"{STUDENT_USER_FOLDER_PATH}oldstudent_{user_name}.json")
@@ -275,13 +281,35 @@ def check_old_files():
         for file in filelist:
             if split_student_account_user_name_from_filepath(file) == user_name:
                 duplicate_files.append(file)
-        print(duplicate_files)
+        print(F"duplicate_files{duplicate_files}")
+        for file in duplicate_files:
+            print(F"dup file :  file {file}", end=" ")
+            user = load_dict_from_json_path(file)
+            print(user.get("account_3_eduroam_pw", -1))
+            if user.get("account_3_eduroam_pw", -1) == -1:
+                print("removing file")
+                os.remove(file)
+            else:
+                eduroam_pw = user.get("account_3_eduroam_pw")
+                eduroam_pw_gen_date = user.get("account_3_eduroam_pw_gen_date")
+                os.remove(file)
+                save_student_as_json(account_user_name=fetched_students.get("account_user_name"),
+                                     first_name=user.get("first_name"),
+                                     last_name=user.get("last_name"),
+                                     klass=user.get("klass"),
+                                     skola=user.get("skola"),
+                                     birthday=user.get("birthday"),
+                                     google_pw=user.get("google_pw"),
+                                     eduroam_pw=eduroam_pw,
+                                     eduroam_pw_gen_datetime=eduroam_pw_gen_date.replace("_", " "),
+                                     this_is_a_web_import=True)
+                continue
+
 
 if __name__ == "__main__":
     # _1_create_students_ids_from_web(run_only_class=["EK20B_FOL"], headless_bool=False)
     # import_all_student_from_web()
     # _2_process_id_into_student_record()
 
-    check_old_files()
     # import_single_student_from_web(account_user_name="vikjon742", headless_input_bool=False)
     pass
