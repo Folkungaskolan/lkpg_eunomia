@@ -19,7 +19,7 @@ from settings.folders import WEB_ID_TO_PROCESS_PATH, STUDENT_USER_FOLDER_PATH
 from settings.threadsettings import THREADCOUNT
 from utils.creds import get_cred
 from utils.decorators import function_timer
-from utils.file_utils import save_student_as_json
+from utils.file_utils import save_student
 from utils.file_utils.json_wrapper import load_dict_from_json_path
 from utils.path_utils.path_helpers import split_file_name_no_suffix_from_filepath, split_student_account_user_name_from_filepath
 from utils.web_utils.general_web import init_chrome_webdriver, position_windows
@@ -227,8 +227,8 @@ def _2_1_process_id_into_student_record(id_list: list[str], verbose: bool = Fals
             continue
         else:
             print(F"t:{thread_nr} processing id:{student_web_id} -> {account_user_name}          2022-10-25 11:06:03")
-            save_student_as_json(account_user_name=account_user_name, first_name=first_name, last_name=last_name, klass=klass, birthday=birthday, google_pw=google_pw,
-                                 skola=skola, this_is_a_web_import=True)
+            save_student(user_id=account_user_name, first_name=first_name, last_name=last_name, klass=klass, birthday=birthday, google_pw=google_pw,
+                         skola=skola, this_is_a_web_import=True)
             os.remove(id_file)
     return f"Done in thread {thread_nr}"
 
@@ -293,16 +293,16 @@ def check_old_files(new_file_within_days_limit: int = None) -> None:
                 eduroam_pw = user.get("account_3_eduroam_pw")
                 eduroam_pw_gen_date = user.get("account_3_eduroam_pw_gen_date")
                 os.remove(file)
-                save_student_as_json(account_user_name=fetched_students.get("account_user_name"),
-                                     first_name=user.get("first_name"),
-                                     last_name=user.get("last_name"),
-                                     klass=user.get("klass"),
-                                     skola=user.get("skola"),
-                                     birthday=user.get("birthday"),
-                                     google_pw=user.get("google_pw"),
-                                     eduroam_pw=eduroam_pw,
-                                     eduroam_pw_gen_datetime=eduroam_pw_gen_date.replace("_", " "),
-                                     this_is_a_web_import=True)
+                save_student(user_id=fetched_students.get("account_user_name"),
+                             first_name=user.get("first_name"),
+                             last_name=user.get("last_name"),
+                             klass=user.get("klass"),
+                             skola=user.get("skola"),
+                             birthday=user.get("birthday"),
+                             google_pw=user.get("google_pw"),
+                             eduroam_pw=eduroam_pw,
+                             eduroam_pw_gen_datetime=eduroam_pw_gen_date.replace("_", " "),
+                             this_is_a_web_import=True)
                 continue
 
 

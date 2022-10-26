@@ -6,7 +6,7 @@ from settings.folders import STUDENT_USER_FOLDER_PATH
 from utils import import_student_from_web
 from utils import load_dict_from_json_path, generate_eduroam_for_user
 from utils.file_utils.excel import write_student_xlsx_from_json
-from utils.file_utils.student_files import save_student_as_json, find_student_json_filepath
+from utils.file_utils.student_files import save_student, find_student_json_filepath
 
 
 class Student(Person):
@@ -182,8 +182,8 @@ class Student(Person):
         """ save the student """
         if self.verbose:
             print(F"save student {self.account_user_name}                                      2022-09-16 09:05:27")
-        save_student_as_json(account_user_name=self.account_user_name, first_name=self._first_name, last_name=self._last_name, klass=self._klass, google_pw=self._google_pw,
-                             eduroam_pw=self._eduroam_pw, eduroam_pw_gen_datetime=self._eduroam_pw_gen_datetime)
+        save_student(user_id=self.account_user_name, first_name=self._first_name, last_name=self._last_name, klass=self._klass, google_pw=self._google_pw,
+                     eduroam_pw=self._eduroam_pw, eduroam_pw_gen_datetime=self._eduroam_pw_gen_datetime)
 
     @classmethod
     def get_student_user_json_obj(cls, account_user_name: str) -> dict[str, str]:
