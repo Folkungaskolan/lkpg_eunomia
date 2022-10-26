@@ -1,10 +1,31 @@
-from sqlalchemy import Column, String, Integer, DateTime, Float, Boolean, SmallInteger, create_engine
+from sqlalchemy import Column, String, Integer, DateTime, Float, Boolean, SmallInteger
 from sqlalchemy.ext.declarative import declarative_base
 
-from utils.creds import get_cred
+from database.mysql_db import create_db_engine, init_db
 from utils.pnr_utils import pnr10_to_pnr12
 
 Base = declarative_base()
+
+
+class Student_dbo(Base):
+    """ database model for student """
+    __tablename__ = 'student'
+    user_id: str = Column(String(length=10), primary_key=True)
+    google_pw: str = Column(String(length=45))
+    eduroam_pw: str = Column(String(length=10))
+    first_name: str = Column(String(length=50))
+    last_name: str = Column(String(length=50))
+    eduroam_pw_gen_date = Column(DateTime)
+    birthday = Column(DateTime)
+    klass: str = Column(String(length=45))
+    skola: str = Column(String(length=45))
+    last_web_import = Column(DateTime)
+    webid: str = Column(String(length=45))
+
+    @property
+    def email(self) -> str:
+        """ Returns the email address for the student """
+        return f"{self.user_id}@edu.linkoping.se"
 
 
 class Staff_dbo(Base):
@@ -82,12 +103,9 @@ class Tjf_dbo(Base):
     __tablename__ = 'tjf'
     id: int = Column(Integer, primary_key=True)
     pnr12: str = Column(String(length=12))
-    # user_id: str = Column(String(length=6))
     id_komplement_pa: str = Column(String(length=6))
     year: int = Column(SmallInteger)
-    # month: int = Column(SmallInteger)
     aktivitet: str = Column(String(length=10))
-    # namn: str = Column(String(length=50))
     yrke: str = Column(String(length=50))
 
     jan: float = Column(Float)
@@ -106,24 +124,6 @@ class Tjf_dbo(Base):
 
     def __repr__(self):
         return F"Tjf(id:{self.id}|pnr12='{self.pnr12}', user_id='{self.user_id}', id_komplement_pa='{self.id_komplement_pa}', year={self.year}, month={self.month}, aktivitet_s='{self.aktivitet_s}', aktivitet='{self.aktivitet}', namn='{self.namn}', yrke='{self.yrke}', jan={self.jan}, feb={self.feb}, mar={self.mar}, apr={self.apr}, maj={self.maj}, jun={self.jun}, jul={self.jul}, aug={self.aug}, sep={self.sep}, okt={self.okt}, dec={self.dec}, kommentar='{self.kommentar}', personalkategori='{self.personalkategori}')"
-
-class Student_dbo(Base):
-    """ database model for students. """
-    __tablename__ = 'student'
-    id: int = Column(Integer, primary_key=True)
-    user_id: str = Column(String(length=9))
-    first_name: str = Column(String(length=50))
-    last_name: str = Column(String(length=50))
-    pnr: str = Column(String(length=12))
-    google_pw: str = Column(String(length=50))
-    eduroam_pw: str = Column(String(length=10))
-    eduroam_pw_gen_date = Column(DateTime(timezone=True))
-    klass: str = Column(String(length=50))
-
-    @property
-    def email(self):
-        """ get student email """
-        return self.user_id + "@edu.linkoping.se"
 
 
 class FakturaRad_dbo(Base):
@@ -177,15 +177,14 @@ class SplitMethods_dbo(Base):
 
 def create_all_tables(echo: bool = False):
     """ create all tables in database. """
-    creds = get_cred(account_file_name="mysql_root_local")
-    engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/eunomia", echo=False)
+
+    engine = create_db_engine(echo=echo)
     Base.metadata.create_all(engine)
 
 
 def drop_all_tables(echo: bool = False):
     """ drop all tables in database. """
-    creds = get_cred(account_file_name="mysql_root_local")
-    engine = create_engine(f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/eunomia", echo=False)
+    engine = create_db_engine(echo=echo)
     Base.metadata.drop_all(engine)
 
 
@@ -196,9 +195,28 @@ def reset_mysql_db(echo=False):
     print("MySql DB reset done.")
 
 
+def demo_distinct(echo: bool = False) -> None:
+    """ demo av join """
+    session = init_db(echo=echo)
+    results = session.query(FakturaRad_dbo.tjanst).distinct().all()
+    for result in results:
+        print(result.tjanst)
+
+
+def demo_join() -> None:
+    """ demo av join https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.join"""
+    session = init_db()
+    results = session.query(Tjf_dbo, Staff_dbo.aktivitet_char).join(Staff_dbo, Tjf_dbo.pnr12 == Staff_dbo.pnr12) \
+        .limit(5).all()
+    for result in results:
+        print(f"Tjf_dbo{result.Tjf_dbo} Staff_dbo{result.aktivitet_char}")
+
+
 if __name__ == '__main__':
     pass
-    reset_mysql_db()
+    print(demo_distinct(echo=True))
+    # create_all_tables(echo=True)
+    # reset_mysql_db(echo=True)
 
     # # Test
     # from database.mysql_db import init_db
