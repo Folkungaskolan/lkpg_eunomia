@@ -7,6 +7,8 @@ from database.models import Student_dbo
 from database.mysql_db import init_db
 from settings.folders import STUDENT_USER_FOLDER_PATH
 
+session = init_db()
+
 
 def find_student_json_filepath(account_user_name: str, verbose: bool = False) -> str:
     """
@@ -45,7 +47,7 @@ def save_student(user_id: str = None,
                  eduroam_pw: str = None,
                  eduroam_pw_gen_datetime: datetime = None,
                  webid: str = None,
-                 this_is_a_web_import: bool = False
+                 this_is_a_web_import: bool = False,
                  ) -> None:
     """ Sparar ny information, tar inte bort gamla värden
     :param user_id: användarens användarnamn
@@ -66,7 +68,7 @@ def save_student(user_id: str = None,
     """
     if user_id is None:
         raise ValueError("account_user_name is None")
-    session = init_db()
+    # session = init_db()
     student = session.query(Student_dbo).filter(Student_dbo.user_id == user_id).first()
     if student is None:
         student = Student_dbo(user_id=user_id)
@@ -102,5 +104,5 @@ def save_student(user_id: str = None,
 
 
 if __name__ == '__main__':
-    save_student(user_id="test1", first_name="test åäö", last_name="test3", klass="test4", skola="test5", birthday="2022-01-01", google_pw="test7")
+    save_student(user_id="test2", first_name="test åäö", last_name="test3", klass="test4", skola="test5", birthday="2022-01-01", google_pw="test7")
     pass

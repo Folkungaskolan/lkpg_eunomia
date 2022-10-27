@@ -109,7 +109,7 @@ def save_student_id_from_url(driver, url: str):
 
 
 @function_timer
-def _1_create_students_ids_from_web(run_only_class: list[str] = None, force_single_thread: bool = False, headless_bool: bool = True) -> None:
+def _1_create_student_ids_from_web(run_only_class: list[str] = None, force_single_thread: bool = False, headless_bool: bool = True) -> None:
     """
     Öppnar Elevkonto sidan
     Listar skolor i Skola
@@ -146,7 +146,7 @@ def _1_create_students_ids_from_web(run_only_class: list[str] = None, force_sing
             elif option.text in run_only_class:
                 urls.append(F'https://elevkonto.linkoping.se/users?FreeText=&School={url_skola}&SchoolClass={option.text}')
                 urls.append(F'https://elevkonto.linkoping.se/users?FreeText=&School={url_skola}&SchoolClass={option.text}&_page=2')
-    print("Run END")
+    print("listing urls finnished                                    2022-10-27 11:23:11")
     driver.close()
     print(urls)
     if force_single_thread:
@@ -237,15 +237,15 @@ def _2_1_process_id_into_student_record(id_list: list[str], verbose: bool = Fals
 def run_id_import(run_only_class: list[str] = None, headless_bool: bool = False):
     """ Run all steps to import student ids from web """
     if run_only_class is None:
-        _1_create_students_ids_from_web(headless_bool=headless_bool)
+        _1_create_student_ids_from_web(headless_bool=headless_bool)
     else:
-        _1_create_students_ids_from_web(run_only_class=run_only_class, headless_bool=headless_bool)
+        _1_create_student_ids_from_web(run_only_class=run_only_class, headless_bool=headless_bool)
 
 
 @function_timer
 def import_all_student_from_web() -> None:
     """ Importera alla elever från webben """
-    _1_create_students_ids_from_web()
+    _1_create_student_ids_from_web()
     _2_process_id_into_student_record()
 
 
