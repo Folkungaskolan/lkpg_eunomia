@@ -4,16 +4,15 @@ from sqlalchemy.engine.base import Engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 
-from utils.creds import get_cred
+from src.utils.creds import get_cred
 
 
 def create_db_engine(creds_filename: str = "mysql_root_local", echo: bool = False) -> Engine:
     """ create mysql engine """
     creds = get_cred(account_file_name=creds_filename)
-    connection_string = f"mysql+mysqldb://{creds['usr']}:{creds['pw']}@localhost/eunomia"
-    print(f"connection_string|{connection_string}")
+    connection_string = f"mysql://{creds['usr']}:{creds['pw']}@localhost/eunomia"
+    # print(f"connection_string|{connection_string}")
     engine = create_engine(connection_string, echo=echo)
-    print(f"engine|{type(engine)}")
     return engine
 
 

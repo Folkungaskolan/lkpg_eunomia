@@ -1,7 +1,8 @@
-setuptools>=60.2.0
-numpy>=1.23.3
-pandas>=1.4.4
-dask>=2022.9.0
-selenium>=4.4.3
+setuptools>=65.5.0
+SQLAlchemy>=1.4.42
+mysqlclient>=2.0.3
+numpy>=1.23.4
+pandas>=1.5.1
+selenium>=4.5.0
 requests>=2.28.1
-SQLAlchemy>=1.4.41
+dask>=2022.10.0

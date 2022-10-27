@@ -1,8 +1,10 @@
+"""
+MySQL database models
+"""
 from sqlalchemy import Column, String, Integer, DateTime, Float, Boolean, SmallInteger
 from sqlalchemy.ext.declarative import declarative_base
 
-from database.mysql_db import create_db_engine, init_db
-from utils.pnr_utils import pnr10_to_pnr12
+from src.database.mysql_db import init_db, create_db_engine
 
 Base = declarative_base()
 
@@ -50,10 +52,6 @@ class Staff_dbo(Base):
     def pnr10(self) -> str:
         """ get pnr10. """
         return self.pnr12[2:]
-
-    def set_pnr12_with_pnr10(self, pnr10: str) -> None:
-        """ set pnr12 with pnr10. """
-        self.pnr12 = pnr10_to_pnr12(pnr10)
 
     def __repr__(self):
         return f"Staff(id:{self.id}|user_id='{self.user_id}', first_name='{self.first_name}', last_name='{self.last_name}', pnr12='{self.pnr12}'), , pnr10='{self.pnr10}')"
@@ -177,7 +175,6 @@ class SplitMethods_dbo(Base):
 
 def create_all_tables(echo: bool = False):
     """ create all tables in database. """
-
     engine = create_db_engine(echo=echo)
     Base.metadata.create_all(engine)
 
