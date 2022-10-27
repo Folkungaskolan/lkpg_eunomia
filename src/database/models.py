@@ -1,10 +1,12 @@
 """
 MySQL database models
 """
+from datetime import datetime
+
 from sqlalchemy import Column, String, Integer, DateTime, Float, Boolean, SmallInteger
 from sqlalchemy.ext.declarative import declarative_base
 
-from src.database.mysql_db import init_db, create_db_engine
+from database.mysql_db import init_db, create_db_engine
 
 Base = declarative_base()
 
@@ -163,6 +165,17 @@ class FakturaRad_dbo(Base):
         return F"FakturaRad_dbo(tjanst={self.tjanst},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod},anvandare={self.anvandare},avser={self.avser},faktura_year={self.faktura_year},faktura_month={self.faktura_month},antal={self.antal},pris={self.pris},summa={self.summa},split_done={self.split_done},split_654_e={self.split_654_e},split_655_e={self.split_655_e},split_656_e={self.split_656_e},split_654_a={self.split_654_a},split_655_a={self.split_655_a},split_656_a={self.split_656_a},split_654_p={self.split_654_p},split_655_p={self.split_655_p},split_656_p={self.split_656_p},split_method_used={self.split_method_used},split_sum={self.split_sum},split_sum_error={self.split_sum_error})"
 
 
+class RunTime_dbo(Base):
+    """ Spara runtime data för funktionerna """
+    __tablename__ = 'function_run_times'
+    id: int = Column(Integer, primary_key=True)
+    run_date: datetime = Column(DateTime)
+    function_name: str = Column(String(length=50))
+    list_length: int = Column(Integer)
+    run_time_sec: float = Column(Float)
+    avg_time_sec: float = Column(Float)
+
+
 class SplitMethods_dbo(Base):
     """ database model for split methods. """
     __tablename__ = 'split_methods'
@@ -211,8 +224,8 @@ def demo_join() -> None:
 
 if __name__ == '__main__':
     pass
-    print(demo_distinct(echo=True))
-    # create_all_tables(echo=True)
+    # print(demo_distinct(echo=True))
+    create_all_tables(echo=True)
     # reset_mysql_db(echo=True)
 
     # # Test
