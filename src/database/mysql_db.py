@@ -4,7 +4,7 @@ from sqlalchemy.engine.base import Engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 
-from src.utils.creds import get_cred
+from utils.creds import get_cred
 
 
 def create_db_engine(creds_filename: str = "mysql_root_local", echo: bool = False) -> Engine:
