@@ -24,13 +24,13 @@ def import_invoice_file() -> None:
         local_session = init_db()
 
         list_length = len(df.index)
-        print_progress_bar(0, list_length, prefix='Staff Export Progress:', suffix='Complete', length=50)
+        print_progress_bar(0, list_length, prefix='Invoice import Progress:', suffix='Complete', length=50)
         for index, row in df.iterrows():
             # if index > 5:
             #     break
             if index % 100 == 0:
                 print_progress_bar(iteration=index + 1, total=list_length,
-                                   prefix=F'Staff  Export Progress:{index}/{list_length}  ', suffix='Complete',
+                                   prefix=F'Invoice import Progress Progress:{index}/{list_length}  ', suffix='Complete',
                                    length=50)
             period = str(row["Period"])
             faktura_year = int(period.split("-")[0])

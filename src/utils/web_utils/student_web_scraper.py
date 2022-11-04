@@ -15,6 +15,8 @@ from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.wait import WebDriverWait
 
 from CustomErrors import NoUserFoundError
+from database.models import Student_dbo
+from database.mysql_db import init_db
 from settings.folders import WEB_ID_TO_PROCESS_PATH, STUDENT_USER_FOLDER_PATH
 from settings.threadsettings import THREADCOUNT
 from utils.creds import get_cred
@@ -22,6 +24,7 @@ from utils.decorators import function_timer
 from utils.file_utils import save_student
 from utils.file_utils.json_wrapper import load_dict_from_json_path
 from utils.path_utils.path_helpers import split_file_name_no_suffix_from_filepath, split_student_account_user_name_from_filepath
+from utils.student.count_students import count_student
 from utils.web_utils.general_web import init_chrome_webdriver, position_windows
 
 
@@ -161,19 +164,18 @@ def _1_create_student_ids_from_web(run_only_class: list[str] = None, force_singl
 
 
 @function_timer
-def _1_2_rips_ids_from_urls(urls: list[str], headless_bool: bool = True, thread_nr: int = 0) -> None:
+def _1_2_rips_ids_from_urls(urls: list[str], headless_bool: bool = True, thread_nr: int = 0) -> str:
     driver = init_chrome_webdriver(headless_bool=headless_bool)
     driver = login_student_accounts_page(driver)
     if not headless_bool:
         position_windows(driver=driver, position_nr=(thread_nr % 4) + 1)
     for url in urls:
-        print(url)
+        print(f"thread:{thread_nr} {url:}")
         driver = save_student_id_from_url(driver, url=url)
     driver.close()
     return F"Thread {thread_nr} done"
 
 
-@function_timer
 def _2_process_id_into_student_record(verbose: bool = False, force_single_thread: bool = False, headless_bool: bool = False) -> None:
     """ Hämta id json filer och hämta elev för varje sådan"""
     if verbose:
@@ -181,7 +183,7 @@ def _2_process_id_into_student_record(verbose: bool = False, force_single_thread
     filelist = list(Path(WEB_ID_TO_PROCESS_PATH).rglob('*.[Jj][Ss][Oo][Nn]'))
     print(F"len {len(filelist)}:filelist")
     if force_single_thread:
-        _2_1_process_id_into_student_record(id_list=filelist, verbose=verbose, headless_bool=headless_bool)
+        _2_1_process_id_into_student_record(id_list=filelist, headless_bool=headless_bool)
     else:
         sublists = list(split(filelist, chunk_size=math.ceil(len(filelist) / THREADCOUNT)))
         with concurrent.futures.ThreadPoolExecutor(max_workers=THREADCOUNT) as executor:
@@ -197,12 +199,14 @@ def split(list_a, chunk_size):
         yield list_a[i:i + chunk_size]
 
 
-def _2_1_process_id_into_student_record(id_list: list[str], verbose: bool = False, headless_bool: bool = True, thread_nr: int = 0) -> None:
+@function_timer
+def _2_1_process_id_into_student_record(id_list: list[str], headless_bool: bool = True, thread_nr: int = 0) -> str:
     """ Threaded student fetcher """
     # print(F"process_student_ids starting in thread {thread_nr}")
     # print(F"t:{thread_nr} idlist: {id_list}")
     # print(F"t:{thread_nr} len {len(id_list)}:")
     driver = init_chrome_webdriver(headless_bool=headless_bool)
+    session = init_db()
     if not headless_bool:
         position_windows(driver=driver, position_nr=(thread_nr % 4) + 1)
     driver = login_student_accounts_page(driver)
@@ -227,8 +231,33 @@ def _2_1_process_id_into_student_record(id_list: list[str], verbose: bool = Fals
             continue
         else:
             print(F"t:{thread_nr} processing id:{student_web_id} -> {account_user_name}          2022-10-25 11:06:03")
-            save_student(user_id=account_user_name, first_name=first_name, last_name=last_name, klass=klass, birthday=birthday, google_pw=google_pw,
-                         skola=skola, this_is_a_web_import=True)
+            # save_student(user_id=account_user_name, first_name=first_name, last_name=last_name, klass=klass, birthday=birthday, google_pw=google_pw,
+            #              skola=skola, this_is_a_web_import=True)
+
+            student = session.query(Student_dbo).filter(Student_dbo.user_id == account_user_name).first()
+            if student is None:
+                student = Student_dbo(user_id=account_user_name)
+                session.add(student)
+                session.commit()
+
+            if klass is None:
+                student.klass = "undetermined_class"
+            else:
+                student.klass = klass
+            student.last_web_import = datetime.now()
+            if first_name is not None:
+                student.first_name = first_name
+            if last_name is not None:
+                student.last_name = last_name
+            if skola is not None:
+                student.skola = skola
+            if birthday is not None:
+                student.birthday = birthday
+            if google_pw is not None:
+                student.google_pw = google_pw
+            student.old = None
+            student.webid = student_web_id
+            session.commit()
             os.remove(id_file)
     return f"Done in thread {thread_nr}"
 
@@ -247,6 +276,7 @@ def import_all_student_from_web() -> None:
     """ Importera alla elever från webben """
     _1_create_student_ids_from_web()
     _2_process_id_into_student_record()
+    count_student()
 
 
 @function_timer
@@ -304,6 +334,7 @@ def check_old_files(new_file_within_days_limit: int = None) -> None:
                              eduroam_pw_gen_datetime=eduroam_pw_gen_date.replace("_", " "),
                              this_is_a_web_import=True)
                 continue
+
 
 
 if __name__ == "__main__":

@@ -25,6 +25,7 @@ class Student_dbo(Base):
     skola: str = Column(String(length=45))
     last_web_import = Column(DateTime)
     webid: str = Column(String(length=45))
+    old: str = Column(DateTime)  # om denna är satt så är eleven gammal och hittas inte längre på webbsidan
 
     @property
     def email(self) -> str:
@@ -163,6 +164,16 @@ class FakturaRad_dbo(Base):
 
     def __repr__(self):
         return F"FakturaRad_dbo(tjanst={self.tjanst},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod},anvandare={self.anvandare},avser={self.avser},faktura_year={self.faktura_year},faktura_month={self.faktura_month},antal={self.antal},pris={self.pris},summa={self.summa},split_done={self.split_done},split_654_e={self.split_654_e},split_655_e={self.split_655_e},split_656_e={self.split_656_e},split_654_a={self.split_654_a},split_655_a={self.split_655_a},split_656_a={self.split_656_a},split_654_p={self.split_654_p},split_655_p={self.split_655_p},split_656_p={self.split_656_p},split_method_used={self.split_method_used},split_sum={self.split_sum},split_sum_error={self.split_sum_error})"
+
+
+class StudentCount_dbo(Base):
+    """ Spara antal studenter per månad """
+    __tablename__ = 'student_count'
+    id: int = Column(Integer, primary_key=True)
+    year: int = Column(SmallInteger)
+    month: int = Column(SmallInteger)
+    id_komplement_pa: str = Column(String(length=10))
+    count: int = Column(Integer)
 
 
 class RunTime_dbo(Base):
