@@ -11,9 +11,5 @@ def gen_for(user_list: list[str]) -> None:
 
 if __name__ == '__main__':
     # generate_eduroam_for_user(user_id="edvpet613", headless_input_bool=False)
-    # gen_for(user_list=["asmbrh065",
-    #                    "edvpet613",
-    #                    "mokboa436",
-    #                    "sigand252"]
-    #         )
+    gen_for(user_list=["edvpet613", "asmbrh065"])  # WORKS
     write_student_csv_from_mysql()
