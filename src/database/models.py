@@ -11,6 +11,14 @@ from database.mysql_db import init_db, create_db_engine
 Base = declarative_base()
 
 
+class Student_id_process_que_dbo(Base):
+    """ student id proccess que """
+    __tablename__ = 'student_id_process_que_dbo'
+    id = Column(Integer, primary_key=True)
+    web_id = Column(String(255), nullable=False)
+    taken = Column(Boolean, nullable=False, default=False)
+
+
 class Student_dbo(Base):
     """ database model for student """
     __tablename__ = 'student'

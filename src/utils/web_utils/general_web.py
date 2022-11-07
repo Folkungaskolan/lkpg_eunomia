@@ -6,12 +6,12 @@ from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
-from settings.file_references import CHROME_DRIVER_EXEC, FIREFOX_DRIVER_EXEC
+from settings.file_references import CHROME_DRIVER_EXEC, FIREFOX_DRIVER_EXEC, FIREFOX_SELENIUM_DRIVER_EXEC
 
 
 def init_firefox_webdriver(headless_bool: bool = None) -> webdriver:
     """		fixar inställningar för webdrivern		"""
-    path = r'H:\Min enhet\selenium_browserdriver\geckodriver.exe'
+    path = FIREFOX_SELENIUM_DRIVER_EXEC
     options = FirefoxOptions()
     options.binary_location = FIREFOX_DRIVER_EXEC
     if headless_bool is True:
@@ -27,6 +27,8 @@ def init_chrome_webdriver(headless_bool: bool = True, file_download_redirect_to_
     """		fixar inställningar för webdrivern		"""
     options = ChromeOptions()
     options.headless = headless_bool
+    # https://stackoverflow.com/questions/47392423/python-selenium-devtools-listening-on-ws-127-0-0-1
+    options.add_experimental_option('excludeSwitches', ['enable-logging'])
     if file_download_redirect_to_folder is not None:
         options.add_experimental_option("prefs", {"download.default_dirctory": file_download_redirect_to_folder})
     srv_obj = Service(executable_path=CHROME_DRIVER_EXEC)

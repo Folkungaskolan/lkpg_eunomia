@@ -5,3 +5,5 @@ from settings.folders import MAIN_INTALL_SAVE_FOLER
 CHROME_DRIVER_EXEC = MAIN_INTALL_SAVE_FOLER + "Selenium Driver/chromedriver107.exe"
 
 FIREFOX_DRIVER_EXEC = r"C:\Program Files\Mozilla Firefox\firefox.exe"
+
+FIREFOX_SELENIUM_DRIVER_EXEC = r'H:\Min enhet\Eunomia\Selenium Driver\geckodriver.exe'

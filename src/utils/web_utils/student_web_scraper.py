@@ -6,25 +6,31 @@ import os
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+import random
 
 import selenium
+from selenium import webdriver
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.wait import WebDriverWait
+from sqlalchemy.orm import Session
 
 from CustomErrors import NoUserFoundError
-from database.models import Student_dbo
+from database.models import Student_dbo, Student_id_process_que_dbo
 from database.mysql_db import init_db
 from settings.folders import WEB_ID_TO_PROCESS_PATH, STUDENT_USER_FOLDER_PATH
 from settings.threadsettings import THREADCOUNT
 from utils.creds import get_cred
 from utils.decorators import function_timer
 from utils.file_utils import save_student
+from utils.file_utils.excel import write_student_csv_from_mysql
 from utils.file_utils.json_wrapper import load_dict_from_json_path
 from utils.path_utils.path_helpers import split_file_name_no_suffix_from_filepath, split_student_account_user_name_from_filepath
+from utils.print_progress_bar import print_progress_bar
 from utils.student.count_students import count_student
+from utils.student.student_mysql import save_student_information_to_db
 from utils.web_utils.general_web import init_chrome_webdriver, position_windows
 
 
@@ -32,6 +38,7 @@ def fetch_single_student_from_web(account_user_name: str, headless_input_bool: b
     """ import a student from the web to a json file"""
     if account_user_name is None:
         raise ValueError("account_user_name is None")
+    local_session = init_db()
     driver = init_chrome_webdriver(headless_bool=headless_input_bool)
     if not headless_input_bool:
         position_windows(driver=driver)
@@ -63,6 +70,14 @@ def fetch_single_student_from_web(account_user_name: str, headless_input_bool: b
                 raise NoUserFoundError(f"no user found with id:{id} | account_user_name:{account_user_name}")
             else:
                 driver.close()
+                save_student_information_to_db(account_user_name=account_user_name,
+                                               first_name=first_name,
+                                               last_name=last_name,
+                                               klass=klass,
+                                               skola=skola,
+                                               birthday=birthday,
+                                               google_pw=pw,
+                                               session=local_session)
                 return {"account_user_name": account_user_name,
                         "first_name": first_name,
                         "last_name": last_name,
@@ -95,24 +110,10 @@ def login_student_accounts_page(driver):
     return driver
 
 
-def save_student_id_from_url(driver, url: str):
-    """ Hämtar student ID för varje elev från klass sidan """
-
-    driver.get(url=url)
-    rows = driver.find_elements(by=By.CLASS_NAME, value="item-row")
-    for row in rows:
-        data_item_id = row.get_attribute("data-item-id")
-        # print(data_item_id)
-        if data_item_id is not None:
-            item_id = {"data_item_id": data_item_id}
-            with open(WEB_ID_TO_PROCESS_PATH + data_item_id + '.json', 'w') as f:
-                json.dump(item_id, f)
-            f.close()
-    return driver
-
-
 @function_timer
-def _1_create_student_ids_from_web(run_only_class: list[str] = None, force_single_thread: bool = False, headless_bool: bool = True) -> None:
+def _1_create_student_ids_from_web(run_only_class: list[str] = None,
+                                   force_single_thread: bool = False,
+                                   headless_bool: bool = True) -> None:
     """
     Öppnar Elevkonto sidan
     Listar skolor i Skola
@@ -167,30 +168,44 @@ def _1_create_student_ids_from_web(run_only_class: list[str] = None, force_singl
 def _1_2_rips_ids_from_urls(urls: list[str], headless_bool: bool = True, thread_nr: int = 0) -> str:
     driver = init_chrome_webdriver(headless_bool=headless_bool)
     driver = login_student_accounts_page(driver)
+    local_session = init_db()
     if not headless_bool:
         position_windows(driver=driver, position_nr=(thread_nr % 4) + 1)
     for url in urls:
         print(f"thread:{thread_nr} {url:}")
-        driver = save_student_id_from_url(driver, url=url)
+        driver.get(url=url)
+        rows = driver.find_elements(by=By.CLASS_NAME, value="item-row")
+        for row in rows:
+            data_item_id = row.get_attribute("data-item-id")
+            if data_item_id is not None:
+                item = Student_id_process_que_dbo(web_id=data_item_id)
+                local_session.add(item)
+    local_session.commit()
+    local_session.close()
     driver.close()
     return F"Thread {thread_nr} done"
 
 
-def _2_process_id_into_student_record(verbose: bool = False, force_single_thread: bool = False, headless_bool: bool = False) -> None:
+def _2_process_id_into_student_record(verbose: bool = False,
+                                      force_single_thread: bool = False,
+                                      headless_bool: bool = False) -> None:
     """ Hämta id json filer och hämta elev för varje sådan"""
     if verbose:
         print(F"process_student_ids starting")
-    filelist = list(Path(WEB_ID_TO_PROCESS_PATH).rglob('*.[Jj][Ss][Oo][Nn]'))
-    print(F"len {len(filelist)}:filelist")
-    if force_single_thread:
-        _2_1_process_id_into_student_record(id_list=filelist, headless_bool=headless_bool)
-    else:
-        sublists = list(split(filelist, chunk_size=math.ceil(len(filelist) / THREADCOUNT)))
-        with concurrent.futures.ThreadPoolExecutor(max_workers=THREADCOUNT) as executor:
-            results = [executor.submit(_2_1_process_id_into_student_record, id_list=sublist, thread_nr=i) for i, sublist in enumerate(sublists)]
 
+    local_session = init_db()
+    local_session.execute("UPDATE eunomia.student_id_process_que_dbo SET taken = 0")
+    local_session.commit()
+
+    if force_single_thread:
+        _2_1_process_id_into_student_record(headless_bool=headless_bool)
+    else:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=THREADCOUNT) as executor:
+            results = [executor.submit(_2_1_process_id_into_student_record, thread_nr=i) for i in range(THREADCOUNT)]
+        print(F"Started {len(results)} threads")
         for f in concurrent.futures.as_completed(results):
             print(f.result())
+    write_student_csv_from_mysql()
 
 
 def split(list_a, chunk_size):
@@ -200,20 +215,33 @@ def split(list_a, chunk_size):
 
 
 @function_timer
-def _2_1_process_id_into_student_record(id_list: list[str], headless_bool: bool = True, thread_nr: int = 0) -> str:
+def _2_1_process_id_into_student_record(headless_bool: bool = True, thread_nr: int = 0) -> str:
     """ Threaded student fetcher """
-    # print(F"process_student_ids starting in thread {thread_nr}")
-    # print(F"t:{thread_nr} idlist: {id_list}")
-    # print(F"t:{thread_nr} len {len(id_list)}:")
     driver = init_chrome_webdriver(headless_bool=headless_bool)
-    session = init_db()
+    local_session = init_db()
+    driver = login_student_accounts_page(driver)
     if not headless_bool:
         position_windows(driver=driver, position_nr=(thread_nr % 4) + 1)
-    driver = login_student_accounts_page(driver)
-    for id_file in id_list:
-        student_web_id = split_file_name_no_suffix_from_filepath(id_file)
-
-        driver.get(url=F"https://elevkonto.linkoping.se/entity/view/user/{student_web_id}")
+    i = 0
+    if thread_nr == 0:
+        start_count = local_session.query(Student_id_process_que_dbo).count()
+        print_progress_bar(0, start_count, prefix='Progress:', suffix='Complete', length=50)
+    while local_session.query(Student_id_process_que_dbo).count() > 0:
+        i += 1
+        if thread_nr == 0:
+            left_count = local_session.query(Student_id_process_que_dbo).count()
+            print_progress_bar(iteration=start_count - left_count,
+                               total=start_count,
+                               prefix='Progress:',
+                               suffix=F'Complete {left_count} students left to process',
+                               length=50)
+        rows_remaining = local_session.query(Student_id_process_que_dbo.id).limit(500).all()
+        thread_picked_row_id = random.choice([item for sublist in list(rows_remaining) for item in sublist])
+        local_session.execute(f"UPDATE eunomia.student_id_process_que_dbo SET taken = 1 WHERE id = {thread_picked_row_id}")
+        local_session.commit()
+        row = local_session.query(Student_id_process_que_dbo).filter(Student_id_process_que_dbo.id == thread_picked_row_id).first()
+        driver.get(url=F"https://elevkonto.linkoping.se/entity/view/user/{row.web_id}")
+        google_pw = None
         try:
             account_user_name = driver.find_element(by=By.XPATH, value="/html/body/div[1]/div/article/div[2]/div/div[2]/div[1]/div[2]/div[2]/span").text
             birthday = driver.find_element(by=By.XPATH, value="/html/body/div[1]/div/article/div[2]/div/div[2]/div[1]/div[1]/div[2]/span").text
@@ -222,44 +250,28 @@ def _2_1_process_id_into_student_record(id_list: list[str], headless_bool: bool 
             klass = driver.find_element(by=By.XPATH, value="/html/body/div[1]/div/article/div[2]/div/div[2]/div[1]/div[13]/div[2]/span").text
             skola = driver.find_element(by=By.XPATH, value="/html/body/div[1]/div/article/div[2]/div/div[2]/div[1]/div[10]/div[2]/span").text
         except selenium.common.exceptions.NoSuchElementException as e:
-            print(f" process failed id:{student_web_id}")
+            print(f" process failed id:{row.web_id}")
             continue
         try:
             google_pw = driver.find_element(by=By.XPATH, value="/html/body/div[1]/div/article/div[2]/div/div[2]/div[1]/div[5]/div[2]/span").text
         except selenium.common.exceptions.NoSuchElementException as e:
-            print(f" process failed id:{student_web_id} no pw found for user : {account_user_name}")
+            print(f" process failed id:{row.web_id} no pw found for user : {account_user_name}")
             continue
         else:
-            print(F"t:{thread_nr} processing id:{student_web_id} -> {account_user_name}          2022-10-25 11:06:03")
-            # save_student(user_id=account_user_name, first_name=first_name, last_name=last_name, klass=klass, birthday=birthday, google_pw=google_pw,
-            #              skola=skola, this_is_a_web_import=True)
-
-            student = session.query(Student_dbo).filter(Student_dbo.user_id == account_user_name).first()
-            if student is None:
-                student = Student_dbo(user_id=account_user_name)
-                session.add(student)
-                session.commit()
-
-            if klass is None:
-                student.klass = "undetermined_class"
-            else:
-                student.klass = klass
-            student.last_web_import = datetime.now()
-            if first_name is not None:
-                student.first_name = first_name
-            if last_name is not None:
-                student.last_name = last_name
-            if skola is not None:
-                student.skola = skola
-            if birthday is not None:
-                student.birthday = birthday
-            if google_pw is not None:
-                student.google_pw = google_pw
-            student.old = None
-            student.webid = student_web_id
-            session.commit()
-            os.remove(id_file)
-    return f"Done in thread {thread_nr}"
+            # print(F"t:{thread_nr} processing id:{row.web_id} -> {account_user_name}          2022-10-25 11:06:03")
+            local_session = save_student_information_to_db(user_id=account_user_name,
+                                                           first_name=first_name,
+                                                           last_name=last_name,
+                                                           klass=klass,
+                                                           skola=skola,
+                                                           birthday=birthday,
+                                                           google_pw=google_pw,
+                                                           session=local_session,
+                                                           webid=row.web_id)
+            local_session.delete(row)
+            local_session.commit()
+            continue
+        return f"Done in thread {thread_nr}"
 
 
 @function_timer
@@ -277,6 +289,7 @@ def import_all_student_from_web() -> None:
     _1_create_student_ids_from_web()
     _2_process_id_into_student_record()
     count_student()
+    write_student_csv_from_mysql()
 
 
 @function_timer
@@ -336,11 +349,20 @@ def check_old_files(new_file_within_days_limit: int = None) -> None:
                 continue
 
 
+def test():
+    local_session = init_db()
+    # student_ids = local_session.query(Student_id_process_que_dbo).count()
+
+    local_session.commit()
+    # print(student_ids)
+
 
 if __name__ == "__main__":
     # _1_create_students_ids_from_web(run_only_class=["EK20B_FOL"], headless_bool=False)
     # import_all_student_from_web()
     # _2_process_id_into_student_record()
-
+    # _1_create_student_ids_from_web(headless_bool=False)
+    _2_process_id_into_student_record()
+    # test()
     # import_single_student_from_web(account_user_name="vikjon742", headless_input_bool=False)
     pass
