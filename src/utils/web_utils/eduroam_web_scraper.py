@@ -51,6 +51,7 @@ def generate_eduroam_for_user(user_id: str = None, google_pw: str = None, headle
         epw = eduroam_pass.text  # spara lösenordet
         driver.close()  # Stäng fönstret
         save_student_information_to_db(user_id=user_id, eduroam_pw=epw, session=local_session)
+        print(F"eduroam för {user_id=} är {epw=}")
         return epw
 
 
