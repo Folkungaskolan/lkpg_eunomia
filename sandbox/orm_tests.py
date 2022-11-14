@@ -51,6 +51,3 @@ def drop_all_tables(echo: bool = False):
 if __name__ == '__main__':
     drop_all_tables()
     create_all_tables()
-    # session = init_db()
-    # session.add(Parent(name="parent1"))
-    # session.commit()

@@ -24,5 +24,18 @@ def init_db(echo: bool = False) -> Session:
     return session
 
 
+class MysqlDb:
+    """ singleton session to Mysql db """
+    __instance = None  # type: Session
+    __session = None
+    def __new__(cls):
+        if (cls.__instance is None):
+            cls.__instance = super(MysqlDb, cls).__new__(cls)
+        return cls.__instance
+    def session(self):
+        if (self.__session is None):
+            self.__session = init_db()
+        return self.__session
+
 if __name__ == '__main__':
     pass

@@ -7,7 +7,7 @@ import pandas as pd
 from sqlalchemy.sql.elements import and_
 
 from database.models import Tjf_dbo, Staff_dbo
-from database.mysql_db import init_db
+from database.mysql_db import init_db, MysqlDb
 from settings.folders import FAKTURA_EXCEL_TJF_FOLDER
 from utils.decorators import function_timer
 from utils.pnr_utils import pnr10_to_pnr12
@@ -98,14 +98,14 @@ def determine_aktivitet_from_id(id_pa: str, aktivitet_char: str) -> str:
 
 def generate_aktivitet_from_tjf() -> None:  # Done
     """ Genererar aktivitet baserat på tjf """
-    local_session = init_db()
-    tjf_list = local_session.query(Tjf_dbo.id, Tjf_dbo.id_komplement_pa, Staff_dbo.aktivitet_char).join(Staff_dbo, Tjf_dbo.pnr12 == Staff_dbo.pnr12) \
+    s = MysqlDb().session()
+    tjf_list = s.query(Tjf_dbo.id, Tjf_dbo.id_komplement_pa, Staff_dbo.aktivitet_char).join(Staff_dbo, Tjf_dbo.pnr12 == Staff_dbo.pnr12) \
         .filter(Tjf_dbo.aktivitet == None).all()
     for row_id, id_komplement_pa, aktivitet_char in tjf_list:
         numeric_aktivitet = determine_aktivitet_from_id(id_pa=id_komplement_pa, aktivitet_char=aktivitet_char)
-        local_session.query(Tjf_dbo).filter(Tjf_dbo.id == row_id).update({"aktivitet": numeric_aktivitet})
+        s.query(Tjf_dbo).filter(Tjf_dbo.id == row_id).update({"aktivitet": numeric_aktivitet})
         print(f"tjf: id: {row_id}, id_komplement_pa: {id_komplement_pa}, aktivitet_char: {aktivitet_char}, numeric_aktivitet: {numeric_aktivitet}")
-    local_session.commit()
+    s.commit()
 
 
 if __name__ == '__main__':

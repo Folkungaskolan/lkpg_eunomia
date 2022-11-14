@@ -6,7 +6,7 @@ import pandas as pd
 from sqlalchemy.sql.elements import and_
 
 from database.models import FakturaRad_dbo
-from database.mysql_db import init_db
+from database.mysql_db import MysqlDb
 from settings.folders import FAKTURA_EXCEL_FAKTURA_RADER_FOLDER
 from utils.print_progress_bar import print_progress_bar
 
@@ -21,7 +21,7 @@ def import_invoice_file() -> None:
         df = df.astype({"Avser": "str", 'Pris': "str", 'Summa': "str", 'Antal': "int"})
         # print(df.dtypes)
         # print(df)
-        local_session = init_db()
+        s = MysqlDb().session()
 
         list_length = len(df.index)
         print_progress_bar(0, list_length, prefix='Invoice import Progress:', suffix='Complete', length=50)
@@ -50,7 +50,7 @@ def import_invoice_file() -> None:
             except ValueError:
                 print(f"Error: {row}")
                 continue
-            local_session.query(FakturaRad_dbo).filter(and_(FakturaRad_dbo.avser == row["Avser"],
+            s.query(FakturaRad_dbo).filter(and_(FakturaRad_dbo.avser == row["Avser"],
                                                             FakturaRad_dbo.avser == faktura_month,
                                                             FakturaRad_dbo.avser == faktura_year
                                                             )
@@ -69,8 +69,8 @@ def import_invoice_file() -> None:
                                    summa=summa)
             # print(f_rad)
             # print("----------------------")
-            local_session.add(f_rad)
-        local_session.commit()
+            s.add(f_rad)
+        s.commit()
 
 
 if __name__ == "__main__":

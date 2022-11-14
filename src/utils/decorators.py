@@ -3,9 +3,7 @@ from datetime import datetime
 from time import time, sleep
 
 from database.models import RunTime_dbo
-from database.mysql_db import init_db
-
-session = init_db()
+from database.mysql_db import MysqlDb
 
 
 def function_timer(func):
@@ -30,14 +28,15 @@ def function_timer(func):
 
 def write_runtime_to_db(func_name: str, list_length: int, run_time_sec: float) -> None:
     """ Skriver körtid till db """
+    s = MysqlDb().session()
     print(f'Function {func_name!r}  with list length:{list_length}  executed in {(run_time_sec):.4f}s')
-    session.add(RunTime_dbo(run_date=datetime.now(),
-                            function_name=func_name,
-                            list_length=list_length,
-                            run_time_sec=run_time_sec,
-                            avg_time_sec=run_time_sec / list_length)
-                )
-    session.commit()
+    s.add(RunTime_dbo(run_date=datetime.now(),
+                      function_name=func_name,
+                      list_length=list_length,
+                      run_time_sec=run_time_sec,
+                      avg_time_sec=run_time_sec / list_length)
+          )
+    s.commit()
 
 
 @function_timer

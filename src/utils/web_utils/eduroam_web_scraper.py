@@ -6,7 +6,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from CustomErrors import LogInFailure
 from database.models import Student_dbo
-from database.mysql_db import init_db
+from database.mysql_db import init_db, MysqlDb
 from utils.student.student_mysql import save_student_information_to_db
 from utils.web_utils.general_web import init_firefox_webdriver
 
@@ -17,8 +17,8 @@ def generate_eduroam_for_user(user_id: str = None, google_pw: str = None, headle
     if user_id is None:
         raise ValueError("account_user_name is None")
     if google_pw is None:
-        local_session = init_db()
-        google_pw = local_session.query(Student_dbo.google_pw).filter(Student_dbo.user_id == user_id).first()[0]
+        s = MysqlDb().session()
+        google_pw = s.query(Student_dbo.google_pw).filter(Student_dbo.user_id == user_id).first()[0]
 
     # initiera drivaren
     # behöver vara firefox för att kringgå problem med redan inloggad användare
@@ -50,7 +50,7 @@ def generate_eduroam_for_user(user_id: str = None, google_pw: str = None, headle
         eduroam_pass = driver.find_element(By.XPATH, "/html/body/div/div[2]/p[8]/span")  # hämta Lösen
         epw = eduroam_pass.text  # spara lösenordet
         driver.close()  # Stäng fönstret
-        save_student_information_to_db(user_id=user_id, eduroam_pw=epw, session=local_session)
+        save_student_information_to_db(user_id=user_id, eduroam_pw=epw)
         print(F"eduroam för {user_id=} är {epw=}")
         return epw
 

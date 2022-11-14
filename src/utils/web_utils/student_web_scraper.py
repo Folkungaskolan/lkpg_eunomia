@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 
 from CustomErrors import NoUserFoundError
 from database.models import Student_dbo, Student_id_process_que_dbo
-from database.mysql_db import init_db
+from database.mysql_db import init_db, MysqlDb
 from settings.folders import WEB_ID_TO_PROCESS_PATH, STUDENT_USER_FOLDER_PATH
 from settings.threadsettings import THREADCOUNT
 from utils.creds import get_cred
@@ -38,7 +38,7 @@ def fetch_single_student_from_web(account_user_name: str, headless_input_bool: b
     """ import a student from the web to a json file"""
     if account_user_name is None:
         raise ValueError("account_user_name is None")
-    local_session = init_db()
+    s = MysqlDb().session()
     driver = init_chrome_webdriver(headless_bool=headless_input_bool)
     if not headless_input_bool:
         position_windows(driver=driver)
@@ -77,7 +77,7 @@ def fetch_single_student_from_web(account_user_name: str, headless_input_bool: b
                                                skola=skola,
                                                birthday=birthday,
                                                google_pw=pw,
-                                               session=local_session)
+                                               session=s)
                 return {"account_user_name": account_user_name,
                         "first_name": first_name,
                         "last_name": last_name,
@@ -168,7 +168,7 @@ def _1_create_student_ids_from_web(run_only_class: list[str] = None,
 def _1_2_rips_ids_from_urls(urls: list[str], headless_bool: bool = True, thread_nr: int = 0) -> str:
     driver = init_chrome_webdriver(headless_bool=headless_bool)
     driver = login_student_accounts_page(driver)
-    local_session = init_db()
+    s = MysqlDb().session()
     if not headless_bool:
         position_windows(driver=driver, position_nr=(thread_nr % 4) + 1)
     for url in urls:
@@ -179,9 +179,9 @@ def _1_2_rips_ids_from_urls(urls: list[str], headless_bool: bool = True, thread_
             data_item_id = row.get_attribute("data-item-id")
             if data_item_id is not None:
                 item = Student_id_process_que_dbo(web_id=data_item_id)
-                local_session.add(item)
-    local_session.commit()
-    local_session.close()
+                s.add(item)
+    s.commit()
+    s.close()
     driver.close()
     return F"Thread {thread_nr} done"
 
@@ -193,9 +193,9 @@ def _2_process_id_into_student_record(verbose: bool = False,
     if verbose:
         print(F"process_student_ids starting")
 
-    local_session = init_db()
-    local_session.execute("UPDATE eunomia.student_id_process_que_dbo SET taken = 0")
-    local_session.commit()
+    s = MysqlDb().session()
+    s.execute("UPDATE eunomia.student_id_process_que_dbo SET taken = 0")
+    s.commit()
 
     if force_single_thread:
         _2_1_process_id_into_student_record(headless_bool=headless_bool)
@@ -218,28 +218,28 @@ def split(list_a, chunk_size):
 def _2_1_process_id_into_student_record(headless_bool: bool = True, thread_nr: int = 0) -> str:
     """ Threaded student fetcher """
     driver = init_chrome_webdriver(headless_bool=headless_bool)
-    local_session = init_db()
+    s = MysqlDb().session()
     driver = login_student_accounts_page(driver)
     if not headless_bool:
         position_windows(driver=driver, position_nr=(thread_nr % 4) + 1)
     i = 0
     if thread_nr == 0:
-        start_count = local_session.query(Student_id_process_que_dbo).count()
+        start_count = s.query(Student_id_process_que_dbo).count()
         print_progress_bar(0, start_count, prefix='Progress:', suffix='Complete', length=50)
-    while local_session.query(Student_id_process_que_dbo).count() > 0:
+    while s.query(Student_id_process_que_dbo).count() > 0:
         i += 1
         if thread_nr == 0:
-            left_count = local_session.query(Student_id_process_que_dbo).count()
+            left_count = s.query(Student_id_process_que_dbo).count()
             print_progress_bar(iteration=start_count - left_count,
                                total=start_count,
                                prefix='Progress:',
                                suffix=F'Complete {left_count} students left to process',
                                length=50)
-        rows_remaining = local_session.query(Student_id_process_que_dbo.id).limit(500).all()
+        rows_remaining = s.query(Student_id_process_que_dbo.id).limit(500).all()
         thread_picked_row_id = random.choice([item for sublist in list(rows_remaining) for item in sublist])
-        local_session.execute(f"UPDATE eunomia.student_id_process_que_dbo SET taken = 1 WHERE id = {thread_picked_row_id}")
-        local_session.commit()
-        row = local_session.query(Student_id_process_que_dbo).filter(Student_id_process_que_dbo.id == thread_picked_row_id).first()
+        s.execute(f"UPDATE eunomia.student_id_process_que_dbo SET taken = 1 WHERE id = {thread_picked_row_id}")
+        s.commit()
+        row = s.query(Student_id_process_que_dbo).filter(Student_id_process_que_dbo.id == thread_picked_row_id).first()
         driver.get(url=F"https://elevkonto.linkoping.se/entity/view/user/{row.web_id}")
         google_pw = None
         try:
@@ -259,17 +259,17 @@ def _2_1_process_id_into_student_record(headless_bool: bool = True, thread_nr: i
             continue
         else:
             # print(F"t:{thread_nr} processing id:{row.web_id} -> {account_user_name}          2022-10-25 11:06:03")
-            local_session = save_student_information_to_db(user_id=account_user_name,
+            s = save_student_information_to_db(user_id=account_user_name,
                                                            first_name=first_name,
                                                            last_name=last_name,
                                                            klass=klass,
                                                            skola=skola,
                                                            birthday=birthday,
                                                            google_pw=google_pw,
-                                                           session=local_session,
+                                                           session=s,
                                                            webid=row.web_id)
-            local_session.delete(row)
-            local_session.commit()
+            s.delete(row)
+            s.commit()
             continue
         return f"Done in thread {thread_nr}"
 
@@ -350,10 +350,10 @@ def check_old_files(new_file_within_days_limit: int = None) -> None:
 
 
 def test():
-    local_session = init_db()
-    # student_ids = local_session.query(Student_id_process_que_dbo).count()
+    s = MysqlDb().session()
+    # student_ids = s.query(Student_id_process_que_dbo).count()
 
-    local_session.commit()
+    # s.commit()
     # print(student_ids)
 
 

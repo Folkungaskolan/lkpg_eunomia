@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, Float, Boolean, SmallInteger
 from sqlalchemy.ext.declarative import declarative_base
 
-from database.mysql_db import init_db, create_db_engine
+from database.mysql_db import create_db_engine, MysqlDb
 
 Base = declarative_base()
 
@@ -233,7 +233,7 @@ def reset_mysql_db(echo=False):
 
 def demo_distinct(echo: bool = False) -> None:
     """ demo av join """
-    session = init_db(echo=echo)
+    session = MysqlDb().session()
     results = session.query(FakturaRad_dbo.tjanst).distinct().all()
     for result in results:
         print(result.tjanst)
@@ -241,7 +241,7 @@ def demo_distinct(echo: bool = False) -> None:
 
 def demo_join() -> None:
     """ demo av join https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.join"""
-    session = init_db()
+    session = MysqlDb().session()
     results = session.query(Tjf_dbo, Staff_dbo.aktivitet_char).join(Staff_dbo, Tjf_dbo.pnr12 == Staff_dbo.pnr12) \
         .limit(5).all()
     for result in results:

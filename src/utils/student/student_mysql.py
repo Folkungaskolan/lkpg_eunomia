@@ -1,10 +1,7 @@
 """ student access to MySQL """
 from datetime import datetime
-
-from sqlalchemy.orm import Session
-
 from database.models import Student_dbo
-from database.mysql_db import init_db
+from database.mysql_db import MysqlDb
 
 
 def save_student_information_to_db(user_id: str,
@@ -15,16 +12,12 @@ def save_student_information_to_db(user_id: str,
                                    birthday: str = None,
                                    google_pw: str = None,
                                    eduroam_pw: str = None,
-                                   session: Session = None,
-                                   webid: str = None) -> Session:
+                                   webid: str = None):
     """ save student information to mysql"""
     if user_id is None:
         raise ValueError("user_id is None")
-    if session is None:
-        local_session = init_db()
-    else:
-        local_session = session
-    student = local_session.query(Student_dbo).filter(Student_dbo.user_id == user_id).first()
+    s = MysqlDb().session()
+    student = s.query(Student_dbo).filter(Student_dbo.user_id == user_id).first()
     # print(f"Saveing student |{student.user_id}")
     if student is None:
         student = Student_dbo(user_id=user_id)
@@ -37,9 +30,9 @@ def save_student_information_to_db(user_id: str,
                                           eduroam_pw=eduroam_pw,
                                           pw=google_pw,
                                           webid=webid)
-        local_session.add(student)
-        local_session.commit()
-        return local_session
+        s.add(student)
+        s.commit()
+        return s
     student = add_info_to_student_obj(student_obj=student,
                                       first_name=first_name,
                                       last_name=last_name,
@@ -49,9 +42,8 @@ def save_student_information_to_db(user_id: str,
                                       eduroam_pw=eduroam_pw,
                                       pw=google_pw,
                                       webid=webid)
-    local_session.add(student)
-    local_session.commit()
-    return local_session
+    s.add(student)
+    s.commit()
 
 
 def add_info_to_student_obj(student_obj: Student_dbo,
