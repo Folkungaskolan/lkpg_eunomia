@@ -9,6 +9,7 @@ from pathlib import Path
 import random
 
 import selenium
+import sqlalchemy
 from selenium import webdriver
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
@@ -228,8 +229,10 @@ def _2_1_process_id_into_student_record(headless_bool: bool = True, thread_nr: i
         print_progress_bar(0, start_count, prefix='Progress:', suffix='Complete', length=50)
     while local_session.query(Student_id_process_que_dbo).count() > 0:
         i += 1
+        left_count = local_session.query(Student_id_process_que_dbo).count()
+        if left_count < 20 and thread_nr > 4:
+            return f"Done in thread {thread_nr}"
         if thread_nr == 0:
-            left_count = local_session.query(Student_id_process_que_dbo).count()
             print_progress_bar(iteration=start_count - left_count,
                                total=start_count,
                                prefix='Progress:',
@@ -268,8 +271,11 @@ def _2_1_process_id_into_student_record(headless_bool: bool = True, thread_nr: i
                                            google_pw=google_pw,
                                            session=local_session,
                                            webid=row.web_id)
-            local_session.delete(row)
-            local_session.commit()
+            try:
+                local_session.delete(row)
+                local_session.commit()
+            except sqlalchemy.orm.exc.ObjectDeletedError:  # happens in the end when all threads are done and they take the last same row
+                pass
             continue
         return f"Done in thread {thread_nr}"
 
@@ -362,7 +368,7 @@ if __name__ == "__main__":
     # import_all_student_from_web()
     # _2_process_id_into_student_record()
     # _1_create_student_ids_from_web(headless_bool=False)
-    _2_process_id_into_student_record()
+    # _2_process_id_into_student_record()
     # count_student()
     # write_student_csv_from_mysql()
     pass

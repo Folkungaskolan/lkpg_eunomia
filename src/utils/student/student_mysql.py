@@ -25,7 +25,7 @@ def save_student_information_to_db(user_id: str,
     else:
         local_session = session
     student = local_session.query(Student_dbo).filter(Student_dbo.user_id == user_id).first()
-    print(f"Saveing student |{student.user_id}")
+    # print(f"Saveing student |{student.user_id}")
     if student is None:
         student = Student_dbo(user_id=user_id)
         student = add_info_to_student_obj(student_obj=student,
