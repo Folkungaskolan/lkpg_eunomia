@@ -168,7 +168,7 @@ def _1_create_student_ids_from_web(run_only_class: list[str] = None,
 def _1_2_rips_ids_from_urls(urls: list[str], headless_bool: bool = True, thread_nr: int = 0) -> str:
     driver = init_chrome_webdriver(headless_bool=headless_bool)
     driver = login_student_accounts_page(driver)
-    s = MysqlDb().session()
+    local_session = init_db()
     if not headless_bool:
         position_windows(driver=driver, position_nr=(thread_nr % 4) + 1)
     for url in urls:
@@ -179,9 +179,9 @@ def _1_2_rips_ids_from_urls(urls: list[str], headless_bool: bool = True, thread_
             data_item_id = row.get_attribute("data-item-id")
             if data_item_id is not None:
                 item = Student_id_process_que_dbo(web_id=data_item_id)
-                s.add(item)
-    s.commit()
-    s.close()
+                local_session.add(item)
+    local_session.commit()
+    local_session.close()
     driver.close()
     return F"Thread {thread_nr} done"
 
@@ -193,16 +193,16 @@ def _2_process_id_into_student_record(verbose: bool = False,
     if verbose:
         print(F"process_student_ids starting")
 
-    s = MysqlDb().session()
-    s.execute("UPDATE eunomia.student_id_process_que_dbo SET taken = 0")
-    s.commit()
+    local_session = init_db()
+    local_session.execute("UPDATE eunomia.student_id_process_que_dbo SET taken = 0")
+    local_session.commit()
 
     if force_single_thread:
         _2_1_process_id_into_student_record(headless_bool=headless_bool)
     else:
         with concurrent.futures.ThreadPoolExecutor(max_workers=THREADCOUNT) as executor:
             results = [executor.submit(_2_1_process_id_into_student_record, thread_nr=i) for i in range(THREADCOUNT)]
-        print(F"Started {len(results)} threads")
+        print(F"started {len(results)} threads")
         for f in concurrent.futures.as_completed(results):
             print(f.result())
     write_student_csv_from_mysql()
@@ -214,32 +214,32 @@ def split(list_a, chunk_size):
         yield list_a[i:i + chunk_size]
 
 
-@function_timer
+# @function_timer
 def _2_1_process_id_into_student_record(headless_bool: bool = True, thread_nr: int = 0) -> str:
     """ Threaded student fetcher """
     driver = init_chrome_webdriver(headless_bool=headless_bool)
-    s = MysqlDb().session()
+    local_session = init_db()
     driver = login_student_accounts_page(driver)
     if not headless_bool:
         position_windows(driver=driver, position_nr=(thread_nr % 4) + 1)
     i = 0
     if thread_nr == 0:
-        start_count = s.query(Student_id_process_que_dbo).count()
+        start_count = local_session.query(Student_id_process_que_dbo).count()
         print_progress_bar(0, start_count, prefix='Progress:', suffix='Complete', length=50)
-    while s.query(Student_id_process_que_dbo).count() > 0:
+    while local_session.query(Student_id_process_que_dbo).count() > 0:
         i += 1
         if thread_nr == 0:
-            left_count = s.query(Student_id_process_que_dbo).count()
+            left_count = local_session.query(Student_id_process_que_dbo).count()
             print_progress_bar(iteration=start_count - left_count,
                                total=start_count,
                                prefix='Progress:',
                                suffix=F'Complete {left_count} students left to process',
                                length=50)
-        rows_remaining = s.query(Student_id_process_que_dbo.id).limit(500).all()
+        rows_remaining = local_session.query(Student_id_process_que_dbo.id).limit(500).all()
         thread_picked_row_id = random.choice([item for sublist in list(rows_remaining) for item in sublist])
-        s.execute(f"UPDATE eunomia.student_id_process_que_dbo SET taken = 1 WHERE id = {thread_picked_row_id}")
-        s.commit()
-        row = s.query(Student_id_process_que_dbo).filter(Student_id_process_que_dbo.id == thread_picked_row_id).first()
+        local_session.execute(f"UPDATE eunomia.student_id_process_que_dbo SET taken = 1 WHERE id = {thread_picked_row_id}")
+        local_session.commit()
+        row = local_session.query(Student_id_process_que_dbo).filter(Student_id_process_que_dbo.id == thread_picked_row_id).first()
         driver.get(url=F"https://elevkonto.linkoping.se/entity/view/user/{row.web_id}")
         google_pw = None
         try:
@@ -259,17 +259,17 @@ def _2_1_process_id_into_student_record(headless_bool: bool = True, thread_nr: i
             continue
         else:
             # print(F"t:{thread_nr} processing id:{row.web_id} -> {account_user_name}          2022-10-25 11:06:03")
-            s = save_student_information_to_db(user_id=account_user_name,
-                                                           first_name=first_name,
-                                                           last_name=last_name,
-                                                           klass=klass,
-                                                           skola=skola,
-                                                           birthday=birthday,
-                                                           google_pw=google_pw,
-                                                           session=s,
-                                                           webid=row.web_id)
-            s.delete(row)
-            s.commit()
+            save_student_information_to_db(user_id=account_user_name,
+                                           first_name=first_name,
+                                           last_name=last_name,
+                                           klass=klass,
+                                           skola=skola,
+                                           birthday=birthday,
+                                           google_pw=google_pw,
+                                           session=local_session,
+                                           webid=row.web_id)
+            local_session.delete(row)
+            local_session.commit()
             continue
         return f"Done in thread {thread_nr}"
 
@@ -363,6 +363,6 @@ if __name__ == "__main__":
     # _2_process_id_into_student_record()
     # _1_create_student_ids_from_web(headless_bool=False)
     _2_process_id_into_student_record()
-    # test()
-    # import_single_student_from_web(account_user_name="vikjon742", headless_input_bool=False)
+    # count_student()
+    # write_student_csv_from_mysql()
     pass
