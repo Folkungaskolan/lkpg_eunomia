@@ -31,7 +31,7 @@ from utils.file_utils.json_wrapper import load_dict_from_json_path
 from utils.path_utils.path_helpers import split_file_name_no_suffix_from_filepath, split_student_account_user_name_from_filepath
 from utils.print_progress_bar import print_progress_bar
 from utils.student.count_students import count_student
-from utils.student.student_mysql import save_student_information_to_db
+from utils.student.student_mysql import save_student_information_to_db, find_and_move_old_students
 from utils.web_utils.general_web import init_chrome_webdriver, position_windows
 
 
@@ -368,7 +368,8 @@ if __name__ == "__main__":
     # import_all_student_from_web()
     # _2_process_id_into_student_record()
     # _1_create_student_ids_from_web(headless_bool=False)
-    # _2_process_id_into_student_record()
-    # count_student()
-    # write_student_csv_from_mysql()
+    _2_process_id_into_student_record()
+    count_student()
+    write_student_csv_from_mysql()
+    # find_and_move_old_students() # kör bara om importen är helt lyckad. Dvs alla klasser alla elever hämtat från webben
     pass

@@ -91,7 +91,7 @@ def generate_split_on_student_count(year: int, month: int, enheter_to_split_over
     """ Generera split på antal elever """
     s = MysqlDb().session()
 
-    alla_enheter = ID_AKTIVITET.keys()
+    alla_enheter = set(ID_AKTIVITET.keys())
     if enheter_to_split_over is None:
         enheter_to_split_over = alla_enheter
     elif enheter_to_split_over == {"CB"}:
@@ -116,6 +116,8 @@ def generate_split_on_student_count(year: int, month: int, enheter_to_split_over
                                                                                  ).first()
         if enhet_student_count is None:
             raise ValueError(f"Kunde inte hitta antal elever för enhet: {enhet}")
+            abs_distribution[enhet] = 0
+            continue
         abs_distribution[enhet] = enhet_student_count[0]
     total = sum(abs_distribution.values())
     for key in abs_distribution.keys():
@@ -125,5 +127,6 @@ def generate_split_on_student_count(year: int, month: int, enheter_to_split_over
 
 
 if __name__ == "__main__":
-    split, x = generate_split_on_student_count(year=2022, month=11, enheter_to_split_over={"GY"})
-    print(split)
+    # split = generate_split_on_student_count(year=2022, month=11, enheter_to_split_over={"CB"})
+    # print(split)
+    pass

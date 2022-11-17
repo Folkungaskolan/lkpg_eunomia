@@ -33,7 +33,30 @@ class Student_dbo(Base):
     skola: str = Column(String(length=45))
     last_web_import = Column(DateTime)
     webid: str = Column(String(length=45))
-    old: str = Column(DateTime)  # om denna är satt så är eleven gammal och hittas inte längre på webbsidan
+    klass_examen_year: int = Column(Integer, default=0)
+
+    @property
+    def email(self) -> str:
+        """ Returns the email address for the student """
+        return f"{self.user_id}@edu.linkoping.se"
+
+
+class Student_old_dbo(Base):
+    """ database model for student """
+    __tablename__ = 'student_old'
+    user_id: str = Column(String(length=10), primary_key=True)
+    google_pw: str = Column(String(length=45))
+    eduroam_pw: str = Column(String(length=10))
+    first_name: str = Column(String(length=50))
+    last_name: str = Column(String(length=50))
+    eduroam_pw_gen_date = Column(DateTime)
+    birthday = Column(DateTime)
+    klass: str = Column(String(length=45))
+    skola: str = Column(String(length=45))
+    last_web_import = Column(DateTime)
+    webid: str = Column(String(length=45))
+    old = Column(DateTime)  # om denna är satt så är eleven gammal och hittas inte längre på webbsidan Detta är när den flyttades datum
+    klass_examen_year: int = Column(Integer, default=0)
 
     @property
     def email(self) -> str:
@@ -173,12 +196,12 @@ class FakturaRadSplit_dbo(Base):
     split_id: int = Column(Integer)  # id of faktura rad
     faktura_year: int = Column(SmallInteger)
     faktura_month: int = Column(SmallInteger)
-    tjanst: str = Column(String(length=150))
-    avser: str = Column(String(length=150))
-    anvandare: str = Column(String(length=150))
+    tjanst: str = Column(String(length=150))  # katregori
+    avser: str = Column(String(length=150))  # vilken utrustning eller tjänst som faktureras
+    anvandare: str = Column(String(length=150))  # i de fall användaren är känd
     split_summa: float = Column(Float)  # fakturans summans rad
-    konto: str = Column(String(length=50))
-    aktivitet: str = Column(String(length=50))
+    id_komplement_pa: str = Column(String(length=50))  # "655119", osv
+    aktivitet: str = Column(String(length=50))  # "p": "410200" osv
 
 
 class StudentCount_dbo(Base):
@@ -202,15 +225,73 @@ class RunTime_dbo(Base):
     avg_time_sec: float = Column(Float)
 
 
-class SplitMethods_dbo(Base):
-    """ database model for split methods. """
-    __tablename__ = 'split_methods'
-    """ database model for split methods.
-     Specifikation för hur en viss typ av utrustning ska delas upp i olika kostnads kategorier."""
-    id: int = Column(Integer, primary_key=True)
-    tjanst: str = Column(String(length=50))
-    method_to_use: str = Column(String(length=50))
+class FasitCopy(Base):
+    """ Spara fasit kopia"""
+    __tablename__ = "fasit_copy"
 
+    name: str = Column(String(length=150), primary_key=True)
+    color: str = Column(String(length=150))
+    unmanaged: str = Column(String(length=150))
+    status: str = Column(String(length=150))
+    attribute_adress: str = Column(String(length=150))
+    attribute_anvandare: str = Column(String(length=150))
+    attribute_anvandarnamn: str = Column(String(length=150))
+    attribute_byggnad: str = Column(String(length=150))
+    attribute_delad: str = Column(String(length=150))
+    attribute_domain: str = Column(String(length=150))
+    attribute_elev: str = Column(String(length=150))
+    attribute_elev_epost: str = Column(String(length=150))
+    attribute_epost: str = Column(String(length=150))
+    attribute_faktura: str = Column(String(length=150))
+    attribute_fakturakod: str = Column(String(length=150))
+    attribute_faktureras_ej: str = Column(String(length=150))
+    attribute_fasit_admin: str = Column(String(length=150))
+    attribute_fasit_admin_html: str = Column(String(length=150))
+    attribute_hyresperiodens_slut: str = Column(String(length=150))
+    attribute_it_kontakt: str = Column(String(length=150))
+    attribute_jobbtitel: str = Column(String(length=150))
+    attribute_klass: str = Column(String(length=150))
+    attribute_kund: str = Column(String(length=150))
+    attribute_kundnummer: str = Column(String(length=150))
+    attribute_mobilnummer: str = Column(String(length=150))
+    attribute_modell: str = Column(String(length=150))
+    attribute_mottagare_av_faktura: str = Column(String(length=150))
+    attribute_mottagare_av_fakturaspecifikation: str = Column(String(length=150))
+    attribute_noteringar: str = Column(String(length=250))
+    attribute_plats: str = Column(String(length=150))
+    attribute_senast_inloggade: str = Column(String(length=150))
+    attribute_senast_online: str = Column(String(length=150))
+    attribute_serienummer: str = Column(String(length=150))
+    attribute_servicestatus: str = Column(String(length=150))
+    attribute_servicestatus_full: str = Column(String(length=150))
+    attribute_skola: str = Column(String(length=150))
+    attribute_tillverkare: str = Column(String(length=150))
+    attribute_tjanster: str = Column(String(length=150))
+    attribute_aterlamnings_datum: str = Column(String(length=150))
+    tag_anknytning: int = Column(Integer, default=False)
+    tag_anvandare: int = Column(Integer, default=False)
+    tag_chromebook: int = Column(Integer, default=False)
+    tag_chromebox: int = Column(Integer, default=False)
+    tag_dator: int = Column(Integer, default=False)
+    tag_domain: int = Column(Integer, default=False)
+    tag_faktura: int = Column(Integer, default=False)
+    tag_funktionskonto: int = Column(Integer, default=False)
+    tag_kund: int = Column(Integer, default=False)
+    tag_mobiltelefon: int = Column(Integer, default=False)
+    tag_pekplatta: int = Column(Integer, default=False)
+    tag_person: int = Column(Integer, default=False)
+    tag_plats: int = Column(Integer, default=False)
+    tag_rcard: int = Column(Integer, default=False)
+    tag_skrivare: int = Column(Integer, default=False)
+    tag_skarm: int = Column(Integer, default=False)
+    tag_tv: int = Column(Integer, default=False)
+    tag_utrustning: int = Column(Integer, default=False)
+    tag_videoprojektor: int = Column(Integer, default=False)
+    eunomia_update_web: int = Column(Integer, default=False)  # if eunomia changed a value spread updates to web
+    eunomia_user_id: str = Column(String(length=20))  # eunomia version of user id
+    eunomia_update_web_command: int = Column(String(length=200))
+    # Ska innehålla sträng med vilka variabler som ska uppdateras på webben
+    # data från databasen till webben
 
 def create_all_tables(echo: bool = False):
     """ create all tables in database. """

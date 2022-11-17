@@ -47,13 +47,15 @@ def split_row() -> None:
 def create_split_row_for_cb(year: int, month: int, total_to_split: float, split: list[str:float]) -> None:
     """ Mata in Chromebook fördelningen för givet år och månad """
     s = MysqlDb().session()
-    for key, value in split.items():
-        s.add(FakturaRadSplit_dbo(faktura_year=year,
+    for enhet_id, enhets_share_of_total in split.items():
+        s.add(FakturaRadSplit_dbo(
+                                faktura_year=year,
                                   faktura_month=month,
                                   tjanst="Chromebook",
-                                  pris=value,
-                                  antal=0,
-                                  summa=0))
+                                  split_summa=enhets_share_of_total * total_to_split,
+                                  id_komplement_pa=enhet_id,
+                                  aktivitet=ID_AKTIVITET[enhet_id]["p"]
+                                  ))
     s.commit()
 
 
@@ -61,7 +63,8 @@ def behandla_dela_cb() -> None:
     """ Behandla dela cb för månader med lösa CB rader"""
     print("Dela enligt CB")
     s = MysqlDb().session()
-    sum_cbs = s.query(FakturaRad_dbo.faktura_year,
+    sum_cbs = s.query(FakturaRad_dbo.id,
+                      FakturaRad_dbo.faktura_year,
                       FakturaRad_dbo.faktura_month,
                       FakturaRad_dbo.tjanst,
                       func.sum(FakturaRad_dbo.pris).label("pris_sum"),
@@ -102,24 +105,26 @@ def behandla_dela_cb() -> None:
             month_CB_sum.split_method_used = "CB"
         s.commit()
         # Skapa en split referens
-        split_by_student = generate_split_on_student_count(year=sum_cb.year,
+        split_by_student = generate_split_on_student_count(year=sum_cb.faktura_year,
                                                            month=sum_cb.faktura_month,
                                                            enheter_to_split_over={"CB"}
                                                            )
         # Skapa en delning
         for enhet, enhets_andel in split_by_student.items():
+            split_row = s.query(FakturaRadSplit_dbo).filter(and_(FakturaRadSplit_dbo.faktura_year == sum_cb.faktura_year,
+                                                                 FakturaRadSplit_dbo.faktura_month == sum_cb.faktura_month,
+                                                                 FakturaRadSplit_dbo.id_komplement_pa == enhet,
+                                                                 FakturaRadSplit_dbo.aktivitet))
+
             s.add(FakturaRadSplit_dbo(faktura_year=sum_cb.faktura_year,
                                       faktura_month=sum_cb.faktura_month,
+                                      split_id=sum_cb.id,  # CB kommer ha backreferens till summerings raden
                                       tjanst="Chromebook",
                                       split_summa=enhets_andel * sum_cb.pris_sum,
-                                      aktivitet=ID_AKTIVITET[enhet]["p"],
-                                      summa=0)
+                                      aktivitet=ID_AKTIVITET[enhet]["p"]
+                                      )
                   )
-            s.commit()
-            s = create_split_row_for_cb(year=sum_cb.faktura_year,
-                                        month=FakturaRad_dbo.faktura_month,
-                                        total_to_split=sum_cb.summa_sum,
-                                        split=generate_split_on_student_count(month=sum_cb.faktura_month))
+        s.commit()
 
     # sätt alla CB rader till split_done
     sum_cbs = s.query(FakturaRad_dbo).filter(and_(FakturaRad_dbo.tjanst.contains("Chromebook"),
