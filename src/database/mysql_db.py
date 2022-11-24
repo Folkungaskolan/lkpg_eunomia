@@ -28,14 +28,21 @@ class MysqlDb:
     """ singleton session to Mysql db """
     __instance = None  # type: Session
     __session = None
+
     def __new__(cls):
         if (cls.__instance is None):
             cls.__instance = super(MysqlDb, cls).__new__(cls)
         return cls.__instance
-    def session(self):
+
+    def session(self, echo: bool = False) -> Session:
+        """
+        get session
+        :param echo: echo sql statements
+        """
         if (self.__session is None):
-            self.__session = init_db()
+            self.__session = init_db(echo=echo)
         return self.__session
+
 
 if __name__ == '__main__':
     pass

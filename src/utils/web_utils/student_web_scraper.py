@@ -19,19 +19,19 @@ from selenium.webdriver.support.wait import WebDriverWait
 from sqlalchemy.orm import Session
 
 from CustomErrors import NoUserFoundError
-from database.models import Student_dbo, Student_id_process_que_dbo
+from database.models import Student_id_process_que_dbo
 from database.mysql_db import init_db, MysqlDb
-from settings.folders import WEB_ID_TO_PROCESS_PATH, STUDENT_USER_FOLDER_PATH
+from settings.folders import STUDENT_USER_FOLDER_PATH
 from settings.threadsettings import THREADCOUNT
 from utils.creds import get_cred
 from utils.decorators import function_timer
 from utils.file_utils import save_student
-from utils.file_utils.excel import write_student_csv_from_mysql
+from utils.file_utils.to_csv import write_student_csv_from_mysql
 from utils.file_utils.json_wrapper import load_dict_from_json_path
-from utils.path_utils.path_helpers import split_file_name_no_suffix_from_filepath, split_student_account_user_name_from_filepath
+from utils.path_utils.path_helpers import split_student_account_user_name_from_filepath
 from utils.print_progress_bar import print_progress_bar
-from utils.student.count_students import count_student
-from utils.student.student_mysql import save_student_information_to_db, find_and_move_old_students
+
+from utils.student.student_mysql import save_student_information_to_db, count_student
 from utils.web_utils.general_web import init_chrome_webdriver, position_windows
 
 

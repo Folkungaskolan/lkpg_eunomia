@@ -1,7 +1,9 @@
 """ student access to MySQL """
+import math
 from datetime import datetime
+from functools import cache
 
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 from database.models import Student_dbo, StudentCount_dbo, Student_old_dbo
@@ -87,102 +89,85 @@ def _add_info_to_student_obj(student_obj: Student_dbo,
     return student_obj
 
 
-def copy_student_counts(from_month: int, to_month: int, from_year: int = 2022, to_year: int = 2022) -> None:
-    """ copy student counts from student_dbo to student_count_dbo """
-    session = MysqlDb().session()
-    for student in session.query(StudentCount_dbo).filter(and_(StudentCount_dbo.month == from_month,
-                                                               StudentCount_dbo.year == from_year)
-                                                          ).all():
-        student_count = StudentCount_dbo(month=to_month,
-                                         year=to_year,
-                                         id_komplement_pa=student.id_komplement_pa,
-                                         count=student.count)
-        session.add(student_count)
-    session.commit()
-
-
-def calculate_examen_year(klass: str) -> int:
-    """ calculate examen year """
-    if "22" in klass:
-        return 2022 + 3
-    if "21" in klass:
-        return 2021 + 3
-    if "20" in klass:
-        return 2020 + 3
-    if klass.startswith("4"):
-        return 2022 + 3
-    if klass.startswith("5"):
-        return 2021 + 3
-    if klass.startswith("6"):
-        return 2020 + 3
-    if klass.startswith("7"):
-        return 2022 + 3
-    if klass.startswith("8"):
-        return 2021 + 3
-    if klass.startswith("9"):
-        return 2020 + 3
-    return -1
-
-
-def update_student_examen_year() -> None:
-    """ update student examen year """
+@cache
+def count_student(endast_id_komplement_pa: set[str] = None, month: int = None) -> tuple[dict[str, int], dict[str, float]]:
+    """ Räknar elever i respektive klass i databasen och sparar dessa siffror samt returnerar dem
+    return raw_total, relative_distribution
+    """
     s = MysqlDb().session()
-    students = s.query(Student_dbo).all()
-    for student in students:
-        student.klass_examen_year = calculate_examen_year(student.klass)
-    s.commit()
-
-
-def find_and_move_old_students() -> None:  # TODO: Move student to old table when the quit
-    """ find and move old students """
-    s = MysqlDb().session()
-    import_dates = s.query(Student_dbo.last_web_import).order_by(Student_dbo.last_web_import.desc()).first()
-    all_students = s.query(Student_dbo).all()
-    for student in all_students:
-        # if student.user_id == "dalhad279":
-        #     print("dalhad279")
-        if student.last_web_import.year != import_dates[0].year \
-                or student.last_web_import.month != import_dates[0].month \
-                or student.last_web_import.day != import_dates[0].day:
-            print(student.user_id)
-
-            old_student = s.query(Student_old_dbo).filter(Student_old_dbo.user_id == student.user_id).first()
-            if old_student is None:
-                old_student = Student_old_dbo(user_id=student.user_id,
-                                              google_pw=student.google_pw,
-                                              eduroam_pw=student.eduroam_pw,
-                                              first_name=student.first_name,
-                                              last_name=student.last_name,
-                                              eduroam_pw_gen_date=student.eduroam_pw_gen_date,
-                                              birthday=student.birthday,
-                                              klass=student.klass,
-                                              skola=student.skola,
-                                              last_web_import=student.last_web_import,
-                                              webid=student.webid,
-                                              klass_examen_year=student.klass_examen_year,
-                                              old=datetime.now()
-                                              )
-                s.add(old_student)
+    raw_total = {}
+    relative_distribution = {}
+    if month == datetime.now().month or month is None:
+        slask = []
+        klass_sum = s.query(Student_dbo.klass,
+                                        Student_dbo.skola,
+                                        func.count(Student_dbo.klass).label("sum")
+                                        ).group_by(Student_dbo.klass
+                                                   ).all()
+        for klass_obj in klass_sum:
+            # print(klass)
+            if "_FOL" in klass_obj.klass:  # FOLKUNGASKOLAN
+                if klass_obj.klass.startswith("EK"):  # EK
+                    raw_total["655119"] = raw_total.get("655119", 0) + klass_obj.sum
+                elif klass_obj.klass.startswith("ES"):  # ES
+                    raw_total["655123"] = raw_total.get("655123", 0) + klass_obj.sum
+                elif klass_obj.klass.startswith("SA"):  # SA
+                    raw_total["655122"] = raw_total.get("655122", 0) + klass_obj.sum
+                elif klass_obj.skola in {"Folkungaskolan 5", "Folkungaskolan 6"}:  # 7-9
+                    raw_total["656520"] = raw_total.get("656520", 0) + klass_obj.sum
+                elif klass_obj.skola in {"Folkungaskolan 4"}:  # 4-6
+                    raw_total["656510"] = raw_total.get("656510", 0) + klass_obj.sum
+                continue
+            elif "_STL" in klass_obj.klass:  # S:t Lars
+                if klass_obj.klass.startswith("NA"):  # NA
+                    raw_total["654300"] = raw_total.get("654300", 0) + klass_obj.sum
+                elif klass_obj.klass.startswith("ES"):  # ES
+                    raw_total["654100"] = raw_total.get("654100", 0) + math.ceil(klass_obj.sum / 2)  # TODO Fråga Maria H om detta är ok
+                    raw_total["654200"] = raw_total.get("654200", 0) + math.ceil(klass_obj.sum / 2)
+                elif klass_obj.klass.startswith("IMA"):  # IMA
+                    raw_total["654400"] = raw_total.get("654400", 0) + klass_obj.sum
+                continue
+            slask.append(klass_obj.klass)  # om ingen tagit hand om klassen så lägger vi den i slasken
+        print(F"slask klasser: {slask}")
+        for key in raw_total.keys():
+            id_count = s.query(StudentCount_dbo).filter(StudentCount_dbo.id_komplement_pa == key,
+                                                                    StudentCount_dbo.month == datetime.now().month,
+                                                                    StudentCount_dbo.year == datetime.now().year,
+                                                                    ).first()
+            if id_count is None:
+                s.add(StudentCount_dbo(id_komplement_pa=key,
+                                                   count=raw_total[key],
+                                                   month=datetime.now().month,
+                                                   year=datetime.now().year)
+                                  )
             else:
-                old_student.google_pw = student.google_pw,
-                old_student.eduroam_pw = student.eduroam_pw,
-                old_student.first_name = student.first_name,
-                old_student.last_name = student.last_name,
-                old_student.eduroam_pw_gen_date = student.eduroam_pw_gen_date,
-                old_student.birthday = student.birthday,
-                old_student.klass = student.klass,
-                old_student.skola = student.skola,
-                old_student.last_web_import = student.last_web_import,
-                old_student.webid = student.webid,
-                old_student.klass_examen_year = student.klass_examen_year,
-                old_student.old = datetime.now()
-            s.delete(student)  # ta bort den gamla eleven från den aktiva elev listan
-            print(F"Deleting {student.user_id:}")
-    s.commit()
-    print("find_and_move_old_students  Done")
+                id_count.count = raw_total[key]
+                id_count.month = datetime.now().month
+                id_count.year = datetime.now().year
+            s.commit()
+    else:
+        old_month_counts = s.query(StudentCount_dbo).filter(StudentCount_dbo.month == month).all()
+        print(old_month_counts)
+        for id_komplement_pa in old_month_counts:
+            raw_total[id_komplement_pa.id_komplement_pa] = id_komplement_pa.count
+
+    if endast_id_komplement_pa is not None:
+        for k in list(raw_total.keys()):
+            if k not in endast_id_komplement_pa:
+                del raw_total[k]
+
+    total = sum(raw_total.values())
+    for key in raw_total.keys():
+        relative_distribution[key] = raw_total[key] / total
+
+    return raw_total, relative_distribution
+
+
+
 
 
 if __name__ == '__main__':
+    pass
     # update_student_examen_year()
-    find_and_move_old_students()
+    # find_and_move_old_students()
     # copy_student_counts(from_month=10, to_month=8)

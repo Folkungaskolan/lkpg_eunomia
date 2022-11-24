@@ -1,19 +1,19 @@
 """ allt som har med fasit hanteringen i databasen att göra"""
 from functools import cache
 
-from CustomErrors import GearNotFoundError
+from CustomErrors import GearNotFoundError, NoUserFoundError
 from database.models import FasitCopy, Staff_dbo
 from database.mysql_db import MysqlDb
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 
+from utils.dbutil.student_db import update_student_examen_year
 from utils.file_utils.fasit_file import load_fasit_csv
-from utils.student.student_mysql import update_student_examen_year
 
 
 def load_fasit_to_db() -> None:
     """ Ladda in fasit informationen till databasen"""
     df = load_fasit_csv()
-    print(df)
+    # print(df)
     df = df.fillna(0, inplace=False)
     s = MysqlDb().session()
 
@@ -51,7 +51,7 @@ def load_fasit_to_db() -> None:
                 attribute_mottagare_av_fakturaspecifikation=row['attribute.mottagare_av_fakturaspecifikation'],
                 attribute_noteringar=row['attribute.noteringar'],
                 attribute_plats=row['attribute.plats'],
-                attribute_senast_inloggade=extract_cb_student_userids_login_list(row['attribute.senast_inloggade']),
+                attribute_senast_inloggade=extract_cb_student_user_ids_login_list(row['attribute.senast_inloggade']),
                 attribute_senast_online=row['attribute.senast_online'],
                 attribute_serienummer=row['attribute.serienummer'],
                 attribute_servicestatus=row['attribute.servicestatus'],
@@ -111,7 +111,7 @@ def load_fasit_to_db() -> None:
             fasit_item.attribute_mottagare_av_fakturaspecifikation = row['attribute.mottagare_av_fakturaspecifikation']
             fasit_item.attribute_noteringar = row['attribute.noteringar']
             fasit_item.attribute_plats = row['attribute.plats']
-            fasit_item.attribute_senast_inloggade = extract_cb_student_userids_login_list(row['attribute.senast_inloggade'])
+            fasit_item.attribute_senast_inloggade = extract_cb_student_user_ids_login_list(row['attribute.senast_inloggade'])
             fasit_item.attribute_senast_online = row['attribute.senast_online']
             fasit_item.attribute_serienummer = row['attribute.serienummer']
             fasit_item.attribute_servicestatus = row['attribute.servicestatus']
@@ -143,10 +143,12 @@ def load_fasit_to_db() -> None:
     s.commit()
     create_fasit_student_user_ids()
     update_student_examen_year()
+    translate_fasit_name_to_eunomia_name()
+    update_staff_from_fasit_file()
 
 
 def create_fasit_staff_user_ids() -> None:
-    """ skapar eunomia koppling till användarnamn för peronsalen"""
+    """ Skapar eunomia koppling till användarnamn för personalen"""
     s = MysqlDb().session()
     fasit_staff = s.query(FasitCopy).filter(FasitCopy.tag_person == 1).all()
     for staff in fasit_staff:
@@ -157,7 +159,7 @@ def create_fasit_staff_user_ids() -> None:
 
 
 @cache
-def extract_cb_student_userids_login_list(senast_inloggade: str) -> str:
+def extract_cb_student_user_ids_login_list(senast_inloggade: str) -> str:
     """ Drar ut bara användarnamnen från senast inloggade strängen"""
     if senast_inloggade == 0:
         return ""
@@ -209,7 +211,64 @@ def get_needed_web_updates() -> list[dict[str:str]]:
     return todo_list
 
 
+def get_user_id_for_fasit_user(attribute_anvandare: str) -> str:
+    """ Hämta user_id för fasit användare
+    Dolk Lyam -> lyadol
+    """
+    s = MysqlDb().session()
+    user = s.query(FasitCopy).filter(FasitCopy.name == attribute_anvandare).first()
+    if user is not None:
+        return user.attribute_anvandarnamn  # user_id i FASIT
+    else:
+        raise NoUserFoundError(f"Kunde inte hitta användare med attribute_anvandare: {attribute_anvandare}")
+
+
+def update_staff_from_fasit_file() -> None:
+    """ Uppdateriar personal tabellen utifrån fasit filen"""
+    s = MysqlDb().session()
+    fasit_staff = s.query(FasitCopy).filter(FasitCopy.tag_person == 1).all()
+    for f_staff in fasit_staff:
+        staffer = s.query(Staff_dbo).filter(Staff_dbo.user_id == f_staff.attribute_anvandarnamn).first()
+        if staffer is not None:  # hittades
+            staffer.full_name = f_staff.name
+            staffer.email = f_staff.attribute_epost
+            staffer.title = f_staff.attribute_jobbtitel
+        else:  # hittades inte så skapa ny
+            s.add(Staff_dbo(user_id=f_staff.attribute_anvandarnamn,
+                            full_name=f_staff.name,
+                            email=f_staff.attribute_epost,
+                            titel=f_staff.attribute_jobbtitel
+                            ))
+    s.commit()
+
+
+def translate_fasit_name_to_eunomia_name() -> str:
+    """ Skriv in användarnamn istället för attribut användare för kända användare"""
+    s = MysqlDb().session(echo=True)
+    utdelad_utrustning = s.query(FasitCopy).filter(FasitCopy.attribute_anvandare != None).all()
+    for named_gear in utdelad_utrustning:
+        print(F"named_gear: {named_gear.name} attribute_anvandare: {named_gear.attribute_anvandare}")
+    # s.commit()
+
+
+def delete_stupid_info_in_fasit() -> None:
+    """ Tar bort onödig info i fasit kopieringen"""
+    s = MysqlDb().session(echo=False)
+    found = s.query(FasitCopy).filter(or_(FasitCopy.tag_plats == 1
+                                          # ,FasitCopy.tag_rcard == 1
+                                          )
+                                      ).all()
+    for f in found:
+        print(F"named_gear: {f.name} attribute_anvandare: {f.attribute_anvandare}")
+        f.delete()
+    f.commit()
+
+
 if __name__ == "__main__":
+    # delete_stupid_info_in_fasit()
+    print(get_user_id_for_fasit_user("Dolk Lyam"))
+
+    # translate_fasit_name_to_eunomia_name()
     # create_fasit_staff_user_ids()
-    # add_update_cmd_line(name="E52076", cmd="update", new_value="test1")
-    get_needed_web_updates()
+    # add_update_cmd_line(name="E52076", cmd="update", new_value="test1") # lägg på något som behöver uppdateras
+    # get_needed_web_updates() # lista allt som behöver uppdateras i web versionen

@@ -100,7 +100,7 @@ class AnkHasNoStaffError(Exception):    pass
 
 class DBUnableToCrateUser(Exception):    pass
 
-
+class DelaInteEnligDennaMetod(Exception):    pass
 class DelaEnlElevAntal_pERROR(Exception):    pass
 class DelaEnligtElevAntalError(Exception):    pass
 class FASIT_CBA_Agent_Not_AvaliableError(Exception):    pass
@@ -120,6 +120,7 @@ class InvalidArgumentsError(Exception):    pass
 class Lindesk_ID_NotFoundError(Exception):    pass
 class NameToShortError(ValueError):    pass
 class NoAssignedUserError(Exception):    pass
+class NoKonteringSetInFasit(Exception):    pass
 class NoDataError(Exception):    pass
 class NoInfoFoundError(Exception):    pass
 class NoLinkToAssignAStudentFound(Exception):    pass

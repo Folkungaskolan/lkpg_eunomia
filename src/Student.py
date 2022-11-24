@@ -5,8 +5,9 @@ from Person import Person
 from settings.folders import STUDENT_USER_FOLDER_PATH
 from utils import import_student_from_web
 from utils import load_dict_from_json_path, generate_eduroam_for_user
-from utils.file_utils.excel import write_student_csv_from_mysql
+
 from utils.file_utils.student_files import save_student, find_student_json_filepath
+from utils.file_utils.to_csv import write_student_csv_from_mysql
 
 
 class Student(Person):

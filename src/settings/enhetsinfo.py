@@ -46,3 +46,4 @@ STLARS_ENHETER = {"654100"  # St:Lars ES- Musik
                   "654400"  # St:Lars IMA
                   "654500"  # St:Lars Slask ska inte användas
                   }
+

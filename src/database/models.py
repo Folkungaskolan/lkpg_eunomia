@@ -64,6 +64,16 @@ class Student_old_dbo(Base):
         return f"{self.user_id}@edu.linkoping.se"
 
 
+class TjanstKategori_dbo(Base):
+    """ database model for tjanst kategori """
+    __tablename__ = 'tjanst_kategori'
+    id = Column(Integer, primary_key=True)
+    tjanst: str = Column(String(length=45))
+    tjanst_kategori_lvl1: str = Column(String(length=45), default="ej kategoriserad")
+    tjanst_kategori_lvl2: str = Column(String(length=45), default="ej kategoriserad")
+    beskrivning: str = Column(String(length=255))
+
+
 class Staff_dbo(Base):
     """ database model for staff members. """
     __tablename__ = 'staff'
@@ -81,6 +91,18 @@ class Staff_dbo(Base):
     pnr12: str = Column(String(length=15))
     email: str = Column(String(length=50))
     aktivitet_char: str = Column(String(length=1))
+    sum_tjf_jan: float = Column(Float, default=0)  # Vilka månader som ser konstiga ut
+    sum_tjf_feb: float = Column(Float, default=0)
+    sum_tjf_mar: float = Column(Float, default=0)
+    sum_tjf_apr: float = Column(Float, default=0)
+    sum_tjf_maj: float = Column(Float, default=0)
+    sum_tjf_jun: float = Column(Float, default=0)
+    sum_tjf_jul: float = Column(Float, default=0)
+    sum_tjf_aug: float = Column(Float, default=0)
+    sum_tjf_sep: float = Column(Float, default=0)
+    sum_tjf_okt: float = Column(Float, default=0)
+    sum_tjf_nov: float = Column(Float, default=0)
+    sum_tjf_dec: float = Column(Float, default=0)
 
     @property
     def pnr10(self) -> str:
@@ -164,14 +186,14 @@ class FakturaRad_dbo(Base):
     id: int = Column(Integer, primary_key=True)
     faktura_year: int = Column(SmallInteger)
     faktura_month: int = Column(SmallInteger)
-    tjanst: str = Column(String(length=150))
-    avser: str = Column(String(length=150))
-    anvandare: str = Column(String(length=150))
+    tjanst: str = Column(String(length=150))  # kategori grej
+    avser: str = Column(String(length=150))  # specifik grej
+    anvandare: str = Column(String(length=150))  # om fasit har användare
     kundnummer: int = Column(Integer)
     fakturamarkning: str = Column(String(length=50))
     fakturakod: str = Column(String(length=50))
-    antal: int = Column(Integer)
-    pris: float = Column(Float)
+    antal: int = Column(Integer)  # hur många av något i summeringar
+    pris: float = Column(Float)  # pris per enhet
     summa: float = Column(Float)  # fakturans summans rad
     split_done: int = Column(Integer, default=False)  # Has row been split into sub sums?
     split_method_used: str = Column(String(length=50))
@@ -182,11 +204,15 @@ class FakturaRad_dbo(Base):
     # sum of all split sums, control for errors   sum - split_sum_e = error in sum
     split_sum_error: float = Column(Float)
 
+    eunomia_row: int = Column(Integer)  # row in eunomia file
+    eunomia_case_id: str = Column(String(length=50))  # konto in eunomia file
+    eunomia_case_creator_user_id: str = Column(String(length=50))  # konto in eunomia file
+
     def __str__(self):
-        return F"FakturaRad_dbo(tjanst={self.tjanst},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod},anvandare={self.anvandare},avser={self.avser},faktura_year={self.faktura_year},faktura_month={self.faktura_month},antal={self.antal},pris={self.pris},summa={self.summa},split_done={self.split_done},split_654_e={self.split_654_e},split_655_e={self.split_655_e},split_656_e={self.split_656_e},split_654_a={self.split_654_a},split_655_a={self.split_655_a},split_656_a={self.split_656_a},split_654_p={self.split_654_p},split_655_p={self.split_655_p},split_656_p={self.split_656_p},split_method_used={self.split_method_used},split_sum={self.split_sum},split_sum_error={self.split_sum_error})"
+        return F"FakturaRad_dbo(tjanst={self.tjanst},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod},anvandare={self.anvandare},avser={self.avser},faktura_year={self.faktura_year},faktura_month={self.faktura_month},antal={self.antal},pris={self.pris},summa={self.summa},split_done={self.split_done}tag_,split_method_used={self.split_method_used},split_sum={self.split_sum},split_sum_error={self.split_sum_error})"
 
     def __repr__(self):
-        return F"FakturaRad_dbo(tjanst={self.tjanst},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod},anvandare={self.anvandare},avser={self.avser},faktura_year={self.faktura_year},faktura_month={self.faktura_month},antal={self.antal},pris={self.pris},summa={self.summa},split_done={self.split_done},split_654_e={self.split_654_e},split_655_e={self.split_655_e},split_656_e={self.split_656_e},split_654_a={self.split_654_a},split_655_a={self.split_655_a},split_656_a={self.split_656_a},split_654_p={self.split_654_p},split_655_p={self.split_655_p},split_656_p={self.split_656_p},split_method_used={self.split_method_used},split_sum={self.split_sum},split_sum_error={self.split_sum_error})"
+        return F"FakturaRad_dbo(tjanst={self.tjanst},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod},anvandare={self.anvandare},avser={self.avser},faktura_year={self.faktura_year},faktura_month={self.faktura_month},antal={self.antal},pris={self.pris},summa={self.summa},split_done={self.split_done}tag_,split_method_used={self.split_method_used},split_sum={self.split_sum},split_sum_error={self.split_sum_error})"
 
 
 class FakturaRadSplit_dbo(Base):
@@ -196,12 +222,15 @@ class FakturaRadSplit_dbo(Base):
     split_id: int = Column(Integer)  # id of faktura rad
     faktura_year: int = Column(SmallInteger)
     faktura_month: int = Column(SmallInteger)
-    tjanst: str = Column(String(length=150))  # katregori
+    tjanst: str = Column(String(length=150))  # kategori
     avser: str = Column(String(length=150))  # vilken utrustning eller tjänst som faktureras
     anvandare: str = Column(String(length=150))  # i de fall användaren är känd
-    split_summa: float = Column(Float)  # fakturans summans rad
+    split_summa: float = Column(Float)  # fakturans summans rad för denna enhet och aktivitet
     id_komplement_pa: str = Column(String(length=50))  # "655119", osv
+    split_metod: str = Column(String(length=50))
     aktivitet: str = Column(String(length=50))  # "p": "410200" osv
+    tjanst_kategori_lvl1: str = Column(String(length=45), default="ej kategoriserad")
+    tjanst_kategori_lvl2: str = Column(String(length=45), default="ej kategoriserad")
 
 
 class StudentCount_dbo(Base):
@@ -212,17 +241,6 @@ class StudentCount_dbo(Base):
     month: int = Column(SmallInteger)
     id_komplement_pa: str = Column(String(length=10))
     count: int = Column(Integer)
-
-
-class RunTime_dbo(Base):
-    """ Spara runtime data för funktionerna """
-    __tablename__ = 'function_run_times'
-    id: int = Column(Integer, primary_key=True)
-    run_date: datetime = Column(DateTime)
-    function_name: str = Column(String(length=50))
-    list_length: int = Column(Integer)
-    run_time_sec: float = Column(Float)
-    avg_time_sec: float = Column(Float)
 
 
 class FasitCopy(Base):
@@ -292,11 +310,31 @@ class FasitCopy(Base):
     eunomia_update_web_command: int = Column(String(length=200))
     # Ska innehålla sträng med vilka variabler som ska uppdateras på webben
     # data från databasen till webben
+    eunomia_kontering: str = Column(String(length=100))
+
+    def __str__(self):
+        return self.__repr__
+
+    def __repr__(self):
+        """ Repr för fasit rad"""
+        return f"{self.name}, {self.status}, {self.attribute_anvandare}, {self.attribute_anvandarnamn},  {self.attribute_epost},  {self.attribute_hyresperiod}"
+
 
 def create_all_tables(echo: bool = False):
     """ create all tables in database. """
     engine = create_db_engine(echo=echo)
     Base.metadata.create_all(engine)
+
+
+class RunTime_dbo(Base):
+    """ Spara runtime data för funktionerna """
+    __tablename__ = 'function_run_times'
+    id: int = Column(Integer, primary_key=True)
+    run_date: datetime = Column(DateTime)
+    function_name: str = Column(String(length=50))
+    list_length: int = Column(Integer)
+    run_time_sec: float = Column(Float)
+    avg_time_sec: float = Column(Float)
 
 
 def drop_all_tables(echo: bool = False):
