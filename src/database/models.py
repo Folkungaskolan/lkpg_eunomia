@@ -103,7 +103,7 @@ class Staff_dbo(Base):
     sum_tjf_okt: float = Column(Float, default=0)
     sum_tjf_nov: float = Column(Float, default=0)
     sum_tjf_dec: float = Column(Float, default=0)
-
+    skola : str = Column(String(length=45))
     @property
     def pnr10(self) -> str:
         """ get pnr10. """

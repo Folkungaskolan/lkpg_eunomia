@@ -2,24 +2,42 @@
 import json
 
 from CustomErrors import AktivitetNotFoundError
-from database.models import StudentCount_dbo
+from database.models import StudentCount_dbo, FakturaRad_dbo, FasitCopy
 from database.mysql_db import MysqlDb
+from utils.dbutil.student_db import generate_split_on_student_count
 from utils.faktura_utils.normalize import normalize
 
 
-def decode_kontering_in_fritext(kontering: str) -> (dict[str:float], str):
+def decode_kontering_in_fritext(faktura_rad: FakturaRad_dbo, fasit_rad: FasitCopy) -> (dict[str:float], str,):
     """ Decode fritextfield """
     s = MysqlDb().session()
-    code_segment = kontering.split("|")
+    code_segment = fasit_rad.eunomia_kontering.split("|")
     temp_kontering = {}
     star_present_in_key = None
     for seg in code_segment:
         if seg.startswith("Kontering"):
-            kontering = seg.split(">")[1]
-            kontering_metod = kontering.split("<")[0]
+            if seg == "Kontering>A513":  # Delas över Gymnasiet
+                return generate_split_on_student_count(enheter=["655"],  # Delas över Gymnasiet
+                                                       month=faktura_rad.faktura_month,
+                                                       year=faktura_rad.faktura_year), "p", "FASIT Kontering>A513"
+            if seg == "Kontering>GruTeknik":  # Delas över grundskolans elever
+                return generate_split_on_student_count(enheter=["656"],  # Delas över Gymnasiet
+                                                       month=faktura_rad.faktura_month,
+                                                       year=faktura_rad.faktura_year), "p", "FASIT Kontering>GruTeknik"
+            if seg == "Kontering>Musikproduktion":  # Delas över grundskolan
+                return generate_split_on_student_count(enheter=["656520"],  # Delas över Gymnasiet
+                                                       month=faktura_rad.faktura_month,
+                                                       year=faktura_rad.faktura_year), "p", "FASIT Kontering>Musikproduktion"
+            if seg == "Kontering>FolkungaBibliotek":  # Delas över grundskolan
+                return generate_split_on_student_count(enheter=["656", "655"],  # Delas över Gymnasiet
+                                                       month=faktura_rad.faktura_month,
+                                                       year=faktura_rad.faktura_year), "p", "Kontering>FolkungaBibliotek"
+
+            faktura_rad = seg.split(">")[1]
+            kontering_metod = faktura_rad.split("<")[0]
             if kontering_metod == "Enheter":
-                kontering = kontering.split(";")
-                for k in kontering:
+                faktura_rad = faktura_rad.split(";")
+                for k in faktura_rad:
                     print(k)
                     key, value = k.split(":")
                     if value == "*":
@@ -33,10 +51,10 @@ def decode_kontering_in_fritext(kontering: str) -> (dict[str:float], str):
                 else:
                     slut_kontering = temp_kontering
             elif kontering_metod == "Elevantal":
-                kontering = kontering.split("<")[1]
-                kontering = kontering.split(";")
+                faktura_rad = faktura_rad.split("<")[1]
+                faktura_rad = faktura_rad.split(";")
                 student_counts = {}
-                for k in kontering:
+                for k in faktura_rad:
                     print(k)
                     counts = s.query(StudentCount_dbo).filter(StudentCount_dbo.id_komplement_pa.startswith(k)).all()
                     for c in counts:

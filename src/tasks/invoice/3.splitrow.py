@@ -8,44 +8,72 @@ from CustomErrors import GearNotFoundInFASIT_CBAError, GearNotAssignedToAUserErr
 from database.models import FakturaRad_dbo, Tjf_dbo, FakturaRadSplit_dbo, FasitCopy, Staff_dbo, TjanstKategori_dbo
 from database.mysql_db import MysqlDb
 from settings.enhetsinfo import ID_AKTIVITET
-from utils.dbutil.fasit_copy import get_fasit_row
-from utils.dbutil.fasit_db import get_user_id_for_fasit_user
+
+from utils.dbutil.fasit_db import get_user_id_for_fasit_user, get_fasit_row
 from utils.dbutil.staff_db import gen_tjf_for_staff, get_tjf_for_enhet
 from utils.dbutil.student_db import generate_split_on_student_count
 from utils.faktura_utils.kontering import decode_kontering_in_fritext
 from utils.faktura_utils.print_table import print_headers, print_row, COL_WIDTHS
+from utils.flatten import flatten_row
 from utils.print_progress_bar import print_progress_bar
 
 from utils.intergration_utils.obsidian import extract_variable_value_from_gear_name
 from utils.student.student_mysql import count_student
 
 
-def dela_enl_fasit_agare(faktura_rad: FakturaRad_dbo, verbose: bool = False) -> bool:
+def dela_enl_fasit_agare(faktura_rad: FakturaRad_dbo, verbose: bool = False) -> (bool, str):
     """ Dela enligt fasit ägare
     returnerar
 
-    falskt om det inte går att dela på fasit ägare
+    Falskt om det inte går att dela på fasit ägare
     Sant om metoden fungerade
+
+    om det ör någon ändring på metod kommer det tillbaka som en sträng
     """
+    split_metod = "fasit_ägare"
     if verbose: print(f"Dela_enl_fasit_ägare start                  2022-11-21 12:34:00")
     s = MysqlDb().session()
-    fasit_avser = s.query(FasitCopy).filter(FasitCopy.name == faktura_rad.avser).first()
-    if fasit_avser is None or fasit_avser.attribute_anvandare is None or len(fasit_avser.attribute_anvandare) == 1 or fasit_avser.attribute_anvandare == "Dolk Lyam":
+    fasit_rad = s.query(FasitCopy).filter(FasitCopy.name == faktura_rad.avser).first()
+    if fasit_rad is None or fasit_rad.attribute_anvandare is None or len(fasit_rad.attribute_anvandare) < 2:
         # raden finns inte i fasit, exv ärenden
         #                     eller är inte kopplad till en användare
         #                                                                eller är kopplad till en med för kort namn
         #                                                                                                             mina ska alltid gå till konterings kontroll
         return False
     else:
-        if verbose: print(f"{fasit_avser.attribute_anvandare:},                            2022-11-21 12:35:30")
+        if verbose: print(f"{fasit_rad.attribute_anvandare:},                            2022-11-21 12:35:30")
         try:
-            user_id = get_user_id_for_fasit_user(fasit_avser.attribute_anvandare)
+            user_id = get_user_id_for_fasit_user(fasit_rad.attribute_anvandare)
         except NoUserFoundError:
             return False
         user_aktivitet_char = s.query(Staff_dbo.aktivitet_char).filter(Staff_dbo.id == user_id).first()
         if user_aktivitet_char is None:
             return False
-        for enhet, enhet_andel in gen_tjf_for_staff(user_id=user_id, rad=faktura_rad):
+        bibliotekarier = flatten_row(s.query(Staff_dbo.user_id).filter(Staff_dbo.titel.startswith("Biblio").all()))
+        janitors = flatten_row(s.query(Staff_dbo.user_id).filter(Staff_dbo.titel.startswith("Vaktm").all()))
+        if user_id in bibliotekarier:  # ["tinasp", "magbro"]:  # bibliotekets kostnader går över hela skolan
+            split = generate_split_on_student_count(enheter=["656", "655"],  # Delas över Gymnasiet
+                                                    month=faktura_rad.faktura_month,
+                                                    year=faktura_rad.faktura_year)
+            split_metod = "Kontering>FolkungaBibliotek"
+        elif user_id in janitors:  # ["jonbjc", "kenchr"]:  # vaktmästarnas kostnader går över hela skolan
+            split = generate_split_on_student_count(enheter=["656", "655"],  # Delas över Gymnasiet
+                                                    month=faktura_rad.faktura_month,
+                                                    year=faktura_rad.faktura_year)
+            split_metod = "Kontering>Vaktmästare"
+        elif user_id == "lyadol":
+            if "Personlig utr" not in fasit_rad.eunomia_kontering:
+                split = generate_split_on_student_count(enheter=["656", "655"],  # Delas över Gymnasiet
+                                                    month=faktura_rad.faktura_month,
+                                                    year=faktura_rad.faktura_year)
+                split_metod = "Kontering>IT-Tekniker Buffert"
+            else:
+                split = gen_tjf_for_staff(user_id=user_id, rad=faktura_rad)
+                split_metod = "Kontering>IT-Tekniker Personlig utr"
+        else:
+            split = gen_tjf_for_staff(user_id=user_id, rad=faktura_rad)
+
+        for enhet, enhet_andel in split:
             s.add(FakturaRadSplit_dbo(
                 faktura_year=faktura_rad.faktura_year,
                 faktura_month=faktura_rad.faktura_month,
@@ -55,11 +83,12 @@ def dela_enl_fasit_agare(faktura_rad: FakturaRad_dbo, verbose: bool = False) -> 
                 aktivitet=ID_AKTIVITET[enhet][user_aktivitet_char]
             ))
         faktura_rad.split_done = 1
+        faktura_rad.split_method = split_metod
         s.commit()
         return True
 
 
-def dela_enl_fasit_kontering(faktura_rad, verbose: bool = False) -> bool:
+def dela_enl_fasit_kontering(faktura_rad:, verbose: bool = False) -> bool:
     """ dela enligt fasit kontering """
     if verbose: print(f"Dela_enl_fasit_kontering start                         2022-11-21 12:55:46")
     s = MysqlDb().session()
@@ -68,7 +97,8 @@ def dela_enl_fasit_kontering(faktura_rad, verbose: bool = False) -> bool:
         return False
     else:
         if verbose: print(f"{fasit_rad.eunomia_kontering:},                            2022-11-21 12:56:24")
-        kontering, aktivitet_char = decode_kontering_in_fritext(fasit_rad.eunomia_kontering)
+        kontering, aktivitet_char, metod_string = decode_kontering_in_fritext(faktura_rad=faktura_rad,
+                                                                              fasit_rad=fasit_rad)
         for enhet in kontering.keys():
             s.add(FakturaRadSplit_dbo(
                 faktura_year=faktura_rad.faktura_year,
@@ -80,7 +110,10 @@ def dela_enl_fasit_kontering(faktura_rad, verbose: bool = False) -> bool:
                 aktivitet=ID_AKTIVITET[enhet][aktivitet_char]
             ))
         faktura_rad.split_done = 1
-        faktura_rad.split_method = "fasit_kontering"
+        if metod_string is None:
+            faktura_rad.split_method = "fasit_kontering"
+        else:
+            faktura_rad.split_method = metod_string
     s.commit()
     return False
 
@@ -89,7 +122,7 @@ def dela_enligt_total_tjf(faktura_rad, dela_over_enheter: list[str], verbose: bo
     """ Dela enligt total tjf
     dela_over_enheter är en lista med enheter som ska delas över
     """
-    print(F"bu") #TODO 2022-11-23 17:13:38
+    print(F"bu")  # TODO 2022-11-23 17:13:38
     split = get_tjf_for_enhet(enheter=dela_over_enheter, month=faktura_rad.faktura_month, year=faktura_rad.faktura_year, verbose=verbose)
     return gen_split_rows(faktura_rad=faktura_rad, split=split, aktivitet_char="p", split_method="elevantal")
 
@@ -126,11 +159,11 @@ def gen_split_rows(faktura_rad: FakturaRad_dbo,
     return True
 
 
-def split_row(month: list[str] = None, verbose: bool = False) -> None:
+def split_row(months: list[str] = None, verbose: bool = False) -> None:
     """ split row """
     s = MysqlDb().session()
     # behandla_dela_cb()
-    if month is None:
+    if months is None:
         rader = s.query(FakturaRad_dbo).filter(or_(FakturaRad_dbo.split_done == None,
                                                    FakturaRad_dbo.split_done == 0)
                                                ).all()
@@ -138,9 +171,11 @@ def split_row(month: list[str] = None, verbose: bool = False) -> None:
     else:
         rader = s.query(FakturaRad_dbo).filter(and_(or_(FakturaRad_dbo.split_done == None,
                                                         FakturaRad_dbo.split_done == 0),
-                                                    FakturaRad_dbo.faktura_month.in_(month)
+                                                    FakturaRad_dbo.faktura_year == 2022,
+                                                    FakturaRad_dbo.faktura_month.in_(months)
                                                     )
-                                               ).limit(2).all()
+                                               ).all()
+        # ).limit(2).all()
     fasit_kontering_successful = False  # säkerställer att värden finns för när utskriftgen sker
     tot_tjf_successful = False
     elevantal_successful = False
@@ -148,11 +183,10 @@ def split_row(month: list[str] = None, verbose: bool = False) -> None:
     for faktura_rad in rader:
         # print(rad)
         if verbose: print("Dela enligt Fasit ägare                             2022-11-21 12:33:22")
-        fasit_agare_successful: bool = dela_enl_fasit_agare(faktura_rad)
-
-        if not fasit_agare_successful:
-            fasit_kontering_successful = dela_enl_fasit_kontering(faktura_rad)
-            if not fasit_kontering_successful:
+        fasit_kontering_successful = dela_enl_fasit_kontering(faktura_rad)
+        if not fasit_kontering_successful:
+            fasit_agare_successful, metod = dela_enl_fasit_agare(faktura_rad)
+            if not fasit_agare_successful:
                 fasit_rad = get_fasit_row(name=faktura_rad.avser)
                 if faktura_rad.fakturamarkning.startswith("S:t Lars"):
                     dela_over_enheter = ["654"]
@@ -160,25 +194,27 @@ def split_row(month: list[str] = None, verbose: bool = False) -> None:
                     dela_over_enheter = ["656", "655"]
                 else:
                     raise Exception("Unknown fakturamarkning                              2022-11-22 15:16:18")
-
-                if fasit_rad.tag_anknytning == 1 \
-                        or fasit_rad.tag_domain == 1 \
-                        or fasit_rad.tag_rcard == 1 \
-                        or fasit_rad.tag_funktionskonto == 1:
-                    tot_tjf_successful = dela_enligt_total_tjf(faktura_rad, dela_over_enheter=dela_over_enheter)
-                elif fasit_rad.tag_chromebox == 1 \
-                        or fasit_rad.tag_videoprojektor == 1:
-                    elevantal_successful = dela_enligt_elevantal(faktura_rad, dela_over_enheter=dela_over_enheter)
+            if fasit_rad.tag_anknytning == 1 \
+                    or fasit_rad.tag_rcard == 1 \
+                    or fasit_rad.tag_mobiltelefon == 1 \
+                    or fasit_rad.tag_skrivare == 1:
+                tot_tjf_successful = dela_enligt_total_tjf(faktura_rad, dela_over_enheter=dela_over_enheter)
+            elif fasit_rad.tag_chromebox == 1 \
+                    or fasit_rad.tag_domain == 1 \
+                    or fasit_rad.tag_videoprojektor == 1 \
+                    or fasit_rad.tag_funktionskonto == 1:
+                elevantal_successful = dela_enligt_elevantal(faktura_rad, dela_over_enheter=dela_over_enheter)
 
         if not fasit_agare_successful and not fasit_kontering_successful and not tot_tjf_successful:
-            print_row(row_values={"Period": "2022-9",
-                                  "Tjänst": "Chromebooks",
-                                  "Avser": "C12345",
-                                  "Summa": 1012,
+            print_row(row_values={"Period": F"{faktura_rad.faktura_year}-{faktura_rad.faktura_month}",
+                                  "Tjänst": faktura_rad.tjanst[:[COL_WIDTHS["Tjänst"]]],
+                                  "Avser": faktura_rad.avser[:[COL_WIDTHS["Avser"]]],
+                                  "Summa": faktura_rad.summa[:[COL_WIDTHS["Summa"]]],
                                   "Fasit ägare": fasit_agare_successful,
                                   "Fasit kontering": fasit_kontering_successful,
                                   "Tot Tjf": tot_tjf_successful,
-                                  "Elevantal": elevantal_successful, "Summary": "Failed"})
+                                  "Elevantal": elevantal_successful,
+                                  "Summary": "Failed"})
         else:
             print_row(row_values={"Period": F"{faktura_rad.faktura_year}-{faktura_rad.faktura_month}",
                                   "Tjänst": faktura_rad.tjanst[:[COL_WIDTHS["Tjänst"]]],
@@ -368,4 +404,4 @@ if __name__ == "__main__":
     # gen_split_by_elevantal(enheter=["654300", "654400"])
     # generate_total_tjf_for_month(1)
     # behandla_dela_cb()
-    split_row(month=["7", "8", "9", "10", "11", "12"])
+    split_row(months=["7", "8", "9", "10", "11", "12"])

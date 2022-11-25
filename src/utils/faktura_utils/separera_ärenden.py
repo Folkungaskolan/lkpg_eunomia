@@ -16,10 +16,9 @@ def separera_cb_repair_cases():
     for faktura_rad in case_faktura_rader:
         case_id = faktura_rad.tjanst.split(" ")
         faktura_rad.eunomia_case_id = case_id[1]
-        try:
-            faktura_rad.eunomia_case_creator_user_id = get_user_id_for_fasit_user(strips_parentheses(faktura_rad.tjanst))
-        except NoUserFoundError:
-            faktura_rad.eunomia_case_creator_user_id = ""
+        user_id = get_user_id_for_fasit_user(strips_parentheses(faktura_rad.tjanst.split("(")[1]))
+        # print(F"{faktura_rad.tjanst:}|{user_id}")
+        faktura_rad.eunomia_case_creator_user_id = user_id
     s.commit()
     write_case_costs_to_csv()
 

@@ -8,6 +8,14 @@ from sqlalchemy import and_, or_
 
 from utils.dbutil.student_db import update_student_examen_year
 from utils.file_utils.fasit_file import load_fasit_csv
+from utils.flatten import flatten_list, flatten_row
+from utils.my_now import now_date
+
+
+def get_fasit_row(name: str) -> FasitCopy:
+    """ Hämta fasit rad från databasen"""
+    s = MysqlDb().session()
+    return s.query(FasitCopy).filter(FasitCopy.name == name).first()
 
 
 def load_fasit_to_db() -> None:
@@ -226,19 +234,54 @@ def get_user_id_for_fasit_user(attribute_anvandare: str) -> str:
 def update_staff_from_fasit_file() -> None:
     """ Uppdateriar personal tabellen utifrån fasit filen"""
     s = MysqlDb().session()
+    old_staff = flatten_row(list(s.query(Staff_dbo.user_id).all()))
+    print("old_staff", old_staff)
     fasit_staff = s.query(FasitCopy).filter(FasitCopy.tag_person == 1).all()
     for f_staff in fasit_staff:
+        if f_staff.attribute_anvandarnamn in old_staff:
+            old_staff.remove(f_staff.attribute_anvandarnamn)
         staffer = s.query(Staff_dbo).filter(Staff_dbo.user_id == f_staff.attribute_anvandarnamn).first()
         if staffer is not None:  # hittades
             staffer.full_name = f_staff.name
             staffer.email = f_staff.attribute_epost
             staffer.title = f_staff.attribute_jobbtitel
+            staffer.domain = "linkom"
+            if f_staff.attribute_faktura.startswith("Folkunga"):
+                staffer.skola = "Folkungaskolan"
+            elif f_staff.attribute_faktura.startswith("St"):
+                staffer.skola = "St:Lars"
+            else:
+                staffer.skola = "okänd"
         else:  # hittades inte så skapa ny
+            if f_staff.attribute_faktura.startswith("Folkunga"):
+                skola = "Folkungaskolan"
+            elif f_staff.attribute_faktura.startswith("St"):
+                skola = "St:Lars"
+            else:
+                skola = "okänd"
             s.add(Staff_dbo(user_id=f_staff.attribute_anvandarnamn,
                             full_name=f_staff.name,
+                            domain="linkom",
                             email=f_staff.attribute_epost,
                             titel=f_staff.attribute_jobbtitel
                             ))
+    s.commit()
+    if len(old_staff) > 0:
+        print(f"Följande användare finns {old_staff}")
+        mark_staffer_as_old(old_staff)
+
+
+def mark_staffer_as_old(old_staff: list[str]) -> None:
+    """ Markera en lista med personer som gamla
+    old_staff lista med user_id
+    exv ["lyadol"]
+    """
+    s = MysqlDb().session()
+    for old_user_id in old_staff:
+        old_staffer = s.query(Staff_dbo).filter(Staff_dbo.user_id == old_user_id).first()
+        if not old_staffer.domain.startswith("old"):  # sabba inte om det redan är old markerat
+            old_staffer.domain = f"old|" + now_date()
+            print(F"Markera {old_user_id} som gammal")
     s.commit()
 
 
@@ -267,7 +310,7 @@ def delete_stupid_info_in_fasit() -> None:
 if __name__ == "__main__":
     # delete_stupid_info_in_fasit()
     print(get_user_id_for_fasit_user("Dolk Lyam"))
-
+    update_staff_from_fasit_file()
     # translate_fasit_name_to_eunomia_name()
     # create_fasit_staff_user_ids()
     # add_update_cmd_line(name="E52076", cmd="update", new_value="test1") # lägg på något som behöver uppdateras
