@@ -153,3 +153,4 @@ class UserAlreadyExistsError(Exception):    pass
 
 
 class VariableNotFoundError(FileNotFoundError):    pass
+class NoValidEnheterFoundError(FileNotFoundError):    pass

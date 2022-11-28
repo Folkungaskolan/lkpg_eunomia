@@ -21,7 +21,7 @@ FASIT_CSV_FILEPATH = MAIN_INTALL_SAVE_FOLER + "fasit.csv"
 
 # /---------------------------------- FATURA HANTERING ----------------------------------/
 
-FAKTURA_EXCEL_TJF_FOLDER = "H:/Min enhet/Månadsuppföljning Tjänstefördelnings källa/"
+FAKTURA_EXCEL_TJF_FOLDER = "H:/Delade enheter/F - Folkungaskolan Fakturauppföljning Eunomia/Tjf Källor/"
 FAKTURA_EXCEL_FAKTURA_RADER_FILE = MAIN_INTALL_SAVE_FOLER + "Fakturor/import.xlsx"
 FAKTURA_CSV_CASE_COSTS_CSV_FILE = MAIN_INTALL_SAVE_FOLER + "Fakturor/casecosts_long_uniqe_filname_Gq2H4nn6uFzaV4RSUHPavmoy3QYso3cpcAYZ6q.csv"
 

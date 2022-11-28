@@ -219,17 +219,17 @@ def split(list_a, chunk_size):
 def _2_1_process_id_into_student_record(headless_bool: bool = True, thread_nr: int = 0) -> str:
     """ Threaded student fetcher """
     driver = init_chrome_webdriver(headless_bool=headless_bool)
-    local_session = init_db()
+    s = init_db()
     driver = login_student_accounts_page(driver)
     if not headless_bool:
         position_windows(driver=driver, position_nr=(thread_nr % 4) + 1)
     i = 0
     if thread_nr == 0:
-        start_count = local_session.query(Student_id_process_que_dbo).count()
+        start_count = s.query(Student_id_process_que_dbo).count()
         print_progress_bar(0, start_count, prefix='Progress:', suffix='Complete', length=50)
-    while local_session.query(Student_id_process_que_dbo).count() > 0:
+    while s.query(Student_id_process_que_dbo).count() > 0:
         i += 1
-        left_count = local_session.query(Student_id_process_que_dbo).count()
+        left_count = s.query(Student_id_process_que_dbo).count()
         if left_count < 20 and thread_nr > 4:
             return f"Done in thread {thread_nr}"
         if thread_nr == 0:
@@ -238,13 +238,13 @@ def _2_1_process_id_into_student_record(headless_bool: bool = True, thread_nr: i
                                prefix='Progress:',
                                suffix=F'Complete {left_count} students left to process',
                                length=50)
-        rows_remaining = local_session.query(Student_id_process_que_dbo.id).limit(500).all()
+        rows_remaining = s.query(Student_id_process_que_dbo.id).limit(500).all()
         thread_picked_row_id = random.choice([item for sublist in list(rows_remaining) for item in sublist])
-        local_session.execute(f"UPDATE eunomia.student_id_process_que_dbo SET taken = 1 WHERE id = {thread_picked_row_id}")
-        local_session.commit()
-        row = local_session.query(Student_id_process_que_dbo).filter(Student_id_process_que_dbo.id == thread_picked_row_id).first()
+        s.execute(f"UPDATE eunomia.student_id_process_que_dbo SET taken = 1 WHERE id = {thread_picked_row_id}")
+        s.commit()
+        row = s.query(Student_id_process_que_dbo).filter(Student_id_process_que_dbo.id == thread_picked_row_id).first()
         driver.get(url=F"https://elevkonto.linkoping.se/entity/view/user/{row.web_id}")
-        google_pw = None
+        google_pw = ""
         try:
             account_user_name = driver.find_element(by=By.XPATH, value="/html/body/div[1]/div/article/div[2]/div/div[2]/div[1]/div[2]/div[2]/span").text
             birthday = driver.find_element(by=By.XPATH, value="/html/body/div[1]/div/article/div[2]/div/div[2]/div[1]/div[1]/div[2]/span").text
@@ -269,11 +269,11 @@ def _2_1_process_id_into_student_record(headless_bool: bool = True, thread_nr: i
                                            skola=skola,
                                            birthday=birthday,
                                            google_pw=google_pw,
-                                           session=local_session,
+                                           session=s,
                                            webid=row.web_id)
             try:
-                local_session.delete(row)
-                local_session.commit()
+                s.delete(row)
+                s.commit()
             except sqlalchemy.orm.exc.ObjectDeletedError:  # happens in the end when all threads are done and they take the last same row
                 pass
             continue
@@ -368,7 +368,8 @@ if __name__ == "__main__":
     # import_all_student_from_web()
     # _2_process_id_into_student_record()
     # _1_create_student_ids_from_web(headless_bool=False)
-    _2_process_id_into_student_record()
+    # _2_process_id_into_student_record(force_single_thread=True, headless_bool=False) # Dev version
+    _2_process_id_into_student_record()  # Run version
     count_student()
     write_student_csv_from_mysql()
     # find_and_move_old_students() # kör bara om importen är helt lyckad. Dvs alla klasser alla elever hämtat från webben

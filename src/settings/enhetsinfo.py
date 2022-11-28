@@ -10,6 +10,7 @@ ID_AKTIVITET = {"655119": GY_AKTIVITER,  # GY EK
                 "656510": GRU_AKTIVITER,  # GRU 4-6
                 "656520": GRU_AKTIVITER,  # GRU 7-9
                 "656310": GRU_AKTIVITER,  # fritids
+                "655125": GY_AKTIVITER,  # IMS går som GY
                 "654100": GY_AKTIVITER,  # St:Lars ES- Musik
                 "654200": GY_AKTIVITER,  # St:Lars ES- bild
                 "654300": GY_AKTIVITER,  # St:Lars NA

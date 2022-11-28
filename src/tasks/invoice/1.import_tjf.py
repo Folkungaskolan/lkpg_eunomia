@@ -12,6 +12,9 @@ from settings.folders import FAKTURA_EXCEL_TJF_FOLDER
 from utils.decorators import function_timer
 from utils.pnr_utils import pnr10_to_pnr12
 
+MONTHS_name_to_int = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "maj": 5, "jun": 6, "jul": 7, "aug": 8, "sep": 9, "okt": 10, "nov": 11, "dec": 12}
+MONTHS_int_to_name = {v: k for k, v in MONTHS_name_to_int.items()}
+
 
 def find_enhets_tjf_file(enhet: str) -> Path:
     """ Hittar tjf filen för en enhet """
@@ -111,5 +114,5 @@ def generate_aktivitet_from_tjf() -> None:  # Done
 if __name__ == '__main__':
     pd.set_option('display.max_columns', 50)
     pd.set_option('display.expand_frame_repr', False)
-    # import_tjf_alla_enheter()  # importerar tjänstefördelningarna för alla enheter
-    generate_aktivitet_from_tjf()  # kontrollerar aktiviteter för personalens idn så de är redo för rad delningar
+    import_tjf_alla_enheter()  # importerar tjänstefördelningarna för alla enheter
+    # generate_aktivitet_from_tjf()  # kontrollerar aktiviteter för personalens idn så de är redo för rad delningar

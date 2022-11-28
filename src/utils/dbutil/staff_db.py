@@ -2,7 +2,7 @@ from functools import cache
 
 from sqlalchemy.orm import Session
 
-from CustomErrors import DBUnableToCrateUser, NoUserFoundError
+from CustomErrors import DBUnableToCrateUser, NoUserFoundError, NoValidEnheterFoundError
 from database.models import Staff_dbo, Tjf_dbo, FasitCopy
 from database.mysql_db import init_db, MysqlDb
 from utils.faktura_utils.normalize import normalize
@@ -97,10 +97,15 @@ def get_pnr_from_user_id(user_id: str) -> str:
         raise NoUserFoundError(f"Kunde inte hitta användare med user_id: {user_id}")
 
 
-@cache  # tjänstefördelningen kommer inte förändras inom samma körning så den kan cachas
+CASHED_GET_TJF_FOR_ENHET = {}
+
+
 def get_tjf_for_enhet(enheter: list[str], month: int) -> dict[str, float]:
     """ get tjf for enhet """
     valid_enheter = []
+    key = f"{enheter.sort()}-{month}"
+    if key in CASHED_GET_TJF_FOR_ENHET:  # om enhet finns i cachad lista, returnera
+        return CASHED_GET_TJF_FOR_ENHET[key]
 
     s = MysqlDb().session()
     id_komplement_pas = s.query(Tjf_dbo.id_komplement_pa).distinct().all()
@@ -110,6 +115,8 @@ def get_tjf_for_enhet(enheter: list[str], month: int) -> dict[str, float]:
                 valid_enheter.append(id_komplement_pa.id_komplement_pa)
     tjfs = s.query(Tjf_dbo).filter(Tjf_dbo.id_komplement_pa.in_(valid_enheter)
                                    ).all()
+    if tjfs is None:
+        raise NoValidEnheterFoundError(f"Kunde inte hitta tjf för givna enheter{enheter}")
     t = {}
     for tjf in tjfs:
         if month == 1:
@@ -138,7 +145,9 @@ def get_tjf_for_enhet(enheter: list[str], month: int) -> dict[str, float]:
             t[tjf.id_komplement_pa] = t.get(tjf.id_komplement_pa, 0) + tjf.dec
         elif month > 13:
             raise ValueError("month must be between 1-12")
-    return normalize(t)
+    result = normalize(t)
+    CASHED_GET_TJF_FOR_ENHET[key] = result
+    return result
 
 
 @cache  # tjänstefördelningen kommer inte förändras inom samma körning så den kan cachas
@@ -263,6 +272,9 @@ def set_tjf_sum_on_staff(user_id: str, month: int, summa: float) -> None:
 
 if __name__ == '__main__':
     pass
+    print(get_tjf_for_enhet(enheter=["655", "656"], month=1))
+    print(get_tjf_for_enhet(enheter=["655", "656"], month=1))
+
     # set_tjf_sum_on_staff(user_id="lyadol", month=1, summa=0.0)
 
 # set_tjf_month_okflagg(user_id="lyadol", month=10)

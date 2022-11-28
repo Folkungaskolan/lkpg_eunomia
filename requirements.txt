@@ -1,9 +1,8 @@
 setuptools>=65.5.0
 SQLAlchemy>=1.4.42
-mysqlclient>=2.0.3
 numpy>=1.23.4
 pandas>=1.5.1
 selenium>=4.5.0
 requests>=2.28.1
 dask>=2022.10.0
-openpyxl>=3.0.10
+colorama~=0.4.6

@@ -35,6 +35,12 @@ class Student_dbo(Base):
     webid: str = Column(String(length=45))
     klass_examen_year: int = Column(Integer, default=0)
 
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return F"user_id: {self.user_id}, first_name: {self.first_name}, last_name: {self.last_name}, klass: {self.klass}, skola: {self.skola}, birthday: {self.birthday}, eduroam_pw: {self.eduroam_pw}, pw: {self.google_pw}, klass_examen_year: {self.klass_examen_year}"
+
     @property
     def email(self) -> str:
         """ Returns the email address for the student """
@@ -103,7 +109,9 @@ class Staff_dbo(Base):
     sum_tjf_okt: float = Column(Float, default=0)
     sum_tjf_nov: float = Column(Float, default=0)
     sum_tjf_dec: float = Column(Float, default=0)
-    skola : str = Column(String(length=45))
+    tjf_error: str = Column(String(length=45), default="0")
+    skola: str = Column(String(length=45))
+
     @property
     def pnr10(self) -> str:
         """ get pnr10. """
@@ -172,12 +180,14 @@ class Tjf_dbo(Base):
     aug: float = Column(Float)
     sep: float = Column(Float)
     okt: float = Column(Float)
+    nov: float = Column(Float)
     dec: float = Column(Float)
     kommentar: str = Column(String(length=150))
     personalkategori: str = Column(String(length=50))
-
+    def __str__(self):
+        return self.__repr__()
     def __repr__(self):
-        return F"Tjf(id:{self.id}|pnr12='{self.pnr12}', user_id='{self.user_id}', id_komplement_pa='{self.id_komplement_pa}', year={self.year}, month={self.month}, aktivitet_s='{self.aktivitet_s}', aktivitet='{self.aktivitet}', namn='{self.namn}', yrke='{self.yrke}', jan={self.jan}, feb={self.feb}, mar={self.mar}, apr={self.apr}, maj={self.maj}, jun={self.jun}, jul={self.jul}, aug={self.aug}, sep={self.sep}, okt={self.okt}, dec={self.dec}, kommentar='{self.kommentar}', personalkategori='{self.personalkategori}')"
+        return F"Tjf(id:{self.id}|pnr12='{self.pnr12}', id_komplement_pa='{self.id_komplement_pa}', year={self.year},  jan={self.jan}, feb={self.feb}, mar={self.mar}, apr={self.apr}, maj={self.maj}, jun={self.jun}, jul={self.jul}, aug={self.aug}, sep={self.sep}, okt={self.okt}, dec={self.dec}, kommentar='{self.kommentar}', personalkategori='{self.personalkategori}')"
 
 
 class FakturaRad_dbo(Base):
