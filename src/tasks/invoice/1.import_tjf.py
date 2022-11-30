@@ -42,6 +42,9 @@ def import_tjf_for_enhet(enhet: str) -> None:
     df = df[df["Personnr"] != "7501010101"]
     session = init_db()
     for index, row in df.iterrows():
+        add_staff, add_tjf = False, False
+        # if row["Personnr"] != "9203051140":  # Dev Rad
+        #     continue# Dev Rad
         # print(row)
         staff = session.query(Staff_dbo).filter(Staff_dbo.pnr12 == pnr10_to_pnr12(row["Personnr"])).first()
         if staff is None:  # om vi inte har en användare så skapas en.
@@ -49,6 +52,7 @@ def import_tjf_for_enhet(enhet: str) -> None:
             staff.full_name = row["Namn"]
             staff.domain = "update_from_web"
             staff.titel = row["Yrke"]
+            add_staff = True
         tjf = session.query(Tjf_dbo).filter(and_(Tjf_dbo.id_komplement_pa == row["ID/Komplement/PA"],
                                                  Tjf_dbo.pnr12 == pnr10_to_pnr12(row["Personnr"])
                                                  )
@@ -56,25 +60,22 @@ def import_tjf_for_enhet(enhet: str) -> None:
         if tjf is None:
             tjf = Tjf_dbo(pnr12=pnr10_to_pnr12(row["Personnr"]),
                           id_komplement_pa=row["ID/Komplement/PA"])
+            add_tjf = True
         tjf.id_komplement_pa = row["ID/Komplement/PA"]
         tjf.year = "2022"
-        tjf.jan = row["Jan"]
-        tjf.feb = row["Feb"]
-        tjf.mar = row["Mar"]
-        tjf.apr = row["Apr"]
-        tjf.maj = row["Maj"]
-        tjf.jun = row["Jun"]
-        tjf.jul = row["Jul"]
-        tjf.aug = row["Aug"]
-        tjf.sep = row["Sep"]
-        tjf.okt = row["Okt"]
-        tjf.nov = row["Nov"]
-        tjf.dec = row["Dec"]
+        for month in MONTHS_name_to_int.keys():  # jan, feb, mar, apr, maj, jun, jul, aug, sep, okt, nov, dec
+            if eval(F'row["{month.capitalize()}"]') is not None \
+                    and len(eval(F'row["{month.capitalize()}"]')) != 0:  # till Jan, Feb osv
+                exec(F'tjf.{month} = row["{month.capitalize()}"]')  # kör tjf.jan = tjfa_sum[{"jan"}]
+            else:
+                exec(F'tjf.{month} = 0')
         tjf.kommentar = row["Kommentar"]
         tjf.yrke = row["Yrke"]
         tjf.personalkategori = row["Personalkategori"]
-        session.add(staff)
-        session.add(tjf)
+        if add_staff:
+            session.add(staff)
+        if add_tjf:
+            session.add(tjf)
     session.commit()
 
 
