@@ -1,9 +1,14 @@
 """ funktioner som hanterar elever i databasen"""
+import inspect
+from datetime import datetime
+
 from sqlalchemy import and_
 
-from database.models import Student_dbo, Student_old_dbo, StudentCount_dbo
+from database.models import Student_dbo, Student_old_dbo, StudentCount_dbo, Tjf_dbo
 from database.mysql_db import MysqlDb
 from settings.enhetsinfo import ID_AKTIVITET, FOLKUNGA_GRU_ENHETER, STLARS_ENHETER, ENHETER_SOM_HAR_CBS, FOLKUNGA_GY_ENHETER
+from utils.dbutil.expandera_enheter import expandera_enheter
+from utils.faktura_utils.normalize import normalize
 
 
 def copy_student_counts(from_month: int, to_month: int, from_year: int = 2022, to_year: int = 2022) -> None:
@@ -43,8 +48,11 @@ def calculate_examen_year(klass: str) -> int:
     return -1
 
 
-def update_student_examen_year() -> None:
+def update_student_examen_year(verbose: bool = False) -> None:
     """ update student examen year """
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
+
     s = MysqlDb().session()
     students = s.query(Student_dbo).all()
     for student in students:
@@ -101,7 +109,7 @@ def find_and_move_old_students() -> None:  # TODO: Move student to old table whe
     print("find_and_move_old_students  Done")
 
 
-def generate_split_on_student_count(year: int, month: int, enheter_to_split_over: set) -> list[str:float]:
+def generate_split_on_student_count(year: int, month: int, enheter_to_split_over: list | str) -> list[str:float]:
     """ Generera split på antal elever """
     s = MysqlDb().session()
 
@@ -116,29 +124,39 @@ def generate_split_on_student_count(year: int, month: int, enheter_to_split_over
         enheter_to_split_over = FOLKUNGA_GRU_ENHETER
     elif enheter_to_split_over == {"STL"}:
         enheter_to_split_over = STLARS_ENHETER
-    if any([True for enhet in enheter_to_split_over if enhet not in alla_enheter]):  # Kollar att enheterna vi fick finns i alla enheter
+
+    expanderad_enheter_to_split_over = expandera_enheter(enheter_to_split_over)
+    if any([True for enhet in expanderad_enheter_to_split_over if enhet not in alla_enheter]):  # Kollar att enheterna vi fick finns i alla enheter
         raise ValueError("Enhet finns inte i alla enheter")
 
     abs_distribution = {}  # Variabel initiering
     rel_distribution = {}  # Variabel initiering
 
     # hämta antal elever
-    for enhet in enheter_to_split_over:
+    for enhet in expanderad_enheter_to_split_over:
         enhet_student_count = s.query(StudentCount_dbo.count).filter(StudentCount_dbo.id_komplement_pa == enhet,
                                                                      StudentCount_dbo.month == month,
                                                                      StudentCount_dbo.year == year,
                                                                      ).first()
         if enhet_student_count is None:
-            raise ValueError(f"Kunde inte hitta antal elever för enhet: {enhet}")
+            # raise ValueError(f"Kunde inte hitta antal elever för enhet: {enhet}")
             abs_distribution[enhet] = 0
-            continue
-        abs_distribution[enhet] = enhet_student_count[0]
+        else:
+            abs_distribution[enhet] = enhet_student_count[0]
     total = sum(abs_distribution.values())
     for key in abs_distribution.keys():
         rel_distribution[key] = abs_distribution[key] / total
-
-    return rel_distribution
+    return normalize(rel_distribution)
 
 
 if __name__ == '__main__':
     pass
+    # copy_student_counts(from_month=10, from_year=2022, to_month=1, to_year=2022)
+    # copy_student_counts(from_month=10, from_year=2022, to_month=2, to_year=2022)
+    # copy_student_counts(from_month=10, from_year=2022, to_month=3, to_year=2022)
+    # copy_student_counts(from_month=10, from_year=2022, to_month=4, to_year=2022)
+    # copy_student_counts(from_month=10, from_year=2022, to_month=5, to_year=2022)
+    # copy_student_counts(from_month=10, from_year=2022, to_month=6, to_year=2022)
+    # copy_student_counts(from_month=10, from_year=2022, to_month=7, to_year=2022)
+    # copy_student_counts(from_month=10, from_year=2022, to_month=8, to_year=2022)
+    # copy_student_counts(from_month=10, from_year=2022, to_month=9, to_year=2022)

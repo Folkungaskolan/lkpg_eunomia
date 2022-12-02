@@ -1,6 +1,6 @@
 """ allt som har med fasit hanteringen i databasen att göra"""
 from functools import cache
-
+import inspect
 from CustomErrors import GearNotFoundError, NoUserFoundError
 from database.models import FasitCopy, Staff_dbo
 from database.mysql_db import MysqlDb
@@ -8,20 +8,26 @@ from sqlalchemy import and_, or_
 
 from utils.dbutil.student_db import update_student_examen_year
 from utils.file_utils.fasit_file import load_fasit_csv
-from utils.flatten import flatten_list, flatten_row
+from utils.flatten import flatten_row
 from utils.my_now import now_date
 
 
-def get_fasit_row(name: str) -> FasitCopy:
+def get_fasit_row(name: str, verbose: bool = False) -> FasitCopy:
     """ Hämta fasit rad från databasen"""
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
     s = MysqlDb().session()
     return s.query(FasitCopy).filter(FasitCopy.name == name).first()
 
 
-def load_fasit_to_db() -> None:
+def load_fasit_to_db(verbose: bool = False) -> None:
     """ Ladda in fasit informationen till databasen"""
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
+
     df = load_fasit_csv()
-    # print(df)
+    if verbose:
+        print(df)
     df = df.fillna(0, inplace=False)
     s = MysqlDb().session()
 
@@ -149,14 +155,16 @@ def load_fasit_to_db() -> None:
             fasit_item.tag_videoprojektor = row['tag.videoprojektor']
             fasit_item.eunomia_user_id = None
     s.commit()
-    create_fasit_student_user_ids()
-    update_student_examen_year()
-    translate_fasit_name_to_eunomia_name()
-    update_staff_from_fasit_file()
+    create_fasit_student_user_ids(verbose=verbose)
+    update_student_examen_year(verbose=verbose)
+    translate_fasit_name_to_eunomia_name(verbose=verbose)
+    update_staff_from_fasit_file(verbose=verbose)
 
 
-def create_fasit_staff_user_ids() -> None:
+def create_fasit_staff_user_ids(verbose: bool = False) -> None:
     """ Skapar eunomia koppling till användarnamn för personalen"""
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
     s = MysqlDb().session()
     fasit_staff = s.query(FasitCopy).filter(FasitCopy.tag_person == 1).all()
     for staff in fasit_staff:
@@ -167,8 +175,10 @@ def create_fasit_staff_user_ids() -> None:
 
 
 @cache
-def extract_cb_student_user_ids_login_list(senast_inloggade: str) -> str:
+def extract_cb_student_user_ids_login_list(senast_inloggade: str, verbose: bool = False) -> str:
     """ Drar ut bara användarnamnen från senast inloggade strängen"""
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
     if senast_inloggade == 0:
         return ""
     emails = senast_inloggade.split(',')
@@ -178,8 +188,10 @@ def extract_cb_student_user_ids_login_list(senast_inloggade: str) -> str:
     return '|'.join(user_ids)
 
 
-def create_fasit_student_user_ids():
+def create_fasit_student_user_ids(verbose: bool = False) -> None:
     """Uppdaterar databsen för eleverna för enklare hämtning av user_id"""
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
     s = MysqlDb().session()
     cbs = s.query(FasitCopy).filter(and_(FasitCopy.eunomia_user_id == None,
                                          FasitCopy.attribute_elev_epost != None
@@ -189,8 +201,10 @@ def create_fasit_student_user_ids():
     s.commit()
 
 
-def add_update_cmd_line(name: str, cmd: str, new_value: str = "") -> None:
+def add_update_cmd_line(name: str, cmd: str, new_value: str = "", verbose: bool = False) -> None:
     """ Lägger till commandosträngen till fasit raden för behandling vid uppdatering av web versionen"""
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
     print("add_update_cmd_line", name, cmd, new_value)
     s = MysqlDb().session()
     fasit_row = s.query(FasitCopy).filter(FasitCopy.name == name).first()
@@ -204,8 +218,10 @@ def add_update_cmd_line(name: str, cmd: str, new_value: str = "") -> None:
     s.commit()
 
 
-def get_needed_web_updates() -> list[dict[str:str]]:
+def get_needed_web_updates(verbose: bool = False) -> list[dict[str:str]]:
     """Hämtar alla rader som behöver uppdateras i web versionen"""
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
     s = MysqlDb().session()
     cbs = s.query(FasitCopy).filter(FasitCopy.eunomia_update_web_command != None).all()
     todo_list = []
@@ -219,10 +235,12 @@ def get_needed_web_updates() -> list[dict[str:str]]:
     return todo_list
 
 
-def get_user_id_for_fasit_user(attribute_anvandare: str) -> str:
+def get_user_id_for_fasit_user(attribute_anvandare: str, verbose: bool = False) -> str:
     """ Hämta user_id för fasit användare
     Dolk Lyam -> lyadol
     """
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
     s = MysqlDb().session()
     user = s.query(FasitCopy).filter(FasitCopy.name == attribute_anvandare).first()
     if user is not None:
@@ -231,8 +249,10 @@ def get_user_id_for_fasit_user(attribute_anvandare: str) -> str:
         raise NoUserFoundError(f"Kunde inte hitta användare med attribute_anvandare: {attribute_anvandare}")
 
 
-def update_staff_from_fasit_file() -> None:
+def update_staff_from_fasit_file(verbose: bool = False) -> None:
     """ Uppdateriar personal tabellen utifrån fasit filen"""
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
     s = MysqlDb().session()
     old_staff = flatten_row(list(s.query(Staff_dbo.user_id).all()))
     print("old_staff", old_staff)
@@ -271,11 +291,13 @@ def update_staff_from_fasit_file() -> None:
         mark_staffer_as_old(old_staff)
 
 
-def mark_staffer_as_old(old_staff: list[str]) -> None:
+def mark_staffer_as_old(old_staff: list[str], verbose: bool = False) -> None:
     """ Markera en lista med personer som gamla
     old_staff lista med user_id
     exv ["lyadol"]
     """
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
     s = MysqlDb().session()
     for old_user_id in old_staff:
         old_staffer = s.query(Staff_dbo).filter(Staff_dbo.user_id == old_user_id).first()
@@ -285,17 +307,28 @@ def mark_staffer_as_old(old_staff: list[str]) -> None:
     s.commit()
 
 
-def translate_fasit_name_to_eunomia_name() -> str:
+def translate_fasit_name_to_eunomia_name(verbose: bool = False) -> str:
     """ Skriv in användarnamn istället för attribut användare för kända användare"""
-    s = MysqlDb().session(echo=True)
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
+    s = MysqlDb().session()
     utdelad_utrustning = s.query(FasitCopy).filter(FasitCopy.attribute_anvandare != None).all()
     for named_gear in utdelad_utrustning:
-        print(F"named_gear: {named_gear.name} attribute_anvandare: {named_gear.attribute_anvandare}")
-    # s.commit()
+        if len(named_gear.attribute_anvandare) > 2:
+            print(F"named_gear: {named_gear.name} attribute_anvandare: {named_gear.attribute_anvandare}")
+            user_id = get_user_id_for_fasit_user(named_gear.attribute_anvandare, verbose=verbose)
+            if user_id is None:  # hittades inte i FASIT
+                continue
+            print(F"{user_id}")
+            named_gear.eunomia_user_id = user_id
+    s.commit()
 
 
-def delete_stupid_info_in_fasit() -> None:
+def delete_stupid_info_in_fasit(verbose: bool = False) -> None:
     """ Tar bort onödig info i fasit kopieringen"""
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
+
     s = MysqlDb().session(echo=False)
     found = s.query(FasitCopy).filter(or_(FasitCopy.tag_plats == 1
                                           # ,FasitCopy.tag_rcard == 1
@@ -309,8 +342,9 @@ def delete_stupid_info_in_fasit() -> None:
 
 if __name__ == "__main__":
     # delete_stupid_info_in_fasit()
-    print(get_user_id_for_fasit_user("Dolk Lyam"))
-    update_staff_from_fasit_file()
+    # print(get_user_id_for_fasit_user("Dolk Lyam"))
+    # update_staff_from_fasit_file()
+    translate_fasit_name_to_eunomia_name(verbose=True)
     # translate_fasit_name_to_eunomia_name()
     # create_fasit_staff_user_ids()
     # add_update_cmd_line(name="E52076", cmd="update", new_value="test1") # lägg på något som behöver uppdateras

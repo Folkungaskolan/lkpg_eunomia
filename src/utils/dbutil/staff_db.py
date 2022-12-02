@@ -1,18 +1,23 @@
+import inspect
 from functools import cache
 
 from sqlalchemy.orm import Session
 
 from CustomErrors import DBUnableToCrateUser, NoUserFoundError, NoValidEnheterFoundError
-from database.models import Staff_dbo, Tjf_dbo, FasitCopy
+from database.models import Staff_dbo, Tjf_dbo, FasitCopy, FakturaRad_dbo
 from database.mysql_db import init_db, MysqlDb
+from statics.eunomia_date_helpers import MONTHS_name_to_int, MONTHS_NAMES, MONTHS_int_to_name
 from utils.faktura_utils.normalize import normalize
 from utils.pnr_utils import pnr10_to_pnr12
 
 
-def get_staff_user_from_db_based_on_user_id(user_id: str, create_on_missing: bool = False) -> Staff_dbo:
+def get_staff_user_from_db_based_on_user_id(user_id: str, create_on_missing: bool = False, verbose: bool = False) -> Staff_dbo:
     """ Get a user from the database.
     lyadol -> Staff_dbo
     """
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
+
     s = MysqlDb().session()
 
     staff = s.query(Staff_dbo).filter_by(user_id=user_id).first()
@@ -24,27 +29,34 @@ def get_staff_user_from_db_based_on_user_id(user_id: str, create_on_missing: boo
     return staff
 
 
-def create_staff_user_from_user_id(user_id: str) -> None:
+def create_staff_user_from_user_id(user_id: str, verbose: bool = False) -> None:
     """ Insert a user into the database. """
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
+
     s = MysqlDb().session()
     staff = Staff_dbo(user_id=user_id)
     s.add(staff)
     s.commit()
 
 
-def print_user(user_id: str) -> None:
+def print_user(user_id: str, verbose: bool = False) -> None:
     """ Print a user from the database. """
-    s = MysqlDb().session()
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
 
+    s = MysqlDb().session()
     staff = s.query(Staff_dbo).filter_by(user_id=user_id).first()
     print(staff)
     print(type(staff))
 
 
-def delete_user(user_id: str) -> None:
+def delete_user(user_id: str, verbose: bool = False) -> None:
     """ Delete a user from the database. """
-    s = MysqlDb().session()
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
 
+    s = MysqlDb().session()
     staff = s.query(Staff_dbo).filter_by(user_id=user_id).first()
     s.delete(staff)
     s.commit()
@@ -56,8 +68,11 @@ def update_staff_user(user_id: str,
                       pnr12: str = None,
                       email: str = None,
                       domain: str = "linkom",
-                      titel: str = None) -> None:
+                      titel: str = None, verbose: bool = False) -> None:
     """ Update a user in the database. """
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
+
     s = MysqlDb().session()
 
     staff = s.query(Staff_dbo).filter_by(user_id=user_id).first()
@@ -84,10 +99,12 @@ def update_staff_user(user_id: str,
 
 
 @cache  # personnummret kommer inte att ändras så denna kan cachas
-def get_pnr_from_user_id(user_id: str) -> str:
+def get_pnr_from_user_id(user_id: str, verbose: bool = False) -> str:
     """ Hämta personnummer från user_id
     197709269034 -> lyadol
     """
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
 
     s = MysqlDb().session()
     pnr = s.query(Staff_dbo.pnr12).filter(Staff_dbo.user_id == user_id).first()
@@ -100,8 +117,11 @@ def get_pnr_from_user_id(user_id: str) -> str:
 CASHED_GET_TJF_FOR_ENHET = {}
 
 
-def get_tjf_for_enhet(enheter: list[str], month: int) -> dict[str, float]:
+def get_tjf_for_enhet(enheter: list[str], month: int, verbose: bool = False) -> dict[str, float]:
     """ get tjf for enhet """
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
+
     valid_enheter = []
     key = f"{enheter.sort()}-{month}"
     if key in CASHED_GET_TJF_FOR_ENHET:  # om enhet finns i cachad lista, returnera
@@ -119,162 +139,54 @@ def get_tjf_for_enhet(enheter: list[str], month: int) -> dict[str, float]:
         raise NoValidEnheterFoundError(f"Kunde inte hitta tjf för givna enheter{enheter}")
     t = {}
     for tjf in tjfs:
-        if month == 1:
-            t[tjf.id_komplement_pa] = t.get(tjf.id_komplement_pa, 0) + tjf.jan
-        elif month == 2:
-            t[tjf.id_komplement_pa] = t.get(tjf.id_komplement_pa, 0) + tjf.feb
-        elif month == 3:
-            t[tjf.id_komplement_pa] = t.get(tjf.id_komplement_pa, 0) + tjf.mar
-        elif month == 4:
-            t[tjf.id_komplement_pa] = t.get(tjf.id_komplement_pa, 0) + tjf.apr
-        elif month == 5:
-            t[tjf.id_komplement_pa] = t.get(tjf.id_komplement_pa, 0) + tjf.maj
-        elif month == 6:
-            t[tjf.id_komplement_pa] = t.get(tjf.id_komplement_pa, 0) + tjf.jun
-        elif month == 7:
-            t[tjf.id_komplement_pa] = t.get(tjf.id_komplement_pa, 0) + tjf.jul
-        elif month == 8:
-            t[tjf.id_komplement_pa] = t.get(tjf.id_komplement_pa, 0) + tjf.aug
-        elif month == 9:
-            t[tjf.id_komplement_pa] = t.get(tjf.id_komplement_pa, 0) + tjf.sep
-        elif month == 10:
-            t[tjf.id_komplement_pa] = t.get(tjf.id_komplement_pa, 0) + tjf.okt
-        elif month == 11:
-            t[tjf.id_komplement_pa] = t.get(tjf.id_komplement_pa, 0) + tjf.nov
-        elif month == 12:
-            t[tjf.id_komplement_pa] = t.get(tjf.id_komplement_pa, 0) + tjf.dec
-        elif month > 13:
-            raise ValueError("month must be between 1-12")
+        for month in MONTHS_NAMES:
+            exec(F"t[tjf.id_komplement_pa] = t.get(tjf.id_komplement_pa, 0) + tjf.{month}")
     result = normalize(t)
     CASHED_GET_TJF_FOR_ENHET[key] = result
     return result
 
 
 @cache  # tjänstefördelningen kommer inte förändras inom samma körning så den kan cachas
-def gen_tjf_for_staff(user_id: str, month: int) -> dict[str, float]:
+def gen_tjf_for_staff(user_id: str, faktura_rad: FakturaRad_dbo, verbose: bool = False) -> dict[str, float]:
     """ Genererar tjf för personalen """
     """ hämta tjänstefördelning för användaren för given månad"""
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
+
     pnr12 = get_pnr_from_user_id(user_id=user_id)
     s = MysqlDb().session()
     tjf_s = s.query(Tjf_dbo).filter(Tjf_dbo.pnr12 == pnr12).all()
     t = {}
-    if month == 1:
-        for tjf in tjf_s:
-            t[tjf.id_komplement_pa] = tjf.jan
-    elif month == 2:
-        for tjf in tjf_s:
-            t[tjf.id_komplement_pa] = tjf.feb
-    elif month == 3:
-        for tjf in tjf_s:
-            t[tjf.id_komplement_pa] = tjf.mar
-    elif month == 4:
-        for tjf in tjf_s:
-            t[tjf.id_komplement_pa] = tjf.apr
-    elif month == 5:
-        for tjf in tjf_s:
-            t[tjf.id_komplement_pa] = tjf.maj
-    elif month == 6:
-        for tjf in tjf_s:
-            t[tjf.id_komplement_pa] = tjf.jun
-    elif month == 7:
-        for tjf in tjf_s:
-            t[tjf.id_komplement_pa] = tjf.jul
-    elif month == 8:
-        for tjf in tjf_s:
-            t[tjf.id_komplement_pa] = tjf.aug
-    elif month == 9:
-        for tjf in tjf_s:
-            t[tjf.id_komplement_pa] = tjf.sep
-    elif month == 10:
-        for tjf in tjf_s:
-            t[tjf.id_komplement_pa] = tjf.okt
-    elif month == 11:
-        for tjf in tjf_s:
-            t[tjf.id_komplement_pa] = tjf.nov
-    elif month == 12:
-        for tjf in tjf_s:
-            t[tjf.id_komplement_pa] = tjf.dec
-    elif month > 13:
-        raise ValueError("month must be between 1-12")
-    set_tjf_sum_on_staff(user_id=user_id, month=month, summa=sum(t.values()))
+    for tjf in tjf_s:
+        for month in MONTHS_NAMES:  # jan,feb, osv...
+            exec(f"t[tjf.id_komplement_pa] = tjf.{month}")
+    set_tjf_sum_on_staff(user_id=user_id, month=faktura_rad.faktura_month, summa=sum(t.values()))
     return normalize(tjf=t)
 
 
-def set_tjf_sum_on_staff(user_id: str, month: int, summa: float) -> None:
+def set_tjf_sum_on_staff(user_id: str, month: int, summa: float ,verbose: bool = False) -> None:
     """ Uppdatera tjf_sum på staff för given månad"""
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
+
     s = MysqlDb().session()
     staff = s.query(Staff_dbo).filter(Staff_dbo.user_id == user_id).first()
-    if month == 1:
-        if staff.sum_tjf_jan == summa * 100:
-            return
-        staff.sum_tjf_jan = summa * 100
-
-    elif month == 2:
-        if staff.sum_tjf_feb == summa * 100:
-            return
-        staff.sum_tjf_feb = summa * 100
-
-    elif month == 3:
-        if staff.sum_tjf_mar == summa * 100:
-            return
-        staff.sum_tjf_mar = summa * 100
-
-    elif month == 4:
-        if staff.sum_tjf_apr == summa * 100:
-            return
-        staff.sum_tjf_apr = summa * 100
-
-    elif month == 5:
-        if staff.sum_tjf_maj == summa * 100:
-            return
-        staff.sum_tjf_maj = summa * 100
-
-    elif month == 6:
-        if staff.sum_tjf_jun == summa * 100:
-            return
-        staff.sum_tjf_jun = summa * 100
-
-    elif month == 7:
-        if staff.sum_tjf_jul == summa * 100:
-            return
-        staff.sum_tjf_jul = summa * 100
-
-    elif month == 8:
-        if staff.sum_tjf_aug == summa * 100:
-            return
-        staff.sum_tjf_aug = summa * 100
-
-    elif month == 9:
-        if staff.sum_tjf_sep == summa * 100:
-            return
-        staff.sum_tjf_sep = summa * 100
-
-    elif month == 10:
-        if staff.sum_tjf_okt == summa * 100:
-            return
-        staff.sum_tjf_okt = summa * 100
-
-    elif month == 11:
-        if staff.sum_tjf_nov == summa * 100:
-            return
-        staff.sum_tjf_nov = summa * 100
-
-    elif month == 12:
-        if staff.sum_tjf_dec == summa * 100:
-            return
-        staff.sum_tjf_dec = summa * 100
-
-    elif month > 13:
-        raise ValueError("month must be between 1-12")
+    exec(f"staff.sum_tjf_{MONTHS_int_to_name[month]} = summa * 100")
+    if round(summa * 100, 3) > 100:
+        staff.tjf_error = True
     s.commit()
     return
 
 
 if __name__ == '__main__':
+    # tjf_lyam = gen_tjf_for_staff(user_id="lyadol", faktura_rad=FakturaRad_dbo(faktura_month=10))
+    # print(tjf_lyam)
+    # print(tjf_lyam.values())
+    # print(sum(tjf_lyam.values()))
+    get_user_name_based_on_full_name()
     pass
-    print(get_tjf_for_enhet(enheter=["655", "656"], month=1))
-    print(get_tjf_for_enhet(enheter=["655", "656"], month=1))
-
+    # print(get_tjf_for_enhet(enheter=["655", "656"], month=1))
+    # print(get_tjf_for_enhet(enheter=["655", "656"], month=1))
     # set_tjf_sum_on_staff(user_id="lyadol", month=1, summa=0.0)
 
 # set_tjf_month_okflagg(user_id="lyadol", month=10)

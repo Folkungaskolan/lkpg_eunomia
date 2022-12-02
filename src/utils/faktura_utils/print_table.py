@@ -2,7 +2,8 @@
 from colorama import init, Fore, Back, Style
 
 init(autoreset=True)
-COL_WIDTHS = {"Period": 7,  # how wide a col is
+COL_WIDTHS = {"ID": 6,
+              "Period": 7,  # how wide a col is
               "Tjänst": 20,
               "Avser": 20,
               "Summa": 12,
@@ -18,8 +19,7 @@ def print_headers():
     header_D = {}
     h1 = ""
     tbl_h = ""
-    headers = [f"Period", "Tjänst", "Avser", "Summa", "Fasit ägare", "Fasit kontering", "Tot Tjf", "Elevantal", "Summary"]
-    for h in headers:
+    for h in COL_WIDTHS.keys():
         header = h.ljust(COL_WIDTHS[h])
         h1 += header + "|"
 
@@ -29,7 +29,19 @@ def print_headers():
     return h1
 
 
-def print_row(row_values: dict[str:str]):
+def print_start(row_values: dict[str:str]):
+    """
+    Print a row for the table.
+    colors by : https://pypi.org/project/colorama/
+    """
+
+    row = ""
+    for r in row_values.keys():
+        print(Style.BRIGHT + str(row_values[r]).ljust(COL_WIDTHS[r]), end="")
+        print("|", end="")
+
+
+def print_result(row_values: dict[str:str]):
     """
     Print a row for the table.
     colors by : https://pypi.org/project/colorama/
@@ -49,7 +61,6 @@ def print_row(row_values: dict[str:str]):
             # str(row_values[r]).ljust(COL_WIDTHS[r])
             print(Fore.RED + str(row_values[r]).ljust(COL_WIDTHS[r]) + '\033[0;0m', end="")
             print("|")
-
         else:
             print(Style.BRIGHT + str(row_values[r]).ljust(COL_WIDTHS[r]), end="")
             print("|", end="")
@@ -58,9 +69,8 @@ def print_row(row_values: dict[str:str]):
 
 if __name__ == "__main__":
     print_headers()
-    print_row(row_values={"Period": "2022-9", "Tjänst": "Chromebooks", "Avser": "C12345", "Summa": 1012, "Fasit ägare": False, "Fasit kontering": True, "Tot Tjf": False,
-                          "Elevantal": False, "Summary": "Success"})
-    print_row(row_values={"Period": "2022-9", "Tjänst": "Chromebooks", "Avser": "C12345", "Summa": 1012, "Fasit ägare": False, "Fasit kontering": True, "Tot Tjf": False,
-                          "Elevantal": False, "Summary": "Fail"})
+    print_start(row_values={"ID": 1, "Period": "2022-9", "Tjänst": "Chromebooks", "Avser": "C12345", "Summa": 1012})
+    print_result(row_values={"Fasit ägare": False, "Fasit kontering": True, "Tot Tjf": False, "Elevantal": False, "Summary": "Success"})
+
     # print(colored('hello', 'red'), colored('world', 'green'))
     # print('\033[2;31;43m CHEESY')

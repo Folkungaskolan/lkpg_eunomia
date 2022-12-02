@@ -9,11 +9,10 @@ from sqlalchemy.sql.elements import and_
 from database.models import Tjf_dbo, Staff_dbo
 from database.mysql_db import init_db, MysqlDb
 from settings.folders import FAKTURA_EXCEL_TJF_FOLDER
+from statics.eunomia_date_helpers import MONTHS_name_to_int
 from utils.decorators import function_timer
 from utils.pnr_utils import pnr10_to_pnr12
 
-MONTHS_name_to_int = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "maj": 5, "jun": 6, "jul": 7, "aug": 8, "sep": 9, "okt": 10, "nov": 11, "dec": 12}
-MONTHS_int_to_name = {v: k for k, v in MONTHS_name_to_int.items()}
 
 
 def find_enhets_tjf_file(enhet: str) -> Path:

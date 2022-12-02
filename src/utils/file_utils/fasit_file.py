@@ -6,8 +6,6 @@ from settings.folders import FASIT_CSV_FILEPATH
 def load_fasit_csv() -> pd.DataFrame:
     """ Ladda in csv filen med fasit informationen från disk"""
     df = pd.read_csv(FASIT_CSV_FILEPATH, encoding="latin-1", sep="\t", skiprows=1, dtype=str)
-    # print(df.columns)
-    # print(df)
     return df
 
 

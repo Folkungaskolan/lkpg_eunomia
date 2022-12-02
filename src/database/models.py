@@ -88,7 +88,7 @@ class Staff_dbo(Base):
     user_id: str = Column(String(length=10))
     first_name: str = Column(String(length=50))
     last_name: str = Column(String(length=50))
-    full_name: str = Column(String(length=70))
+    full_name: str = Column(String(length=70))  # FASIT Namnet .attribute_anvandare
     telefon: str = Column(String(length=20))
     u_created_date = Column(DateTime)
     u_changed_date = Column(DateTime)
@@ -184,8 +184,10 @@ class Tjf_dbo(Base):
     dec: float = Column(Float)
     kommentar: str = Column(String(length=150))
     personalkategori: str = Column(String(length=50))
+
     def __str__(self):
         return self.__repr__()
+
     def __repr__(self):
         return F"Tjf(id:{self.id}|pnr12='{self.pnr12}', id_komplement_pa='{self.id_komplement_pa}', year={self.year},  jan={self.jan}, feb={self.feb}, mar={self.mar}, apr={self.apr}, maj={self.maj}, jun={self.jun}, jul={self.jul}, aug={self.aug}, sep={self.sep}, okt={self.okt}, dec={self.dec}, kommentar='{self.kommentar}', personalkategori='{self.personalkategori}')"
 
@@ -219,10 +221,12 @@ class FakturaRad_dbo(Base):
     eunomia_case_creator_user_id: str = Column(String(length=50))  # konto in eunomia file
 
     def __str__(self):
-        return F"FakturaRad_dbo(tjanst={self.tjanst},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod},anvandare={self.anvandare},avser={self.avser},faktura_year={self.faktura_year},faktura_month={self.faktura_month},antal={self.antal},pris={self.pris},summa={self.summa},split_done={self.split_done}tag_,split_method_used={self.split_method_used},split_sum={self.split_sum},split_sum_error={self.split_sum_error})"
+        return F"FakturaRad_dbo({self.id=} {self.tjanst:},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod}," \
+               F"anvandare={self.anvandare},avser={self.avser},faktura_year={self.faktura_year},faktura_month={self.faktura_month},antal={self.antal},pris={self.pris},summa={self.summa},split_done={self.split_done}tag_,split_method_used={self.split_method_used},split_sum={self.split_sum},split_sum_error={self.split_sum_error})"
 
     def __repr__(self):
-        return F"FakturaRad_dbo(tjanst={self.tjanst},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod},anvandare={self.anvandare},avser={self.avser},faktura_year={self.faktura_year},faktura_month={self.faktura_month},antal={self.antal},pris={self.pris},summa={self.summa},split_done={self.split_done}tag_,split_method_used={self.split_method_used},split_sum={self.split_sum},split_sum_error={self.split_sum_error})"
+        return F"FakturaRad_dbo({self.id=} {self.tjanst:},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod}," \
+               F"anvandare={self.anvandare},avser={self.avser},faktura_year={self.faktura_year},faktura_month={self.faktura_month},antal={self.antal},pris={self.pris},summa={self.summa},split_done={self.split_done}tag_,split_method_used={self.split_method_used},split_sum={self.split_sum},split_sum_error={self.split_sum_error})"
 
 
 class FakturaRadSplit_dbo(Base):
@@ -315,12 +319,13 @@ class FasitCopy(Base):
     tag_tv: int = Column(Integer, default=False)
     tag_utrustning: int = Column(Integer, default=False)
     tag_videoprojektor: int = Column(Integer, default=False)
-    eunomia_update_web: int = Column(Integer, default=False)  # if eunomia changed a value spread updates to web
+
     eunomia_user_id: str = Column(String(length=20))  # eunomia version of user id
     eunomia_update_web_command: int = Column(String(length=200))
     # Ska innehålla sträng med vilka variabler som ska uppdateras på webben
     # data från databasen till webben
     eunomia_kontering: str = Column(String(length=100))
+    eunomia_gear_missing_in_fasit: str = Column(String(length=100))  # om det saknas utrustning i fasit
 
     def __str__(self):
         return self.__repr__
