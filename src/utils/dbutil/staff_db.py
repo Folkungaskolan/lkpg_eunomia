@@ -164,7 +164,7 @@ def gen_tjf_for_staff(user_id: str, faktura_rad: FakturaRad_dbo, verbose: bool =
     return normalize(tjf=t)
 
 
-def set_tjf_sum_on_staff(user_id: str, month: int, summa: float ,verbose: bool = False) -> None:
+def set_tjf_sum_on_staff(user_id: str, month: int, summa: float, verbose: bool = False) -> None:
     """ Uppdatera tjf_sum på staff för given månad"""
     if verbose:
         print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
@@ -178,12 +178,25 @@ def set_tjf_sum_on_staff(user_id: str, month: int, summa: float ,verbose: bool =
     return
 
 
+def get_user_id_for_staff_user_based_on_full_name(full_name: str, verbose: bool = False) -> str:
+    """ Hämtar user_id om "fullname" matchar """
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
+
+    s = MysqlDb().session()
+    user_id = s.query(Staff_dbo.user_id).filter(Staff_dbo.full_name == full_name).first()
+    if user_id is not None:
+        return user_id[0]
+    else:
+        NoUserFoundError(f"Kunde inte hitta användare med attribute_anvandare: {full_name}")
+
+
 if __name__ == '__main__':
     # tjf_lyam = gen_tjf_for_staff(user_id="lyadol", faktura_rad=FakturaRad_dbo(faktura_month=10))
     # print(tjf_lyam)
     # print(tjf_lyam.values())
     # print(sum(tjf_lyam.values()))
-    get_user_name_based_on_full_name()
+    print(get_user_id_for_staff_user_based_on_full_name("Sundstedt Sanna"))
     pass
     # print(get_tjf_for_enhet(enheter=["655", "656"], month=1))
     # print(get_tjf_for_enhet(enheter=["655", "656"], month=1))

@@ -6,6 +6,7 @@ from database.models import FasitCopy, Staff_dbo
 from database.mysql_db import MysqlDb
 from sqlalchemy import and_, or_
 
+from utils.dbutil.staff_db import get_user_id_for_staff_user_based_on_full_name
 from utils.dbutil.student_db import update_student_examen_year
 from utils.file_utils.fasit_file import load_fasit_csv
 from utils.flatten import flatten_row
@@ -159,6 +160,7 @@ def load_fasit_to_db(verbose: bool = False) -> None:
     update_student_examen_year(verbose=verbose)
     translate_fasit_name_to_eunomia_name(verbose=verbose)
     update_staff_from_fasit_file(verbose=verbose)
+    delete_stupid_info_in_fasit(verbose=verbose)  # tar främst bort "plats" info raderna.
 
 
 def create_fasit_staff_user_ids(verbose: bool = False) -> None:
@@ -235,18 +237,18 @@ def get_needed_web_updates(verbose: bool = False) -> list[dict[str:str]]:
     return todo_list
 
 
-def get_user_id_for_fasit_user(attribute_anvandare: str, verbose: bool = False) -> str:
+def get_user_id_for_fasit_user(full_name: str, verbose: bool = False) -> str:
     """ Hämta user_id för fasit användare
     Dolk Lyam -> lyadol
     """
     if verbose:
         print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
     s = MysqlDb().session()
-    user = s.query(FasitCopy).filter(FasitCopy.name == attribute_anvandare).first()
+    user = s.query(FasitCopy).filter(FasitCopy.name == full_name).first()
     if user is not None:
         return user.attribute_anvandarnamn  # user_id i FASIT
     else:
-        raise NoUserFoundError(f"Kunde inte hitta användare med attribute_anvandare: {attribute_anvandare}")
+        raise NoUserFoundError(f"Kunde inte hitta användare med attribute_anvandare: {full_name}")
 
 
 def update_staff_from_fasit_file(verbose: bool = False) -> None:
@@ -312,15 +314,17 @@ def translate_fasit_name_to_eunomia_name(verbose: bool = False) -> str:
     if verbose:
         print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
     s = MysqlDb().session()
-    utdelad_utrustning = s.query(FasitCopy).filter(FasitCopy.attribute_anvandare != None).all()
-    for named_gear in utdelad_utrustning:
-        if len(named_gear.attribute_anvandare) > 2:
-            print(F"named_gear: {named_gear.name} attribute_anvandare: {named_gear.attribute_anvandare}")
-            user_id = get_user_id_for_fasit_user(named_gear.attribute_anvandare, verbose=verbose)
-            if user_id is None:  # hittades inte i FASIT
-                continue
+    all_utrustning = s.query(FasitCopy).filter(FasitCopy.attribute_anvandare != None).all()
+    # all_utrustning = s.query(FasitCopy).filter(FasitCopy.name == "354070096956821").all()
+    for gear in all_utrustning:
+        if len(gear.attribute_anvandare) > 2:
+            print(F"named_gear: {gear.name} attribute_anvandare: {gear.attribute_anvandare}")
+            try:
+                user_id = get_user_id_for_fasit_user(full_name=gear.attribute_anvandare, verbose=verbose)
+            except NoUserFoundError:  # hittades inte i FASIT
+                user_id = get_user_id_for_staff_user_based_on_full_name(full_name=gear.attribute_anvandare, verbose=verbose)
             print(F"{user_id}")
-            named_gear.eunomia_user_id = user_id
+            gear.eunomia_user_id = user_id
     s.commit()
 
 
@@ -335,7 +339,8 @@ def delete_stupid_info_in_fasit(verbose: bool = False) -> None:
                                           )
                                       ).all()
     for f in found:
-        print(F"named_gear: {f.name} attribute_anvandare: {f.attribute_anvandare}")
+        if verbose:
+            print(F"deleting named_gear: {f.name} attribute_anvandare: {f.attribute_anvandare}")
         f.delete()
     f.commit()
 

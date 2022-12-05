@@ -208,7 +208,7 @@ class FakturaRad_dbo(Base):
     pris: float = Column(Float)  # pris per enhet
     summa: float = Column(Float)  # fakturans summans rad
     split_done: int = Column(Integer, default=False)  # Has row been split into sub sums?
-    split_method_used: str = Column(String(length=50))
+    split_method_used: str = Column(String(length=150))
 
     # sum of all split sums, control for errors
     split_sum: float = Column(Float)
@@ -233,7 +233,7 @@ class FakturaRadSplit_dbo(Base):
     """ Sparar delningen av en faktura rad."""
     __tablename__ = 'faktura_rader_split'
     id: int = Column(Integer, primary_key=True)
-    split_id: int = Column(Integer)  # id of faktura rad
+    split_id: int = Column(Integer)  # id of faktura rad som delats
     faktura_year: int = Column(SmallInteger)
     faktura_month: int = Column(SmallInteger)
     tjanst: str = Column(String(length=150))  # kategori
@@ -241,7 +241,7 @@ class FakturaRadSplit_dbo(Base):
     anvandare: str = Column(String(length=150))  # i de fall användaren är känd
     split_summa: float = Column(Float)  # fakturans summans rad för denna enhet och aktivitet
     id_komplement_pa: str = Column(String(length=50))  # "655119", osv
-    split_metod: str = Column(String(length=50))
+    split_method_used: str = Column(String(length=50))
     aktivitet: str = Column(String(length=50))  # "p": "410200" osv
     tjanst_kategori_lvl1: str = Column(String(length=45), default="ej kategoriserad")
     tjanst_kategori_lvl2: str = Column(String(length=45), default="ej kategoriserad")

@@ -1,51 +1,55 @@
 """ konterings hjälp funktioner"""
-import json
+import inspect
 
 from CustomErrors import AktivitetNotFoundError
-from database.models import StudentCount_dbo, FakturaRad_dbo, FasitCopy
+from database.models import StudentCount_dbo
 from database.mysql_db import MysqlDb
 from utils.dbutil.student_db import generate_split_on_student_count
 from utils.faktura_utils.normalize import normalize
 
 
-def decode_kontering_in_fritext(faktura_rad: FakturaRad_dbo, fasit_rad: FasitCopy) -> (dict[str:float], str, str):
+def decode_kontering_in_fritext(*, faktura_month: int, faktura_year: int, konterings_string: str, verbose: bool = False) -> (dict[str:float], str, str):
     """ Decode fritextfield
     Returnerar {"123456": 0.5, "123457": 0.5}
     och "p" som instruktion för aktivitet
     och "konterings kommentar"
 
     """
+    if verbose:
+        print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
+
     s = MysqlDb().session()
-    code_segment = fasit_rad.eunomia_kontering.split("|")
+    code_segments = konterings_string.split("|")
     temp_kontering = {}
     star_present_in_key = None
     aktivitet = None
-    for seg in code_segment:
-        if seg.startswith("Kontering"):
-            metod_string = seg
-            if seg == "Kontering>A513":  # Delas över Gymnasiet
+    for code_segment in code_segments:
+        if code_segment.startswith("Kontering"):
+            metod_string = code_segment
+            if code_segment == "Kontering>A513":  # Delas över Gymnasiet
                 return generate_split_on_student_count(enheter_to_split_over=["655"],  # Delas över Gymnasiet
-                                                       month=faktura_rad.faktura_month,
-                                                       year=faktura_rad.faktura_year), "p", "Kontering>A513"
-            if seg == "Kontering>GruTeknik":  # Delas över grundskolans elever
+                                                       month=faktura_month,
+                                                       year=faktura_year), "p", "Kontering>A513"
+            if code_segment == "Kontering>GruTeknik":  # Delas över grundskolans elever
                 return generate_split_on_student_count(enheter_to_split_over=["656"],  # Delas över Grundskolans elever
-                                                       month=faktura_rad.faktura_month,
-                                                       year=faktura_rad.faktura_year), "p", "Kontering>GruTeknik"
-            if seg == "Kontering>Musikproduktion":  # Delas över grundskolan
+                                                       month=faktura_month,
+                                                       year=faktura_year), "p", "Kontering>GruTeknik"
+            if code_segment == "Kontering>Musikproduktion":  # Delas över grundskolan
                 return {"656520": 1}, "p", "Kontering>Musikproduktion"  # generate_split_on_student_count(enheter=["656520"],  # Delas över Grundskolans 7-9 elever
                 # month=faktura_rad.faktura_month,
                 # year=faktura_rad.faktura_year), "p", "Kontering>Musikproduktion"
-            if seg == "Kontering>FolkungaBibliotek":  # Delas över grundskolan
+            if code_segment == "Kontering>FolkungaBibliotek":  # Delas över grundskolan
                 return generate_split_on_student_count(enheter_to_split_over=["656", "655"],  # Delas över Gymnasiet och Grundskolan enligt antal elever
-                                                       month=faktura_rad.faktura_month,
-                                                       year=faktura_rad.faktura_year), "p", "Kontering>FolkungaBibliotek"
+                                                       month=faktura_month,
+                                                       year=faktura_year), "p", "Kontering>FolkungaBibliotek"
 
-            faktura_rad = seg.split(">")[1]
+            faktura_rad = code_segment.split(">")[1]
             kontering_metod = faktura_rad.split("<")[0]
             if kontering_metod == "Enheter":
                 faktura_rad = faktura_rad.split(";")
                 for k in faktura_rad:
-                    print(k)
+                    if verbose:
+                        print(k)
                     key, value = k.split(":")
                     if value == "*":
                         star_present_in_key = key
@@ -58,11 +62,12 @@ def decode_kontering_in_fritext(faktura_rad: FakturaRad_dbo, fasit_rad: FasitCop
                 else:
                     slut_kontering = temp_kontering
             elif kontering_metod == "Elevantal":
-                f_rad = faktura_rad.split("<")[1]
-                f_rad = faktura_rad.split(";")
+                elev_enhet_str = faktura_rad.split("<")[1]
+                elev_enhet_lista = elev_enhet_str.split(";")
                 student_counts = {}
-                for k in f_rad:
-                    print(k)
+                for k in elev_enhet_lista:
+                    if verbose:
+                        print(k)
                     counts = s.query(StudentCount_dbo).filter(StudentCount_dbo.id_komplement_pa.startswith(k)).all()
                     for c in counts:
                         student_counts[c.id_komplement_pa] = c.count
@@ -70,8 +75,8 @@ def decode_kontering_in_fritext(faktura_rad: FakturaRad_dbo, fasit_rad: FasitCop
             elif kontering_metod == "Personlig utr":  # mina personliga grejer ska konteras efter min Tjf
                 return {"": 0.0}, False, False  # Skickar tillbaka falskt så raden misslyckas med konteringen och kör på Fasit ägaren
 
-        elif seg.startswith("aktivitet"):  # hämta aktivtet från sträng
-            aktivitet = seg.split(":")[1]
+        elif code_segment.startswith("aktivitet"):  # hämta aktivtet från sträng
+            aktivitet = code_segment.split(":")[1]
     if aktivitet is None:
         raise AktivitetNotFoundError(
             f"ingen aktivitet hittad i sträng {faktura_rad.id=}, {faktura_rad.avser=}, {faktura_rad.faktura_year=}, {faktura_rad.faktura_month=}")
@@ -82,5 +87,5 @@ def decode_kontering_in_fritext(faktura_rad: FakturaRad_dbo, fasit_rad: FasitCop
 if __name__ == '__main__':
     # print(decode_kontering_in_fritext(
     #     "Tidigare kommentar|Kontering>Enheter<655119:1;655123:2;655122:3;655125:4;656510:5;656520:6;656310:7;654100:8;654200:9;654300:10;654400:11|aktivitet:p"))
-    print(decode_kontering_in_fritext("Kontering>Elevantal<656;655|aktivitet:p"))
-    print(decode_kontering_in_fritext("Tidigare kommentar|Kontering>Elevantal<655119;655122|aktivitet:p"))
+    print(decode_kontering_in_fritext(konterings_string="Kontering>Elevantal<656;655|aktivitet:p", faktura_month=10, faktura_year=2022))
+    print(decode_kontering_in_fritext(konterings_string="Tidigare kommentar|Kontering>Elevantal<655119;655122|aktivitet:p", faktura_month=10, faktura_year=2022))

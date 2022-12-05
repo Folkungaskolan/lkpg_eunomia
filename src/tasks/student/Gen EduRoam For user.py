@@ -10,7 +10,7 @@ def gen_for(user_list: list[str]) -> None:
 
 
 if __name__ == '__main__':
-    generate_eduroam_for_user(user_id="hannas932", headless_input_bool=True)
+    generate_eduroam_for_user(user_id="ignsau941", headless_input_bool=True)
 
     # gen_for(user_list=["malahl813", "isamat051", "sirlid673"])  # WORKS
     write_student_csv_from_mysql()
