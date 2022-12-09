@@ -109,7 +109,7 @@ def find_and_move_old_students() -> None:  # TODO: Move student to old table whe
     print("find_and_move_old_students  Done")
 
 
-def generate_split_on_student_count(year: int, month: int, enheter_to_split_over: list | str) -> list[str:float]:
+def calc_split_on_student_count(year: int, month: int, enheter_to_split_over: list | str) -> list[str:float]:
     """ Generera split på antal elever """
     s = MysqlDb().session()
 
@@ -149,8 +149,17 @@ def generate_split_on_student_count(year: int, month: int, enheter_to_split_over
     return normalize(rel_distribution)
 
 
+def get_student_enhet_info(*,user_id:str) -> str:
+    """ Returnerar enheten som eleven är kopplad till """
+    s = MysqlDb().session()
+    student = s.query(Student_dbo).filter(Student_dbo.user_id == user_id).first()
+    print(student)
+
+    return user_id
+
 if __name__ == '__main__':
     pass
+    print(get_student_enhet_info(user_id="malmos795"))
     # copy_student_counts(from_month=10, from_year=2022, to_month=1, to_year=2022)
     # copy_student_counts(from_month=10, from_year=2022, to_month=2, to_year=2022)
     # copy_student_counts(from_month=10, from_year=2022, to_month=3, to_year=2022)

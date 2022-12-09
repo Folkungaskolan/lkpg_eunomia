@@ -3,7 +3,7 @@ MySQL database models
 """
 from datetime import datetime
 
-from sqlalchemy import Column, String, Integer, DateTime, Float, Boolean, SmallInteger
+from sqlalchemy import Column, String, Integer, DateTime, Float, Boolean, SmallInteger, func
 from sqlalchemy.ext.declarative import declarative_base
 
 from database.mysql_db import create_db_engine, MysqlDb
@@ -156,8 +156,33 @@ class Staff_dbo(Base):
 
     @property
     def birth_day(self) -> int:
-        """ get numeric birth day. """
+        """ get numeric birthday. """
         return int(self.pnr12[6:8])
+
+
+class StaffSubjects_dbo(Base):
+    """ Vilka ämnen har varje lärare """
+    __tablename__ = 'staff_subjects'
+    id: int = Column(Integer, primary_key=True)
+    subject: str = Column(String(length=10))
+    kategori: str = Column(String(length=20))
+    klass_grupp: str = Column(String(length=20))
+    user_id: str = Column(String(length=50))
+    first_name: str = Column(String(length=50))
+    last_name: str = Column(String(length=50))
+    email: str = Column(String(length=50))
+
+class StaffMentors_dbo(Base):
+    """ Vilka ämnen har varje lärare """
+    __tablename__ = 'staff_mentors'
+    id: int = Column(Integer, primary_key=True)
+    user_id: str = Column(String(length=50))
+    class_name: str = Column(String(length=50))
+    class_level: str = Column(String(length=50))
+    class_in_gru: int = Column(Integer, default=0)
+    class_in_gy: int = Column(Integer, default=0)
+    time_created = Column(DateTime(timezone=True), server_default=func.now())
+    latest_import_made = Column(String(length=50), onupdate=func.now())
 
 
 class Tjf_dbo(Base):
@@ -219,6 +244,8 @@ class FakturaRad_dbo(Base):
     eunomia_row: int = Column(Integer)  # row in eunomia file
     eunomia_case_id: str = Column(String(length=50))  # konto in eunomia file
     eunomia_case_creator_user_id: str = Column(String(length=50))  # konto in eunomia file
+    tjanst_kategori_lvl1: str = Column(String(length=150))  # kategori grej
+    tjanst_kategori_lvl2: str = Column(String(length=150))  # kategori grej
 
     def __str__(self):
         return F"FakturaRad_dbo({self.id=} {self.tjanst:},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod}," \

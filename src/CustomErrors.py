@@ -97,7 +97,7 @@ grund bult Exception
 class AktivitetNotFoundError(Exception):    pass
 class AnkHasNoStaffError(Exception):    pass
 
-
+class ExtrapolationError(Exception):    pass
 class DBUnableToCrateUser(Exception):    pass
 
 class DelaInteEnligDennaMetod(Exception):    pass
@@ -118,6 +118,7 @@ class InformationMissingError(Exception):    pass
 class IngenAnknytningHittadError(Exception):    pass
 class InvalidArgumentsError(Exception):    pass
 class Lindesk_ID_NotFoundError(Exception):    pass
+class NoTjfFoundError:     pass
 class NameToShortError(ValueError):    pass
 class NoAssignedUserError(Exception):    pass
 class NoKonteringSetInFasit(Exception):    pass

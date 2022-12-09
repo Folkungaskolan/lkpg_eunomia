@@ -1,28 +1,37 @@
 import inspect
 from functools import cache
 
-from sqlalchemy.orm import Session
+from sqlalchemy import and_
 
-from CustomErrors import DBUnableToCrateUser, NoUserFoundError, NoValidEnheterFoundError
-from database.models import Staff_dbo, Tjf_dbo, FasitCopy, FakturaRad_dbo
-from database.mysql_db import init_db, MysqlDb
-from statics.eunomia_date_helpers import MONTHS_name_to_int, MONTHS_NAMES, MONTHS_int_to_name
+from CustomErrors import DBUnableToCrateUser, NoUserFoundError, NoValidEnheterFoundError, ExtrapolationError, NoTjfFoundError
+from database.models import Staff_dbo, Tjf_dbo
+from database.mysql_db import MysqlDb, init_db
+from statics.eunomia_date_helpers import MONTHS_NAMES, MONTHS_int_to_name
 from utils.faktura_utils.normalize import normalize
 from utils.pnr_utils import pnr10_to_pnr12
 
 
-def get_staff_user_from_db_based_on_user_id(user_id: str, create_on_missing: bool = False, verbose: bool = False) -> Staff_dbo:
+def get_staff_user_from_db_based_on_user_id(*, user_id: str, create_on_missing: bool = False, verbose: bool = False) -> Staff_dbo:
     """ Get a user from the database.
     lyadol -> Staff_dbo
     """
     if verbose:
         print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
 
-    s = MysqlDb().session()
+    s = init_db()
 
     staff = s.query(Staff_dbo).filter_by(user_id=user_id).first()
     if staff is None and create_on_missing:  # if user does not exist, create it
-        create_staff_user_from_user_id(user_id=user_id)
+        staff = create_staff_user_from_user_id(user_id=user_id)
+        staff.first_name = "unknown"
+        staff.last_name = "unknown"
+        staff.pnr12 = ""
+        staff.email = ""
+        staff.telefon = ""
+        staff.skola = "unknown"
+        staff.domain = "update_from_web"
+        staff.titel = ""
+        s.commit()
         staff = s.query(Staff_dbo).filter_by(user_id=user_id).first()
         if staff is None:
             raise DBUnableToCrateUser("Could not create user                            2022-10-11 10:59:36")
@@ -34,11 +43,11 @@ def create_staff_user_from_user_id(user_id: str, verbose: bool = False) -> None:
     if verbose:
         print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
 
-    s = MysqlDb().session()
-    staff = Staff_dbo(user_id=user_id)
-    s.add(staff)
+    s = init_db()
+    staffer = Staff_dbo(user_id=user_id)
+    s.add(staffer)
     s.commit()
-
+    return staffer
 
 def print_user(user_id: str, verbose: bool = False) -> None:
     """ Print a user from the database. """
@@ -147,7 +156,7 @@ def get_tjf_for_enhet(enheter: list[str], month: int, verbose: bool = False) -> 
 
 
 @cache  # tjänstefördelningen kommer inte förändras inom samma körning så den kan cachas
-def gen_tjf_for_staff(user_id: str, faktura_rad: FakturaRad_dbo, verbose: bool = False) -> dict[str, float]:
+def gen_tjf_for_staff(*, user_id: str, month_nr: str, verbose: bool = False) -> dict[str, float]:
     """ Genererar tjf för personalen """
     """ hämta tjänstefördelning för användaren för given månad"""
     if verbose:
@@ -156,22 +165,39 @@ def gen_tjf_for_staff(user_id: str, faktura_rad: FakturaRad_dbo, verbose: bool =
     pnr12 = get_pnr_from_user_id(user_id=user_id)
     s = MysqlDb().session()
     tjf_s = s.query(Tjf_dbo).filter(Tjf_dbo.pnr12 == pnr12).all()
+    if tjf_s is None:
+        raise NoTjfFoundError(f"Kunde inte hitta tjf för användare med user_id: {user_id}")
     t = {}
     for tjf in tjf_s:
-        for month in MONTHS_NAMES:  # jan,feb, osv...
-            exec(f"t[tjf.id_komplement_pa] = tjf.{month}")
-    set_tjf_sum_on_staff(user_id=user_id, month=faktura_rad.faktura_month, summa=sum(t.values()))
-    return normalize(tjf=t)
+        exec(f"t[tjf.id_komplement_pa] = tjf.{MONTHS_int_to_name[month_nr]}")
+    set_tjf_sum_on_staff(user_id=user_id, month_nr=month_nr, summa=sum(t.values()))
+    if sum(t.values()) > 0:
+        return normalize(tjf=t)
+    else:
+        if len(t.keys()) == 1:  # if its is 1 long there is only one enhet
+            k = list(t.keys())[0]
+            t[k] = 1
+            return t
+        else:
+            extrapolation_list = []
+            for id_komplement_pa in t.keys():
+                extr_month, t[id_komplement_pa] = extrapolera_tjf_from_known_months_given_pnr12(pnr12=pnr12, id_komplement_pa=id_komplement_pa, month_nr=month_nr)
+                extrapolation_list.append(extr_month)
+            print(f"extrapolation_list: {extrapolation_list}")
+            if len(set(extrapolation_list)) == 1:
+                return normalize(tjf=t)
+            else:
+                raise ExtrapolationError(f"Kunde inte extrapolera tjf för {user_id} för månad {month_nr} då olika id gav olika extrapoleringar")
 
 
-def set_tjf_sum_on_staff(user_id: str, month: int, summa: float, verbose: bool = False) -> None:
+def set_tjf_sum_on_staff(user_id: str, month_nr: int, summa: float, verbose: bool = False) -> None:
     """ Uppdatera tjf_sum på staff för given månad"""
     if verbose:
         print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
 
     s = MysqlDb().session()
     staff = s.query(Staff_dbo).filter(Staff_dbo.user_id == user_id).first()
-    exec(f"staff.sum_tjf_{MONTHS_int_to_name[month]} = summa * 100")
+    exec(f"staff.sum_tjf_{MONTHS_int_to_name[month_nr]} = summa * 100")
     if round(summa * 100, 3) > 100:
         staff.tjf_error = True
     s.commit()
@@ -191,12 +217,45 @@ def get_user_id_for_staff_user_based_on_full_name(full_name: str, verbose: bool 
         NoUserFoundError(f"Kunde inte hitta användare med attribute_anvandare: {full_name}")
 
 
+def extrapolera_tjf_from_known_months_given_user_id(user_id: str, id_komplement_pa: str, month_nr: int, riktning: str = "ner") -> (int, float):
+    """ wrapper för att skriva extrapoleringen via User_id """
+    return extrapolera_tjf_from_known_months_given_pnr12(pnr12=get_pnr_from_user_id(user_id=user_id),
+                                                         id_komplement_pa=id_komplement_pa,
+                                                         month_nr=month_nr,
+                                                         riktning=riktning)
+
+
+def extrapolera_tjf_from_known_months_given_pnr12(pnr12: str, id_komplement_pa: str, month_nr: int, riktning: str = "ner") -> (int, float):
+    """ Extrapolera tjf för personalen
+     försöker först hitta tjf "tidigre" i tiden, om det inte finns så försöker den hitta "senare" i tiden
+     """
+    # print(f"{pnr12:}, {id_komplement_pa}, {month_nr:}")
+    s = MysqlDb().session()
+    if month_nr < 1:  # om vi gått hela vägen upp, och inte hittat ett värde att extrapolera med byt riktning
+        return extrapolera_tjf_from_known_months_given_pnr12(pnr12=pnr12, id_komplement_pa=id_komplement_pa, month_nr=1, riktning="upp")
+    if month_nr > 12:  # Inget hittat: returnera 0
+        return 0.0
+    tjf = s.query(Tjf_dbo).filter(and_(Tjf_dbo.pnr12 == pnr12, Tjf_dbo.id_komplement_pa == id_komplement_pa)).first()
+    # print(tjf)
+    # print(F'month nr: {month_nr}:{eval(F"tjf.{MONTHS_int_to_name[month_nr]}")}')
+
+    if (eval(F"tjf.{MONTHS_int_to_name[month_nr]}") is None) or (eval(F"tjf.{MONTHS_int_to_name[month_nr]}") == 0):
+        if riktning == "upp":
+            new_month = month_nr + 1
+        else:
+            new_month = month_nr - 1
+        return extrapolera_tjf_from_known_months_given_pnr12(pnr12=pnr12, id_komplement_pa=id_komplement_pa, month_nr=new_month)
+    else:
+        return month_nr, eval(F"tjf.{MONTHS_int_to_name[month_nr]}")
+
+
 if __name__ == '__main__':
     # tjf_lyam = gen_tjf_for_staff(user_id="lyadol", faktura_rad=FakturaRad_dbo(faktura_month=10))
     # print(tjf_lyam)
     # print(tjf_lyam.values())
     # print(sum(tjf_lyam.values()))
-    print(get_user_id_for_staff_user_based_on_full_name("Sundstedt Sanna"))
+    # print(get_user_id_for_staff_user_based_on_full_name("Sundstedt Sanna"))
+    print(gen_tjf_for_staff(user_id="tilpal", month_nr=8))
     pass
     # print(get_tjf_for_enhet(enheter=["655", "656"], month=1))
     # print(get_tjf_for_enhet(enheter=["655", "656"], month=1))

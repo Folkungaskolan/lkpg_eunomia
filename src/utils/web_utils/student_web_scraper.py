@@ -255,6 +255,7 @@ def _2_1_process_id_into_student_record(headless_bool: bool = True, thread_nr: i
         except selenium.common.exceptions.NoSuchElementException as e:
             print(f" process failed id:{row.web_id}")
             continue
+
         try:
             google_pw = driver.find_element(by=By.XPATH, value="/html/body/div[1]/div/article/div[2]/div/div[2]/div[1]/div[5]/div[2]/span").text
         except selenium.common.exceptions.NoSuchElementException as e:

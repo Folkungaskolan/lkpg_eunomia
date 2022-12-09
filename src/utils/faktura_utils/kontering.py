@@ -4,8 +4,9 @@ import inspect
 from CustomErrors import AktivitetNotFoundError
 from database.models import StudentCount_dbo
 from database.mysql_db import MysqlDb
-from utils.dbutil.student_db import generate_split_on_student_count
+from utils.dbutil.student_db import calc_split_on_student_count
 from utils.faktura_utils.normalize import normalize
+from utils.student.student import get_id_komplement_pa_for_student
 
 
 def decode_kontering_in_fritext(*, faktura_month: int, faktura_year: int, konterings_string: str, verbose: bool = False) -> (dict[str:float], str, str):
@@ -13,7 +14,15 @@ def decode_kontering_in_fritext(*, faktura_month: int, faktura_year: int, konter
     Returnerar {"123456": 0.5, "123457": 0.5}
     och "p" som instruktion för aktivitet
     och "konterings kommentar"
-
+    Alternativ:
+    Kontering>A513
+    Kontering>GruTeknik
+    Kontering>Musikproduktion
+    Kontering>FolkungaBibliotek
+    Kontering<DirektElev>användarnamn
+    Kontering<Enheter>656:0.1;655:0.9     exv
+    Kontering<Enheter>656:0.1;655:*      * innebär "resten"
+    Kontering>
     """
     if verbose:
         print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
@@ -27,27 +36,31 @@ def decode_kontering_in_fritext(*, faktura_month: int, faktura_year: int, konter
         if code_segment.startswith("Kontering"):
             metod_string = code_segment
             if code_segment == "Kontering>A513":  # Delas över Gymnasiet
-                return generate_split_on_student_count(enheter_to_split_over=["655"],  # Delas över Gymnasiet
-                                                       month=faktura_month,
-                                                       year=faktura_year), "p", "Kontering>A513"
+                return calc_split_on_student_count(enheter_to_split_over=["655"],  # Delas över Gymnasiet
+                                                   month=faktura_month,
+                                                   year=faktura_year), "p", "Kontering>A513"
             if code_segment == "Kontering>GruTeknik":  # Delas över grundskolans elever
-                return generate_split_on_student_count(enheter_to_split_over=["656"],  # Delas över Grundskolans elever
-                                                       month=faktura_month,
-                                                       year=faktura_year), "p", "Kontering>GruTeknik"
+                return calc_split_on_student_count(enheter_to_split_over=["656"],  # Delas över Grundskolans elever
+                                                   month=faktura_month,
+                                                   year=faktura_year), "p", "Kontering>GruTeknik"
             if code_segment == "Kontering>Musikproduktion":  # Delas över grundskolan
                 return {"656520": 1}, "p", "Kontering>Musikproduktion"  # generate_split_on_student_count(enheter=["656520"],  # Delas över Grundskolans 7-9 elever
                 # month=faktura_rad.faktura_month,
                 # year=faktura_rad.faktura_year), "p", "Kontering>Musikproduktion"
             if code_segment == "Kontering>FolkungaBibliotek":  # Delas över grundskolan
-                return generate_split_on_student_count(enheter_to_split_over=["656", "655"],  # Delas över Gymnasiet och Grundskolan enligt antal elever
-                                                       month=faktura_month,
-                                                       year=faktura_year), "p", "Kontering>FolkungaBibliotek"
+                return calc_split_on_student_count(enheter_to_split_over=["656", "655"],  # Delas över Gymnasiet och Grundskolan enligt antal elever
+                                                   month=faktura_month,
+                                                   year=faktura_year), "p", "Kontering>FolkungaBibliotek"
+            if code_segment.startswith("Kontering>DirektElev<"):  # Delas över grundskolan
+                elev_anvandarnamn = code_segment.split(">")[1]    # Kontering<DirektElev>användarnamn
+                enheter = get_id_komplement_pa_for_student(user_id=elev_anvandarnamn)
+                aktivitet = "p"
 
-            faktura_rad = code_segment.split(">")[1]
-            kontering_metod = faktura_rad.split("<")[0]
+            t_kontering = code_segment.split(">")[1]
+            kontering_metod = t_kontering.split("<")[0]
             if kontering_metod == "Enheter":
-                faktura_rad = faktura_rad.split(";")
-                for k in faktura_rad:
+                t_kontering = t_kontering.split(";")
+                for k in t_kontering:
                     if verbose:
                         print(k)
                     key, value = k.split(":")
@@ -62,7 +75,7 @@ def decode_kontering_in_fritext(*, faktura_month: int, faktura_year: int, konter
                 else:
                     slut_kontering = temp_kontering
             elif kontering_metod == "Elevantal":
-                elev_enhet_str = faktura_rad.split("<")[1]
+                elev_enhet_str = t_kontering.split("<")[1]
                 elev_enhet_lista = elev_enhet_str.split(";")
                 student_counts = {}
                 for k in elev_enhet_lista:
@@ -79,7 +92,7 @@ def decode_kontering_in_fritext(*, faktura_month: int, faktura_year: int, konter
             aktivitet = code_segment.split(":")[1]
     if aktivitet is None:
         raise AktivitetNotFoundError(
-            f"ingen aktivitet hittad i sträng {faktura_rad.id=}, {faktura_rad.avser=}, {faktura_rad.faktura_year=}, {faktura_rad.faktura_month=}")
+            f"ingen aktivitet hittad i sträng {t_kontering.id=}, {t_kontering.avser=}, {t_kontering.faktura_year=}, {t_kontering.faktura_month=}")
     # print(sum(slut_kontering.values()))
     return slut_kontering, aktivitet, metod_string
 

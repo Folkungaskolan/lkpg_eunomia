@@ -40,30 +40,6 @@ def calc_tjf_sums() -> None:
     mark_tjf_errors()
 
 
-def extrapolera_tjf(pnr12: str, id_komplement_pa: str, month_nr: int, riktning: str = "ner") -> float:
-    """ Extrapolera tjf för personalen
-     försöker först hitta tjf "tidigre" i tiden, om det inte finns så försöker den hitta "senare" i tiden
-     """
-    # print(f"{pnr12:}, {id_komplement_pa}, {month_nr:}")
-    s = MysqlDb().session()
-    if month_nr < 1:  # om vi gått hela vägen upp, och inte hittat ett värde att extrapolera med byt riktning
-        return extrapolera_tjf(pnr12=pnr12, id_komplement_pa=id_komplement_pa, month_nr=1, riktning="upp")
-    if month_nr > 12:  # Inget hittat: returnera 0
-        return 0.0
-    tjf = s.query(Tjf_dbo).filter(and_(Tjf_dbo.pnr12 == pnr12, Tjf_dbo.id_komplement_pa == id_komplement_pa)).first()
-    # print(tjf)
-    # print(F'month nr: {month_nr}:{eval(F"tjf.{MONTHS_int_to_name[month_nr]}")}')
-
-    if eval(F"tjf.{MONTHS_int_to_name[month_nr]}") is None:
-        if riktning == "upp":
-            new_month = riktning = month_nr + 1
-        else:
-            new_month = riktning = month_nr - 1
-        return extrapolera_tjf(pnr12=pnr12, id_komplement_pa=id_komplement_pa, month_nr=new_month)
-    else:
-        return eval(F"tjf.{MONTHS_int_to_name[month_nr]}")
-
-
 def mark_tjf_errors():
     """ Markera tjf fel om någon tjf är över 100 % """
     s = MysqlDb().session()
@@ -83,3 +59,4 @@ if __name__ == '__main__':
     # print(extrapolera_tjf(pnr12="123456789123", id_komplement_pa="321", month_nr=9))
     calc_tjf_sums()
     mark_tjf_errors()
+
