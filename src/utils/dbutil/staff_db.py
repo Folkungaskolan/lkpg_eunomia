@@ -7,6 +7,7 @@ from CustomErrors import DBUnableToCrateUser, NoUserFoundError, NoValidEnheterFo
 from database.models import Staff_dbo, Tjf_dbo
 from database.mysql_db import MysqlDb, init_db
 from statics.eunomia_date_helpers import MONTHS_NAMES, MONTHS_int_to_name
+from utils.EunomiaEnums import Months
 from utils.faktura_utils.normalize import normalize
 from utils.pnr_utils import pnr10_to_pnr12
 
@@ -183,7 +184,7 @@ def gen_tjf_for_staff(*, user_id: str, month_nr: str, verbose: bool = False) -> 
             for id_komplement_pa in t.keys():
                 extr_month, t[id_komplement_pa] = extrapolera_tjf_from_known_months_given_pnr12(pnr12=pnr12, id_komplement_pa=id_komplement_pa, month_nr=month_nr)
                 extrapolation_list.append(extr_month)
-            print(f"extrapolation_list: {extrapolation_list}")
+            # print(f"extrapolation_list: {extrapolation_list}")
             if len(set(extrapolation_list)) == 1:
                 return normalize(tjf=t)
             else:
@@ -227,13 +228,13 @@ def extrapolera_tjf_from_known_months_given_user_id(user_id: str, id_komplement_
 
 def extrapolera_tjf_from_known_months_given_pnr12(pnr12: str, id_komplement_pa: str, month_nr: int, riktning: str = "ner") -> (int, float):
     """ Extrapolera tjf för personalen
-     försöker först hitta tjf "tidigre" i tiden, om det inte finns så försöker den hitta "senare" i tiden
+     försöker först hitta tjf "tidigare" i tiden, om det inte finns så försöker den hitta "senare" i tiden
      """
     # print(f"{pnr12:}, {id_komplement_pa}, {month_nr:}")
     s = MysqlDb().session()
     if month_nr < 1:  # om vi gått hela vägen upp, och inte hittat ett värde att extrapolera med byt riktning
         return extrapolera_tjf_from_known_months_given_pnr12(pnr12=pnr12, id_komplement_pa=id_komplement_pa, month_nr=1, riktning="upp")
-    if month_nr > 12:  # Inget hittat: returnera 0
+    elif month_nr > 12:  # Inget hittat: returnera 0
         return 0.0
     tjf = s.query(Tjf_dbo).filter(and_(Tjf_dbo.pnr12 == pnr12, Tjf_dbo.id_komplement_pa == id_komplement_pa)).first()
     # print(tjf)
@@ -244,7 +245,7 @@ def extrapolera_tjf_from_known_months_given_pnr12(pnr12: str, id_komplement_pa: 
             new_month = month_nr + 1
         else:
             new_month = month_nr - 1
-        return extrapolera_tjf_from_known_months_given_pnr12(pnr12=pnr12, id_komplement_pa=id_komplement_pa, month_nr=new_month)
+        return extrapolera_tjf_from_known_months_given_pnr12(pnr12=pnr12, id_komplement_pa=id_komplement_pa, month_nr=new_month, riktning=riktning)
     else:
         return month_nr, eval(F"tjf.{MONTHS_int_to_name[month_nr]}")
 
@@ -255,7 +256,7 @@ if __name__ == '__main__':
     # print(tjf_lyam.values())
     # print(sum(tjf_lyam.values()))
     # print(get_user_id_for_staff_user_based_on_full_name("Sundstedt Sanna"))
-    print(gen_tjf_for_staff(user_id="tilpal", month_nr=8))
+    print(gen_tjf_for_staff(user_id="friham", month_nr=7))
     pass
     # print(get_tjf_for_enhet(enheter=["655", "656"], month=1))
     # print(get_tjf_for_enhet(enheter=["655", "656"], month=1))

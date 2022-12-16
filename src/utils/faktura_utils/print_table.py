@@ -11,7 +11,8 @@ COL_WIDTHS = {"ID": 6,
               "Fasit kontering": 20,
               "Tot Tjf": 12,
               "Elevantal": 12,
-              "Summary": 12}
+              "Summary": 12,
+              "split_string": 50}
 
 
 def print_headers():
@@ -70,7 +71,7 @@ def print_result(row_values: dict[str:str]):
 if __name__ == "__main__":
     print_headers()
     print_start(row_values={"ID": 1, "Period": "2022-9", "Tjänst": "Chromebooks", "Avser": "C12345", "Summa": 1012})
-    print_result(row_values={"Fasit ägare": False, "Fasit kontering": True, "Tot Tjf": False, "Elevantal": False, "Summary": "Success"})
+    print_result(row_values={"Fasit ägare": False, "Fasit kontering": True, "Tot Tjf": False, "Elevantal": False, "Summary": "Success", "split_string":"bla bla bla bla bla bla 123"})
 
     # print(colored('hello', 'red'), colored('world', 'green'))
     # print('\033[2;31;43m CHEESY')

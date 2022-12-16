@@ -7,6 +7,7 @@ from sqlalchemy import Column, String, Integer, DateTime, Float, Boolean, SmallI
 from sqlalchemy.ext.declarative import declarative_base
 
 from database.mysql_db import create_db_engine, MysqlDb
+from utils.EunomiaEnums import EnhetsAggregering
 
 Base = declarative_base()
 
@@ -246,6 +247,8 @@ class FakturaRad_dbo(Base):
     eunomia_case_creator_user_id: str = Column(String(length=50))  # konto in eunomia file
     tjanst_kategori_lvl1: str = Column(String(length=150))  # kategori grej
     tjanst_kategori_lvl2: str = Column(String(length=150))  # kategori grej
+
+    dela_over_enheter : list[str|EnhetsAggregering]= None # spara vilka enheter som
 
     def __str__(self):
         return F"FakturaRad_dbo({self.id=} {self.tjanst:},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod}," \

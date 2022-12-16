@@ -55,6 +55,8 @@ def get_klasser_for_all_students():
 
 if __name__ == '__main__':
     # print(get_id_komplement_pa_for_student(user_id="malmos795"))
-    klasslist = get_klasser_for_all_students()
-    for klass in klasslist:
-        print(F"Klass {klass} är kopplad till enhet {decode_klass_to_id_komplement_pa(klass_namn=klass)}")
+    print(decode_klass_to_id_komplement_pa("7A_FOL15"))
+
+    # klasslist = get_klasser_for_all_students()
+    # for klass in klasslist:
+    #     print(F"Klass {klass} är kopplad till enhet {decode_klass_to_id_komplement_pa(klass_namn=klass)}")

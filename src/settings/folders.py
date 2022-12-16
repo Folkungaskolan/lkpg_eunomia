@@ -12,7 +12,10 @@ STUDENT_USER_XLSX_FILEPATH = "H:/Min enhet/odbc_source/Elever.xlsx"
 STUDENT_EDUROAM_GEN_FOLDER = MAIN_INTALL_SAVE_FOLER + "Students/1.GenEduroam/"
 
 STUDENT_PW_CSV_FILEPATH = MAIN_INTALL_SAVE_FOLER + "Students/long_uniqe_filname_student_pw_lvceq5mg5n8on4pj17i9zl779e1wnrx.csv"
-KLASSLISTA_CSV_FILEPATH = "H:/Delade enheter/F - Folkungaskolan Vaktmästeri/long_uniqe_filname_klasslistorna_i_h4kuexqj3mgdxcke1iob4v6eyzm60c6.csv"
+KLASSLISTA_CSV_FILEPATHS = [
+    "H:/Delade enheter/F - Folkungaskolan Vaktmästeri/long_uniqe_filname_klasslistorna_i_h4kuexqj3mgdxcke1iob4v6eyzm60c6.csv",
+    "H:/Delade enheter/F - Folkungaskolan GRU Omprov anmälningar/long_uniqe_filname_klasslistorna_i_w0ZHvnn4Udk06zZl7RKVKI9AVC4anMMbtOluxK.csv"
+]
 
 BASE_OBSIDIAN_PATH = r"H:/Min enhet/Obsidian Vault/Folkungaskolan/"
 OBSIDIAN_LINX_SEPARATOR = "§"
@@ -24,5 +27,3 @@ STAFF_USER_SUBJECTS_CSV = STAFF_USER_FOLDER_PATH + "staff_ämnen_raw.csv"
 FAKTURA_EXCEL_TJF_FOLDER = "H:/Delade enheter/F - Folkungaskolan Fakturauppföljning Eunomia/Tjf Källor/"
 FAKTURA_EXCEL_FAKTURA_RADER_FILE = MAIN_INTALL_SAVE_FOLER + "Fakturor/import.xlsx"
 FAKTURA_CSV_CASE_COSTS_CSV_FILE = MAIN_INTALL_SAVE_FOLER + "Fakturor/casecosts_long_uniqe_filname_Gq2H4nn6uFzaV4RSUHPavmoy3QYso3cpcAYZ6q.csv"
-
-

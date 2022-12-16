@@ -252,8 +252,13 @@ def _2_1_process_id_into_student_record(headless_bool: bool = True, thread_nr: i
             last_name = driver.find_element(by=By.XPATH, value="/html/body/div[1]/div/article/div[2]/div/div[2]/div[1]/div[8]/div[2]/span").text
             klass = driver.find_element(by=By.XPATH, value="/html/body/div[1]/div/article/div[2]/div/div[2]/div[1]/div[13]/div[2]/span").text
             skola = driver.find_element(by=By.XPATH, value="/html/body/div[1]/div/article/div[2]/div/div[2]/div[1]/div[10]/div[2]/span").text
+            if klass == "ALV1214TEX04S":  # Av någon anledning får jag Anna Alkenius vuxen konto med i våra listor. Skippar den.
+                s.delete(row)
+                s.commit()
+                continue
         except selenium.common.exceptions.NoSuchElementException as e:
             print(f" process failed id:{row.web_id}")
+
             continue
 
         try:

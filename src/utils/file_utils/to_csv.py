@@ -6,7 +6,7 @@ from pandas import DataFrame
 
 from database.models import Student_dbo, FakturaRad_dbo
 from database.mysql_db import MysqlDb
-from settings.folders import KLASSLISTA_CSV_FILEPATH, STUDENT_PW_CSV_FILEPATH, FAKTURA_CSV_CASE_COSTS_CSV_FILE
+from settings.folders import KLASSLISTA_CSV_FILEPATHS, STUDENT_PW_CSV_FILEPATH, FAKTURA_CSV_CASE_COSTS_CSV_FILE
 
 
 def write_student_csv_from_mysql(verbose: bool = False) -> DataFrame:
@@ -24,7 +24,8 @@ def write_student_csv_from_mysql(verbose: bool = False) -> DataFrame:
                                      Student_dbo.last_name,
                                      Student_dbo.klass).statement, s.bind)
     # används i nyckelhanteringen för att uppdatera klasslistorna på vilka elever som finns på skolan.
-    student_df.to_csv(KLASSLISTA_CSV_FILEPATH, sep=';', encoding='utf-8', index=False)
+    for export_path in KLASSLISTA_CSV_FILEPATHS:
+        student_df.to_csv(export_path, sep=';', encoding='utf-8', index=False)
 
     student_df = pd.read_sql(s.query(Student_dbo.user_id,
                                      Student_dbo.first_name,

@@ -4,9 +4,10 @@ from datetime import datetime
 
 from sqlalchemy import and_
 
-from database.models import Student_dbo, Student_old_dbo, StudentCount_dbo, Tjf_dbo
+from database.models import Student_dbo, Student_old_dbo, StudentCount_dbo
 from database.mysql_db import MysqlDb
 from settings.enhetsinfo import ID_AKTIVITET, FOLKUNGA_GRU_ENHETER, STLARS_ENHETER, ENHETER_SOM_HAR_CBS, FOLKUNGA_GY_ENHETER
+from utils.EunomiaEnums import EnhetsAggregering
 from utils.dbutil.expandera_enheter import expandera_enheter
 from utils.faktura_utils.normalize import normalize
 
@@ -109,21 +110,18 @@ def find_and_move_old_students() -> None:  # TODO: Move student to old table whe
     print("find_and_move_old_students  Done")
 
 
-def calc_split_on_student_count(year: int, month: int, enheter_to_split_over: list | str) -> list[str:float]:
+def calc_split_on_student_count(year: int, month: int, enheter_to_split_over: list[str] | EnhetsAggregering) -> dict[str:float]:
     """ Generera split på antal elever """
     s = MysqlDb().session()
 
     alla_enheter = set(ID_AKTIVITET.keys())
-    if enheter_to_split_over is None:
-        enheter_to_split_over = alla_enheter
-    elif enheter_to_split_over == {"CB"}:
-        enheter_to_split_over = ENHETER_SOM_HAR_CBS
-    elif enheter_to_split_over == {"F_GY"}:
-        enheter_to_split_over = FOLKUNGA_GY_ENHETER
-    elif enheter_to_split_over == {"GRU"}:
-        enheter_to_split_over = FOLKUNGA_GRU_ENHETER
-    elif enheter_to_split_over == {"STL"}:
-        enheter_to_split_over = STLARS_ENHETER
+    if enheter_to_split_over is None:           enheter_to_split_over = alla_enheter
+    elif enheter_to_split_over == {EnhetsAggregering.CB}:       enheter_to_split_over = ENHETER_SOM_HAR_CBS
+    elif enheter_to_split_over == {EnhetsAggregering.F_GY}:     enheter_to_split_over = FOLKUNGA_GY_ENHETER
+    elif enheter_to_split_over == {EnhetsAggregering.GRU}:      enheter_to_split_over = FOLKUNGA_GRU_ENHETER
+    elif enheter_to_split_over == {EnhetsAggregering.GRU4_6}:   return {"656510": 1}
+    elif enheter_to_split_over == {EnhetsAggregering.GRU7_9}:   return {"656520": 1}
+    elif enheter_to_split_over == {EnhetsAggregering.STL}:      enheter_to_split_over = STLARS_ENHETER
 
     expanderad_enheter_to_split_over = expandera_enheter(enheter_to_split_over)
     if any([True for enhet in expanderad_enheter_to_split_over if enhet not in alla_enheter]):  # Kollar att enheterna vi fick finns i alla enheter
