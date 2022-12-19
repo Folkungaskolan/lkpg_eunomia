@@ -3,7 +3,7 @@ from functools import cache
 
 from sqlalchemy import and_
 
-from CustomErrors import DBUnableToCrateUser, NoUserFoundError, NoValidEnheterFoundError, ExtrapolationError, NoTjfFoundError
+from CustomErrors import DBUnableToCrateUser, NoUserFoundError, NoValidEnheterFoundError, ExtrapolationError, NoTjfFoundError, NoDomainSetError
 from database.models import Staff_dbo, Tjf_dbo
 from database.mysql_db import MysqlDb, init_db
 from statics.eunomia_date_helpers import MONTHS_NAMES, MONTHS_int_to_name
@@ -133,7 +133,10 @@ def get_tjf_for_enhet(enheter: list[str], month: int, verbose: bool = False) -> 
         print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
 
     valid_enheter = []
-    key = f"{enheter.sort()}-{month}"
+    try:
+        key = f"{enheter.sort()}-{month}"
+    except AttributeError:
+        raise AttributeError("enheter måste vara en lista")
     if key in CASHED_GET_TJF_FOR_ENHET:  # om enhet finns i cachad lista, returnera
         return CASHED_GET_TJF_FOR_ENHET[key]
 
@@ -183,15 +186,17 @@ def gen_tjf_for_staff(*, user_id: str, month_nr: str, verbose: bool = False) -> 
             extrapolation_list = []
             # Sparar vilka månader som används för extrapolation. Om olika månader kommer så innebär att olika id_komplement_pa ändras i olika
             # månader och kan inte antas vara rättvisa
-            for id_komplement_pa in t.keys():
-                extr_month, t[id_komplement_pa] = extrapolera_tjf_from_known_months_given_pnr12(pnr12=pnr12, id_komplement_pa=id_komplement_pa, month_nr=month_nr)
-                extrapolation_list.append(extr_month)
-            # print(f"extrapolation_list: {extrapolation_list}")
-            if len(set(extrapolation_list)) == 1:
-                return normalize(tjf=t)
-            else:
-                raise ExtrapolationError(f"Kunde inte extrapolera tjf för {user_id} för månad {month_nr} då olika id gav olika extrapoleringar")
-
+            try:
+                for id_komplement_pa in t.keys():
+                    extr_month, t[id_komplement_pa] = extrapolera_tjf_from_known_months_given_pnr12(pnr12=pnr12, id_komplement_pa=id_komplement_pa, month_nr=month_nr)
+                    extrapolation_list.append(extr_month)
+                # print(f"extrapolation_list: {extrapolation_list}")
+                if len(set(extrapolation_list)) == 1:
+                    return normalize(tjf=t)
+                else:
+                    raise ExtrapolationError(f"Kunde inte extrapolera tjf för {user_id} för månad {month_nr} då olika id gav olika extrapoleringar 2022-12-19 16:31:38")
+            except TypeError as e:
+                raise ExtrapolationError(f"Kunde inte extrapolera tjf för {user_id} för månad {month_nr} 2022-12-19 16:31:35 ")
 
 def set_tjf_sum_on_staff(user_id: str, month_nr: int, summa: float, verbose: bool = False) -> None:
     """ Uppdatera tjf_sum på staff för given månad"""
@@ -250,6 +255,26 @@ def extrapolera_tjf_from_known_months_given_pnr12(pnr12: str, id_komplement_pa: 
         return extrapolera_tjf_from_known_months_given_pnr12(pnr12=pnr12, id_komplement_pa=id_komplement_pa, month_nr=new_month, riktning=riktning)
     else:
         return month_nr, eval(F"tjf.{MONTHS_int_to_name[month_nr]}")
+
+
+def get_domain_for_user(user_id: str, verbose: bool = False) -> str:
+    """ Returnerar domän för användaren """
+    s = MysqlDb().session()
+    domain = s.query(Staff_dbo.domain).filter(Staff_dbo.user_id == user_id).first()
+    if domain is not None:
+        return domain[0]
+    elif len(domain) == 0:
+        raise NoDomainSetError(f"Kunde inte hitta domän för användare {user_id}")
+    else:
+        raise NoUserFoundError(f"Kunde inte hitta användare med user_id: {user_id}")
+
+
+def is_staff_old()-> bool:
+    """ if domain for user contains 'old' then return True """
+    if "old" in get_domain_for_user():
+        return True
+    else:
+        return False
 
 
 if __name__ == '__main__':

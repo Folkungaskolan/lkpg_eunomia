@@ -114,6 +114,7 @@ class GearReturnedToLKDATA(Exception):    pass
 class GearUnknownGearIDFormat(Exception):    pass
 class LogInFailure(Exception):    pass
 class ImDoesNotExistsError(Exception):    pass
+class NoDomainSetError(Exception):    pass
 class InformationMissingError(Exception):    pass
 class IngenAnknytningHittadError(Exception):    pass
 class InvalidArgumentsError(Exception):    pass

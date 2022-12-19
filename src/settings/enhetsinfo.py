@@ -18,6 +18,8 @@ ID_AKTIVITET = {"655119": GY_AKTIVITER,  # GY EK
                 "654500": GY_AKTIVITER  # St:Lars Slask ska inte användas
                 }
 
+ALLA_ENHETER = set(ID_AKTIVITET.keys())
+
 # SET
 ENHETER_SOM_HAR_CBS = {"655119",  # Gy EK
                        "655122",  # Gy ES
@@ -41,9 +43,9 @@ FOLKUNGA_GRU_ENHETER = {"656510",  # 4-6
                         "656520",  # 7-9
                         "656310",  # Fritids
                         }
-STLARS_ENHETER = {"654100"  # St:Lars ES- Musik
-                  "654200"  # St:Lars ES- bild
-                  "654300"  # St:Lars NA
-                  "654400"  # St:Lars IMA
-                  "654500"  # St:Lars Slask ska inte användas
+STLARS_ENHETER = {"654100",  # St:Lars ES- Musik
+                  "654200",  # St:Lars ES- bild
+                  "654300",  # St:Lars NA
+                  "654400",  # St:Lars IMA
+                  "654500",  # St:Lars Slask ska inte användas
                   }

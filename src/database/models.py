@@ -7,7 +7,7 @@ from sqlalchemy import Column, String, Integer, DateTime, Float, Boolean, SmallI
 from sqlalchemy.ext.declarative import declarative_base
 
 from database.mysql_db import create_db_engine, MysqlDb
-from utils.EunomiaEnums import EnhetsAggregering, Aktivitet, FakturaRadState
+from utils.EunomiaEnums import EnhetsAggregering, Aktivitet, FakturaRadState, Skola
 
 Base = declarative_base()
 
@@ -251,9 +251,45 @@ class FakturaRad_dbo(Base):
 
     dela_over_enheter: list[str | EnhetsAggregering] = None  # spara vilka enheter som
     split_status: FakturaRadState = FakturaRadState.SPLIT_INCOMPLETE
+    skola: Skola = Skola.UNKNOWN  # skola som raden tillhör
     user_id: str = None
     user_aktivitet_char: Aktivitet = Aktivitet.N
     split: dict[str, float] = {}
+    split_conditions: list[str] = ["self.split_status != FakturaRadState.SPLIT_INCOMPLETE",
+                                   "self.faktura_year is not None",
+                                   "self.faktura_year > 2021",
+                                   "self.faktura_year < 2025",
+                                   "self.faktura_month is not None",
+                                   "self.faktura_month > 0",
+                                   "self.faktura_month < 13",
+                                   "self.tjanst is not None",
+                                   "len(self.tjanst) > 0",
+                                   "self.avser is not None",
+                                   "len(self.avser) > 0",
+                                   "self.anvandare is not None",
+                                   "len(self.anvandare) > 0",
+                                   "self.pris",
+                                   "self.pris > 0",
+                                   "self.summa is not None",
+                                   "self.summa > 0",
+                                   "self.split_method_used is not None",
+                                   "len(self.split_method_used) > 1",
+                                   "Aktivitet(self.user_aktivitet_char) in {Aktivitet.P, Aktivitet.A, Aktivitet.E}",
+                                   ]
+
+    def ready_to_be_split(self) -> bool:
+        """ is row ready to be split? """
+        for c in self.split_conditions:
+            if eval(c) is False:
+                print()
+                print(F"{c} : {eval(c)}")
+                return False
+        return True
+
+    def print_delnings_status(self):
+        """ print status of split. """
+        for c in self.split_conditions:
+            print(F"{c} : {eval(c)}")
 
     def success(self):
         """ Sammantaget, är delningen lyckad? """
@@ -370,6 +406,26 @@ class FasitCopy(Base):
     eunomia_kontering: str = Column(String(length=100))
     eunomia_gear_missing_in_fasit: str = Column(String(length=100))  # om det saknas utrustning i fasit
 
+    def dela_pa_gen_tjf(self):
+        """ Dela upp på generell tjänstefördelning"""
+        b = {self.tag_anknytning == 1,
+             self.tag_rcard == 1,
+             self.tag_mobiltelefon == 1,
+             self.tag_skrivare == 1}
+        return any(b)
+
+    def dela_pa_elevantal(self):
+        """
+        Ska raden delas på generellt elevantal eller ej
+        :return: Bool
+        :rtype:
+        """
+        b = {self.tag_chromebox == 1,
+             self.tag_domain == 1,
+             self.tag_videoprojektor == 1,
+             self.tag_funktionskonto == 1}
+        return any(b)
+
     def __str__(self):
         return self.__repr__
 
@@ -377,66 +433,59 @@ class FasitCopy(Base):
         """ Repr för fasit rad"""
         return f"{self.name}, {self.status}, {self.attribute_anvandare}, {self.attribute_anvandarnamn},  {self.attribute_epost},  {self.attribute_hyresperiod}"
 
+    def create_all_tables(echo: bool = False):
+        """ create all tables in database. """
+        engine = create_db_engine(echo=echo)
+        Base.metadata.create_all(engine)
 
-def create_all_tables(echo: bool = False):
-    """ create all tables in database. """
-    engine = create_db_engine(echo=echo)
-    Base.metadata.create_all(engine)
+    class RunTime_dbo(Base):
+        """ Spara runtime data för funktionerna """
+        __tablename__ = 'function_run_times'
+        id: int = Column(Integer, primary_key=True)
+        run_date: datetime = Column(DateTime)
+        function_name: str = Column(String(length=50))
+        list_length: int = Column(Integer)
+        run_time_sec: float = Column(Float)
+        avg_time_sec: float = Column(Float)
 
+    def drop_all_tables(echo: bool = False):
+        """ drop all tables in database. """
+        engine = create_db_engine(echo=echo)
+        Base.metadata.drop_all(engine)
 
-class RunTime_dbo(Base):
-    """ Spara runtime data för funktionerna """
-    __tablename__ = 'function_run_times'
-    id: int = Column(Integer, primary_key=True)
-    run_date: datetime = Column(DateTime)
-    function_name: str = Column(String(length=50))
-    list_length: int = Column(Integer)
-    run_time_sec: float = Column(Float)
-    avg_time_sec: float = Column(Float)
+    def reset_mysql_db(echo=False):
+        """reset database """
+        drop_all_tables(echo=echo)
+        create_all_tables(echo=echo)
+        print("MySql DB reset done.")
 
+    def demo_distinct(echo: bool = False) -> None:
+        """ demo av join """
+        session = MysqlDb().session()
+        results = session.query(FakturaRad_dbo.tjanst).distinct().all()
+        for result in results:
+            print(result.tjanst)
 
-def drop_all_tables(echo: bool = False):
-    """ drop all tables in database. """
-    engine = create_db_engine(echo=echo)
-    Base.metadata.drop_all(engine)
+    def demo_join() -> None:
+        """ demo av join https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.join"""
+        session = MysqlDb().session()
+        results = session.query(Tjf_dbo, Staff_dbo.aktivitet_char).join(Staff_dbo, Tjf_dbo.pnr12 == Staff_dbo.pnr12) \
+            .limit(5).all()
+        for result in results:
+            print(f"Tjf_dbo{result.Tjf_dbo} Staff_dbo{result.aktivitet_char}")
 
+    if __name__ == '__main__':
+        pass
+        # print(demo_distinct(echo=True))
+        create_all_tables(echo=True)
+        # reset_mysql_db(echo=True)
 
-def reset_mysql_db(echo=False):
-    """reset database """
-    drop_all_tables(echo=echo)
-    create_all_tables(echo=echo)
-    print("MySql DB reset done.")
+        # # Test
+        # from database.mysql_db import init_db
 
-
-def demo_distinct(echo: bool = False) -> None:
-    """ demo av join """
-    session = MysqlDb().session()
-    results = session.query(FakturaRad_dbo.tjanst).distinct().all()
-    for result in results:
-        print(result.tjanst)
-
-
-def demo_join() -> None:
-    """ demo av join https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.join"""
-    session = MysqlDb().session()
-    results = session.query(Tjf_dbo, Staff_dbo.aktivitet_char).join(Staff_dbo, Tjf_dbo.pnr12 == Staff_dbo.pnr12) \
-        .limit(5).all()
-    for result in results:
-        print(f"Tjf_dbo{result.Tjf_dbo} Staff_dbo{result.aktivitet_char}")
-
-
-if __name__ == '__main__':
-    pass
-    # print(demo_distinct(echo=True))
-    create_all_tables(echo=True)
-    # reset_mysql_db(echo=True)
-
-    # # Test
-    # from database.mysql_db import init_db
-
-    # session = init_db()
-    # Staff_dbo.create(session, user_id="test", first_name="test", last_name="test", pnr="test", email="test")
-    # lyam_staff = session.query(Staff_dbo).filter(Staff_dbo.user_id == "lyadol").first()
-    # print(lyam_staff.get_birth_year())
-    # print(lyam_staff.get_birth_month())
-    # print(lyam_staff.get_birth_day())
+        # session = init_db()
+        # Staff_dbo.create(session, user_id="test", first_name="test", last_name="test", pnr="test", email="test")
+        # lyam_staff = session.query(Staff_dbo).filter(Staff_dbo.user_id == "lyadol").first()
+        # print(lyam_staff.get_birth_year())
+        # print(lyam_staff.get_birth_month())
+        # print(lyam_staff.get_birth_day())

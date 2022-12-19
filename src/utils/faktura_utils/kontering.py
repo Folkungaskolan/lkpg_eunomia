@@ -4,6 +4,7 @@ import inspect
 from CustomErrors import AktivitetNotFoundError
 from database.models import StudentCount_dbo, FakturaRad_dbo
 from database.mysql_db import MysqlDb
+from utils.EunomiaEnums import FakturaRadState
 from utils.dbutil.student_db import calc_split_on_student_count
 from utils.faktura_utils.normalize import normalize
 from utils.student.student import get_id_komplement_pa_for_student
@@ -62,14 +63,13 @@ def decode_kontering_in_fritext(*, faktura_rad: FakturaRad_dbo, konterings_strin
             elif remaining_code_segment.startswith("Elevantal"):
                 faktura_rad.split = gen_kontering_elev_antal(kontering=remaining_code_segment, verbose=verbose)
             elif remaining_code_segment.startswith("Personlig utr"):  # mina personliga grejer ska konteras efter min Tjf
-                faktura_rad.split = {"": 0.0}, False, False  # Skickar tillbaka falskt så raden misslyckas med konteringen och kör på Fasit ägaren
+                faktura_rad.split_status = FakturaRadState.SPLIT_INCOMPLETE  # Skickar tillbaka falskt så raden misslyckas med konteringen och kör på Fasit ägaren
             else:
                 raise NotImplementedError(f"Solution for kontering not implemented {konterings_string}")
         elif code_segment.startswith("aktivitet"):  # hämta aktivtet från sträng
             faktura_rad.aktivitet = code_segment.split(":")[1]
     if faktura_rad.aktivitet is None:
         raise AktivitetNotFoundError(f"ingen aktivitet hittad i konterings_string:{konterings_string}")
-
     return faktura_rad.split, faktura_rad.aktivitet, faktura_rad.split_method_used  # för test av kontering
 
 

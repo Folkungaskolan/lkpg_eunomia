@@ -31,6 +31,7 @@ class Skola(Enum):
     """Enum for skola"""
     FOLKUNGA = "FOLKUNGA"
     ST_LARS = "ST_LARS"
+    UNKNOWN = "Unknown"
 
 
 class Months(Enum):

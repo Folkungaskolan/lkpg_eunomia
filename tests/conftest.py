@@ -2,10 +2,11 @@
 import pytest
 from sqlalchemy import and_
 
+from Settings_Student_Numbers import TEST_STUDENT_NUMBERS
 from database.models import StudentCount_dbo, Student_dbo
 from database.mysql_db import MysqlDb
 
-
+FLOAT_TOLERANCE_IN_TESTS = 0.0001
 @pytest.fixture
 def setup_test1():
     """ testing fixtures """
@@ -35,22 +36,12 @@ def base_student_account():
 
 
 @pytest.fixture(scope="session")
-def base_student_numbers():  # https://www.youtube.com/watch?v=ErS0PPfLFLI
+def base_student_numbers() -> None:  # https://www.youtube.com/watch?v=ErS0PPfLFLI
     """ setup base student numbers in database for testing """
     # print("setup_base_student_numbers")
     s = MysqlDb().session()
-    s.add(StudentCount_dbo(year=1900, month=13, count=10, id_komplement_pa="655119"))
-    s.add(StudentCount_dbo(year=1900, month=13, count=12, id_komplement_pa="655123"))
-    s.add(StudentCount_dbo(year=1900, month=13, count=14, id_komplement_pa="655122"))
-    s.add(StudentCount_dbo(year=1900, month=13, count=16, id_komplement_pa="656510"))
-    s.add(StudentCount_dbo(year=1900, month=13, count=18, id_komplement_pa="656520"))
-    s.add(StudentCount_dbo(year=1900, month=13, count=20, id_komplement_pa="656310"))
-    s.add(StudentCount_dbo(year=1900, month=13, count=22, id_komplement_pa="655125"))
-    s.add(StudentCount_dbo(year=1900, month=13, count=24, id_komplement_pa="654100"))
-    s.add(StudentCount_dbo(year=1900, month=13, count=26, id_komplement_pa="654200"))
-    s.add(StudentCount_dbo(year=1900, month=13, count=28, id_komplement_pa="654300"))
-    s.add(StudentCount_dbo(year=1900, month=13, count=30, id_komplement_pa="654400"))
-    s.add(StudentCount_dbo(year=1900, month=13, count=32, id_komplement_pa="654500"))
+    for enhet in TEST_STUDENT_NUMBERS:
+        s.add(StudentCount_dbo(year=1900, month=13, count=TEST_STUDENT_NUMBERS[enhet], id_komplement_pa=enhet))
     s.commit()
     # print("setup_base_student_numbers")
     yield  ## go do the test
