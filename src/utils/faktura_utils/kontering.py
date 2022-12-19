@@ -34,7 +34,7 @@ def decode_kontering_in_fritext(*, faktura_rad: FakturaRad_dbo, konterings_strin
     aktivitet = None
     for code_segment in code_segments:
         if code_segment.startswith("Kontering"):
-            metod_string = code_segment
+            faktura_rad.split_method_used = code_segment
             remaining_code_segment = code_segment.split(">")[1]  # Enheter>656:0.1;655:0.9
             if remaining_code_segment == "A513":  # Delas över Gymnasiet
                 return calc_split_on_student_count(enheter_to_split_over=["655"],  # Delas över Gymnasiet
@@ -53,33 +53,34 @@ def decode_kontering_in_fritext(*, faktura_rad: FakturaRad_dbo, konterings_strin
             elif remaining_code_segment.startswith("DirektElev"):  # Delas över den enheten som en elev tillhör
                 elev_anvandarnamn = remaining_code_segment.split("<")[1]  # Kontering>DirektElev<användarnamn    'Kontering>DirektElev<malmos795'
                 faktura_rad.anvandare = elev_anvandarnamn
+                faktura_rad.user_id = elev_anvandarnamn
                 return calc_split_on_student_count(enheter_to_split_over=get_id_komplement_pa_for_student(user_id=elev_anvandarnamn),  # Delas över Gymnasiet
                                                    month=faktura_rad.faktura_month,
                                                    year=faktura_rad.faktura_year), "p", code_segment
             elif remaining_code_segment.startswith("Enheter"):
-                slut_kontering = gen_kontering_enheter(kontering=remaining_code_segment, verbose=verbose)
+                faktura_rad.split = gen_kontering_enheter(kontering=remaining_code_segment, verbose=verbose)
             elif remaining_code_segment.startswith("Elevantal"):
-                slut_kontering = gen_kontering_elev_antal(kontering=remaining_code_segment, verbose=verbose)
+                faktura_rad.split = gen_kontering_elev_antal(kontering=remaining_code_segment, verbose=verbose)
             elif remaining_code_segment.startswith("Personlig utr"):  # mina personliga grejer ska konteras efter min Tjf
-                return {"": 0.0}, False, False  # Skickar tillbaka falskt så raden misslyckas med konteringen och kör på Fasit ägaren
+                faktura_rad.split = {"": 0.0}, False, False  # Skickar tillbaka falskt så raden misslyckas med konteringen och kör på Fasit ägaren
             else:
                 raise NotImplementedError(f"Solution for kontering not implemented {konterings_string}")
         elif code_segment.startswith("aktivitet"):  # hämta aktivtet från sträng
-            aktivitet = code_segment.split(":")[1]
-    if aktivitet is None:
+            faktura_rad.aktivitet = code_segment.split(":")[1]
+    if faktura_rad.aktivitet is None:
         raise AktivitetNotFoundError(f"ingen aktivitet hittad i konterings_string:{konterings_string}")
 
-    return slut_kontering, aktivitet, metod_string
+    return faktura_rad.split, faktura_rad.aktivitet, faktura_rad.split_method_used  # för test av kontering
 
 
 def gen_kontering_enheter(kontering: str, verbose: bool = False) -> tuple[str, str, str]:
     """ Hanterar kontering om konterings metoden är 'enhet' """
-    star_present_in_key = None # init check variabale
+    star_present_in_key = None  # init check variabale
     if verbose:
         print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
     kontering = kontering.split("<")[1]
     t_kontering = kontering.split(";")
-    slut_kontering : dict[str:float]= {}
+    slut_kontering: dict[str:float] = {}
     for enhets_kontering in t_kontering:
         if verbose:
             print(enhets_kontering)

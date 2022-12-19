@@ -7,7 +7,7 @@ from sqlalchemy import Column, String, Integer, DateTime, Float, Boolean, SmallI
 from sqlalchemy.ext.declarative import declarative_base
 
 from database.mysql_db import create_db_engine, MysqlDb
-from utils.EunomiaEnums import EnhetsAggregering
+from utils.EunomiaEnums import EnhetsAggregering, Aktivitet, FakturaRadState
 
 Base = declarative_base()
 
@@ -173,6 +173,7 @@ class StaffSubjects_dbo(Base):
     last_name: str = Column(String(length=50))
     email: str = Column(String(length=50))
 
+
 class StaffMentors_dbo(Base):
     """ Vilka ämnen har varje lärare """
     __tablename__ = 'staff_mentors'
@@ -248,7 +249,19 @@ class FakturaRad_dbo(Base):
     tjanst_kategori_lvl1: str = Column(String(length=150))  # kategori grej
     tjanst_kategori_lvl2: str = Column(String(length=150))  # kategori grej
 
-    dela_over_enheter : list[str|EnhetsAggregering]= None # spara vilka enheter som
+    dela_over_enheter: list[str | EnhetsAggregering] = None  # spara vilka enheter som
+    split_status: FakturaRadState = FakturaRadState.SPLIT_INCOMPLETE
+    user_id: str = None
+    user_aktivitet_char: Aktivitet = Aktivitet.N
+    split: dict[str, float] = {}
+
+    def success(self):
+        """ Sammantaget, är delningen lyckad? """
+        s = {self.split_status == FakturaRadState.SPLIT_BY_FASIT_USER_SUCCESSFUL,
+             self.split_status == FakturaRadState.SPLIT_BY_FASIT_KONTERING_SUCCESSFUL,
+             self.split_status == FakturaRadState.SPLIT_BY_GENERELL_TFJ_SUCCESSFUL,
+             self.split_status == FakturaRadState.SPLIT_BY_ELEVANTAL_SUCCESSFUL}
+        return any(s)
 
     def __str__(self):
         return F"FakturaRad_dbo({self.id=} {self.tjanst:},kundnummer={self.kundnummer},fakturamarkning={self.fakturamarkning},fakturakod={self.fakturakod}," \

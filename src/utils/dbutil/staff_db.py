@@ -181,6 +181,8 @@ def gen_tjf_for_staff(*, user_id: str, month_nr: str, verbose: bool = False) -> 
             return t
         else:
             extrapolation_list = []
+            # Sparar vilka månader som används för extrapolation. Om olika månader kommer så innebär att olika id_komplement_pa ändras i olika
+            # månader och kan inte antas vara rättvisa
             for id_komplement_pa in t.keys():
                 extr_month, t[id_komplement_pa] = extrapolera_tjf_from_known_months_given_pnr12(pnr12=pnr12, id_komplement_pa=id_komplement_pa, month_nr=month_nr)
                 extrapolation_list.append(extr_month)

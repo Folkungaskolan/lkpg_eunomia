@@ -236,7 +236,7 @@ def get_needed_web_updates(verbose: bool = False) -> list[dict[str:str]]:
             print(F"CB:{cb.name} commands: {cmd}, new_value: {new_value}")
     return todo_list
 
-
+@cache
 def get_user_id_for_fasit_user(full_name: str, verbose: bool = False) -> str:
     """ Hämta user_id för fasit användare
     Dolk Lyam -> lyadol

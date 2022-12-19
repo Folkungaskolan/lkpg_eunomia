@@ -11,6 +11,7 @@ class EnhetsAggregering(Enum):
     GRU = "GRU"
     GRU4_6 = "GRU4_6"
     GRU7_9 = "GRU7_9"
+    FOLKUNGA = "FOLKUNGA"
     STL = "STL"
 
 
@@ -46,6 +47,14 @@ class Months(Enum):
     OCT = 10
     NOV = 11
     DEC = 12
+
+
+class Aktivitet(Enum):
+    """Enum for aktivitet"""
+    N = "n" # Not SET aka Error om det finns i databasen
+    A = "a"  # admin m.fl
+    E = "e"  # Elevhälsan
+    P = "p"  # Pedagogiskt personal
 
 
 if __name__ == '__main__':

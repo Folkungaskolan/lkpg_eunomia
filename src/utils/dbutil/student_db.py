@@ -121,6 +121,7 @@ def calc_split_on_student_count(year: int, month: int, enheter_to_split_over: li
     elif enheter_to_split_over == {EnhetsAggregering.GRU}:      enheter_to_split_over = FOLKUNGA_GRU_ENHETER
     elif enheter_to_split_over == {EnhetsAggregering.GRU4_6}:   return {"656510": 1}
     elif enheter_to_split_over == {EnhetsAggregering.GRU7_9}:   return {"656520": 1}
+    elif enheter_to_split_over == {EnhetsAggregering.FOLKUNGA}: enheter_to_split_over = FOLKUNGA_GY_ENHETER| FOLKUNGA_GRU_ENHETER
     elif enheter_to_split_over == {EnhetsAggregering.STL}:      enheter_to_split_over = STLARS_ENHETER
 
     expanderad_enheter_to_split_over = expandera_enheter(enheter_to_split_over)

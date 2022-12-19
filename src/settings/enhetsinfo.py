@@ -1,7 +1,7 @@
 """ Samling av all information som programmet behöver kring vilka enheter som finns och vilka aktiviteter de har"""
 
-GY_AKTIVITER = {"p": "410200", "e": "410600", "a": "410500"}
-GRU_AKTIVITER = {"p": "310200", "e": "310600", "a": "310500"}
+GY_AKTIVITER = {"p": "410200", "e": "410600", "a": "410500", "n": "-1"}
+GRU_AKTIVITER = {"p": "310200", "e": "310600", "a": "310500", "n": "-1"}
 
 # DICT
 ID_AKTIVITET = {"655119": GY_AKTIVITER,  # GY EK

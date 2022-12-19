@@ -1,16 +1,13 @@
 import concurrent
 import concurrent.futures
-import json
-import math
 import os
+import random
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-import random
 
 import selenium
 import sqlalchemy
-from selenium import webdriver
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
@@ -26,11 +23,10 @@ from settings.threadsettings import THREADCOUNT
 from utils.creds import get_cred
 from utils.decorators import function_timer
 from utils.file_utils import save_student
-from utils.file_utils.to_csv import write_student_csv_from_mysql
 from utils.file_utils.json_wrapper import load_dict_from_json_path
+from utils.file_utils.to_csv import write_student_csv_from_mysql
 from utils.path_utils.path_helpers import split_student_account_user_name_from_filepath
 from utils.print_progress_bar import print_progress_bar
-
 from utils.student.student_mysql import save_student_information_to_db, count_student
 from utils.web_utils.general_web import init_chrome_webdriver, position_windows
 
@@ -359,14 +355,6 @@ def check_old_files(new_file_within_days_limit: int = None) -> None:
                              eduroam_pw_gen_datetime=eduroam_pw_gen_date.replace("_", " "),
                              this_is_a_web_import=True)
                 continue
-
-
-def test():
-    s = MysqlDb().session()
-    # student_ids = s.query(Student_id_process_que_dbo).count()
-
-    # s.commit()
-    # print(student_ids)
 
 
 if __name__ == "__main__":
