@@ -257,7 +257,7 @@ def extrapolera_tjf_from_known_months_given_pnr12(pnr12: str, id_komplement_pa: 
         return month_nr, eval(F"tjf.{MONTHS_int_to_name[month_nr]}")
 
 
-def get_domain_for_user(user_id: str, verbose: bool = False) -> str:
+def get_domain_for_staff_user(*,user_id: str, verbose: bool = False) -> str:
     """ Returnerar domän för användaren """
     s = MysqlDb().session()
     domain = s.query(Staff_dbo.domain).filter(Staff_dbo.user_id == user_id).first()
@@ -269,9 +269,9 @@ def get_domain_for_user(user_id: str, verbose: bool = False) -> str:
         raise NoUserFoundError(f"Kunde inte hitta användare med user_id: {user_id}")
 
 
-def is_staff_old()-> bool:
+def is_staff_old(*,user_id:str)-> bool:
     """ if domain for user contains 'old' then return True """
-    if "old" in get_domain_for_user():
+    if "old" in get_domain_for_staff_user(user_id=user_id):
         return True
     else:
         return False

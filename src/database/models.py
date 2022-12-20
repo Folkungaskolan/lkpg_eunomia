@@ -256,25 +256,26 @@ class FakturaRad_dbo(Base):
     user_aktivitet_char: Aktivitet = Aktivitet.N
     split: dict[str, float] = {}
     split_conditions: list[str] = ["self.split_status != FakturaRadState.SPLIT_INCOMPLETE",
-                                   "self.faktura_year is not None",
-                                   "self.faktura_year > 2021",
-                                   "self.faktura_year < 2025",
-                                   "self.faktura_month is not None",
-                                   "self.faktura_month > 0",
-                                   "self.faktura_month < 13",
-                                   "self.tjanst is not None",
-                                   "len(self.tjanst) > 0",
-                                   "self.avser is not None",
-                                   "len(self.avser) > 0",
-                                   "self.anvandare is not None",
-                                   "len(self.anvandare) > 0",
-                                   "self.pris",
-                                   "self.pris > 0",
-                                   "self.summa is not None",
-                                   "self.summa > 0",
-                                   "self.split_method_used is not None",
-                                   "len(self.split_method_used) > 1",
-                                   "Aktivitet(self.user_aktivitet_char) in {Aktivitet.P, Aktivitet.A, Aktivitet.E}",
+                                   "self.faktura_year is not None", # AUTO set from start
+                                   "self.faktura_year > 2021",# AUTO set from start
+                                   "self.faktura_year < 2025",# AUTO set from start
+                                   "self.faktura_month is not None",# AUTO set from start
+                                   "self.faktura_month > 0",# AUTO set from start
+                                   "self.faktura_month < 13",# AUTO set from start
+                                   "self.tjanst is not None",# AUTO set from start
+                                   "len(self.tjanst) > 0",# AUTO set from start
+                                   "self.avser is not None",# AUTO set from start
+                                   "len(self.avser) > 0",# AUTO set from start
+                                   "self.anvandare is not None",# AUTO set from start
+                                   "len(self.anvandare) > 0",# AUTO set from start
+                                   "self.pris",# AUTO set from start
+                                   "self.pris > 0",# AUTO set from start
+                                   "self.summa is not None",# AUTO set from start
+                                   "self.summa > 0",# AUTO set from start
+
+                                   "self.split_method_used is not None", "len(self.split_method_used) > 1", # Måste sättas
+                                   "self.split is not None","len(self.split) > 0", # Måste sättas
+                                   "Aktivitet(self.user_aktivitet_char) in {Aktivitet.P, Aktivitet.A, Aktivitet.E}" # Behöver en godkänd aktivitet
                                    ]
 
     def ready_to_be_split(self) -> bool:
