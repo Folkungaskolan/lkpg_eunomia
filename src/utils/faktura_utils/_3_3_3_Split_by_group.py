@@ -1,40 +1,29 @@
 """ Fakturadelning utifrån en grupp av personer """
-from sqlalchemy import and_
 
-from database.models import Tjf_dbo
-from database.mysql_db import MysqlDb
+from utils.EunomiaEnums import FakturaRadState, Aktivitet
+from utils.dbutil.staff_db import get_tjf_for_enhet
+from utils.dbutil.student_db import calc_split_on_student_count
+from utils.faktura_utils._3_0_print_table import printfakturainfo
+from utils.faktura_utils._3_666_Insert_invoice_to_database import insert_split_into_database
 
-def generate_total_tjf_for_month(month: int) -> dict[str:dict[str, float]]:
-    """ sum and create a proportion for each tjanstcode in a month """
-    s = MysqlDb().session()
-    id_komplement_pas_aktivitet_combos = s.query(Tjf_dbo.id_komplement_pa, Tjf_dbo.aktivitet).distinct().all()
-    try:
-        return process_tjf_totals(combo_list=id_komplement_pas_aktivitet_combos, month=month)
-    except ValueError as error:
-        for id_komplement_pa, aktivitet in id_komplement_pas_aktivitet_combos:
-            if aktivitet is None:
-                print(f"id_komplement_pa: {id_komplement_pa}, aktivitet: {aktivitet}")
-        raise ValueError from error
-def process_tjf_totals(combo_list: list[list[str]], month: int) -> dict[str:dict[str, float]]:
-    """ process tjf """
-    s = MysqlDb().session()
-    abs_total_tjf = {}
-    abs_sum_tjf = 0
-    MONTHS = {1: "jan", 2: "feb", 3: "mar", 4: "apr", 5: "maj", 6: "jun", 7: "jul", 8: "aug", 9: "sep", 10: "okt", 11: "nov", 12: "dec"}
-    for id_komplement_pa, aktivitet in combo_list:
-        if aktivitet is None:
-            raise ValueError("There are empty numeric aktivitet in tjf")
-    tjfs = s.query(Tjf_dbo).filter(and_(Tjf_dbo.id_komplement_pa == id_komplement_pa,
-                                        Tjf_dbo.id_komplement_pa == aktivitet)).all()
-    combo_tjf_sum = 0
-    for tjf in tjfs:
-        combo_tjf_sum += getattr(tjf, MONTHS[month])
-        abs_sum_tjf += getattr(tjf, MONTHS[month])
-    abs_total_tjf[id_komplement_pa] = {aktivitet: combo_tjf_sum}
-    rel_tjf = {}
-    for id_komplement_pa, aktivitet in combo_list:
-        rel_tjf[id_komplement_pa][aktivitet] = abs_total_tjf[id_komplement_pa][aktivitet] / abs_sum_tjf
-    return rel_tjf
+
+@printfakturainfo
+def dela_gen_tjf_totaler(faktura_rad):
+    """ Dela vad som än kommer in på generell tjf totaler """
+    faktura_rad.split_status = FakturaRadState.SPLIT_BY_GENERELL_TFJ_SUCCESSFUL
+    faktura_rad.split_method_used = "Generell tjf"
+    faktura_rad.user_aktivitet_char = Aktivitet.P
+    faktura_rad.split = get_tjf_for_enhet(enheter=faktura_rad.dela_over_enheter, month=faktura_rad.faktura_month)
+    insert_split_into_database(faktura_rad=faktura_rad)
+
+
+@printfakturainfo
+def dela_elevantal(faktura_rad):
+    """ Dela vad som än kommer in på elevantal"""
+    faktura_rad.split_status = FakturaRadState.SPLIT_BY_ELEVANTAL_SUCCESSFUL
+    faktura_rad.split_method_used = F"Delat på elevantal"
+    faktura_rad.split = calc_split_on_student_count(enheter_to_split_over=faktura_rad.dela_over_enheter, month=faktura_rad.faktura_month, year=faktura_rad.faktura_year)
+    insert_split_into_database(faktura_rad=faktura_rad)
 
 
 if __name__ == '__main__':

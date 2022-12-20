@@ -1,24 +1,31 @@
+import inspect
+
+from sqlalchemy import and_
+
 from database.models import FakturaRadSplit_dbo, FakturaRad_dbo
 from database.mysql_db import MysqlDb
 from settings.enhetsinfo import ID_AKTIVITET
-from utils.EunomiaEnums import FakturaRadState
+from utils.EunomiaEnums import FakturaRadState, Aktivitet
 from utils.dbutil.kategori_db import get_kategorier_for
 from utils.dbutil.student_db import calc_split_on_student_count
+from utils.faktura_utils._3_0_print_table import print_faktura_tail, printfakturainfo
 
 
-def insert_failsafe_row(faktura_rad):
+@printfakturainfo
+def insert_failsafe_row(faktura_rad: FakturaRad_dbo) -> None:
     """ Om allt misslyckas så lägger vi in raden som en failsafe rad. """
     faktura_rad.split_method_used = "Failsafe elevantal Åtgärda"
+    faktura_rad.user_aktivitet_char = Aktivitet.A
     faktura_rad.split = calc_split_on_student_count(enheter_to_split_over=faktura_rad.dela_over_enheter, month=faktura_rad.faktura_month, year=faktura_rad.faktura_year)
     faktura_rad.split_status = FakturaRadState.SPLIT_BY_ELEVANTAL_SUCCESSFUL
     insert_split_into_database(faktura_rad=faktura_rad)
 
-
-def insert_split_into_database(faktura_rad: FakturaRad_dbo) -> bool:
+@printfakturainfo
+def insert_split_into_database(faktura_rad: FakturaRad_dbo, verbose: bool = False) -> None:
     """ generera split raderna """
     s = MysqlDb().session()
     # print(f"insert_split_into_database start                         2022-11-21 12:57:00")
-    if faktura_rad.ready_to_be_split():
+    if faktura_rad.ready_to_be_split(verbose=verbose):
         for enhet in faktura_rad.split.keys():
             if faktura_rad.split[enhet] == 0:  # vi sparar inte noll rader
                 continue
@@ -47,14 +54,15 @@ def insert_split_into_database(faktura_rad: FakturaRad_dbo) -> bool:
             s.commit()
         faktura_rad.split_done = 1
         s.commit()
-        print_result(row_values={"Fasit ägare": faktura_rad.split_status == FakturaRadState.SPLIT_BY_FASIT_USER_SUCCESSFUL,
-                                 "Fasit kontering": faktura_rad.split_status == FakturaRadState.SPLIT_BY_FASIT_KONTERING_SUCCESSFUL,
-                                 "Tot Tjf": faktura_rad.split_status == FakturaRadState.SPLIT_BY_GENERELL_TFJ_SUCCESSFUL,
-                                 "Elevantal": faktura_rad.split_status == FakturaRadState.SPLIT_BY_ELEVANTAL_SUCCESSFUL,
-                                 "Summary": faktura_rad.success(),
-                                 "split_string": faktura_rad.split_method_used})
+        print_faktura_tail(faktura_rad=faktura_rad)
     else:
-        faktura_rad.print_delnings_status()
+        pass
+        if verbose:
+            print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
+            print()
+            faktura_rad.print_split_status()
+            faktura_rad.ready_to_be_split()
+            print(f"{faktura_rad=}")
 
 
 if __name__ == '__main__':

@@ -119,7 +119,7 @@ class InformationMissingError(Exception):    pass
 class IngenAnknytningHittadError(Exception):    pass
 class InvalidArgumentsError(Exception):    pass
 class Lindesk_ID_NotFoundError(Exception):    pass
-class NoTjfFoundError:     pass
+class NoTjfFoundError(Exception):     pass
 class NameToShortError(ValueError):    pass
 class NoAssignedUserError(Exception):    pass
 class NoKonteringSetInFasit(Exception):    pass

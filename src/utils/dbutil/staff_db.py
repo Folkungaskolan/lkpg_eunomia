@@ -133,6 +133,7 @@ def get_tjf_for_enhet(enheter: list[str], month: int, verbose: bool = False) -> 
         print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
 
     valid_enheter = []
+    enheter = list(enheter)
     try:
         key = f"{enheter.sort()}-{month}"
     except AttributeError:
@@ -177,27 +178,7 @@ def gen_tjf_for_staff(*, user_id: str, month_nr: str, verbose: bool = False) -> 
     set_tjf_sum_on_staff(user_id=user_id, month_nr=month_nr, summa=sum(t.values()))
     if sum(t.values()) > 0:
         return normalize(tjf=t)
-    else:
-        if len(t.keys()) == 1:  # if its is 1 long there is only one enhet
-            k = list(t.keys())[0]
-            t[k] = 1
-            return t
-        else:
-            extrapolation_list = []
-            # Sparar vilka månader som används för extrapolation. Om olika månader kommer så innebär att olika id_komplement_pa ändras i olika
-            # månader och kan inte antas vara rättvisa
-            try:
-                for id_komplement_pa in t.keys():
-                    extr_month, t[id_komplement_pa] = extrapolera_tjf_from_known_months_given_pnr12(pnr12=pnr12, id_komplement_pa=id_komplement_pa, month_nr=month_nr)
-                    extrapolation_list.append(extr_month)
-                # print(f"extrapolation_list: {extrapolation_list}")
-                if len(set(extrapolation_list)) == 1:
-                    return normalize(tjf=t)
-                else:
-                    raise ExtrapolationError(f"Kunde inte extrapolera tjf för {user_id} för månad {month_nr} då olika id gav olika extrapoleringar 2022-12-19 16:31:38")
-            except TypeError as e:
-                raise ExtrapolationError(f"Kunde inte extrapolera tjf för {user_id} för månad {month_nr} 2022-12-19 16:31:35 ")
-
+    raise NoTjfFoundError(f"Kunde inte hitta tjf för användare med user_id: {user_id} i månad {month_nr}")
 def set_tjf_sum_on_staff(user_id: str, month_nr: int, summa: float, verbose: bool = False) -> None:
     """ Uppdatera tjf_sum på staff för given månad"""
     if verbose:

@@ -4,7 +4,7 @@ import inspect
 from CustomErrors import AktivitetNotFoundError
 from database.models import StudentCount_dbo, FakturaRad_dbo
 from database.mysql_db import MysqlDb
-from utils.EunomiaEnums import FakturaRadState
+from utils.EunomiaEnums import FakturaRadState, Aktivitet
 from utils.dbutil.student_db import calc_split_on_student_count
 from utils.faktura_utils._3_4_normalize_split import normalize
 from utils.student.student import get_id_komplement_pa_for_student
@@ -30,9 +30,6 @@ def decode_kontering_in_fritext(*, faktura_rad: FakturaRad_dbo, konterings_strin
 
     s = MysqlDb().session()
     code_segments = konterings_string.split("|")
-    temp_kontering = {}
-    star_present_in_key = None
-    aktivitet = None
     for code_segment in code_segments:
         if code_segment.startswith("Kontering"):
             faktura_rad.split_method_used = code_segment
@@ -64,13 +61,15 @@ def decode_kontering_in_fritext(*, faktura_rad: FakturaRad_dbo, konterings_strin
                 faktura_rad.split = gen_kontering_elev_antal(kontering=remaining_code_segment, verbose=verbose)
             elif remaining_code_segment.startswith("Personlig utr"):  # mina personliga grejer ska konteras efter min Tjf
                 faktura_rad.split_status = FakturaRadState.SPLIT_INCOMPLETE  # Skickar tillbaka falskt så raden misslyckas med konteringen och kör på Fasit ägaren
+                return
             else:
                 raise NotImplementedError(f"Solution for kontering not implemented {konterings_string}")
         elif code_segment.startswith("aktivitet"):  # hämta aktivtet från sträng
-            faktura_rad.aktivitet = code_segment.split(":")[1]
-    if faktura_rad.aktivitet is None:
+            faktura_rad.user_aktivitet_char = Aktivitet(code_segment.split(":")[1])
+    if faktura_rad.user_aktivitet_char == Aktivitet.N:
+        print(f"WARNING: No aktivitet found in {konterings_string}")
         raise AktivitetNotFoundError(f"ingen aktivitet hittad i konterings_string:{konterings_string}")
-    return faktura_rad.split, faktura_rad.aktivitet, faktura_rad.split_method_used  # för test av kontering
+    return faktura_rad.split, faktura_rad.user_aktivitet_char, faktura_rad.split_method_used  # för test av kontering
 
 
 def gen_kontering_enheter(kontering: str, verbose: bool = False) -> tuple[str, str, str]:

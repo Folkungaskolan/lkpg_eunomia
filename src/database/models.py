@@ -225,8 +225,8 @@ class FakturaRad_dbo(Base):
     id: int = Column(Integer, primary_key=True)
     faktura_year: int = Column(SmallInteger)
     faktura_month: int = Column(SmallInteger)
-    tjanst: str = Column(String(length=150))  # kategori grej
-    avser: str = Column(String(length=150))  # specifik grej
+    tjanst: str = Column(String(length=150))  # kategori för grej
+    avser: str = Column(String(length=150))  # specifik för grej
     anvandare: str = Column(String(length=150))  # om fasit har användare
     kundnummer: int = Column(Integer)
     fakturamarkning: str = Column(String(length=50))
@@ -255,8 +255,7 @@ class FakturaRad_dbo(Base):
     user_id: str = None
     user_aktivitet_char: Aktivitet = Aktivitet.N
     split: dict[str, float] = {}
-    split_conditions: list[str] = ["self.split_status != FakturaRadState.SPLIT_INCOMPLETE",
-                                   "self.faktura_year is not None", # AUTO set from start
+    split_conditions: list[str] = ["self.faktura_year is not None", # AUTO set from start
                                    "self.faktura_year > 2021",# AUTO set from start
                                    "self.faktura_year < 2025",# AUTO set from start
                                    "self.faktura_month is not None",# AUTO set from start
@@ -273,17 +272,18 @@ class FakturaRad_dbo(Base):
                                    "self.summa is not None",# AUTO set from start
                                    "self.summa > 0",# AUTO set from start
 
+                                   "self.split_status != FakturaRadState.SPLIT_INCOMPLETE", # Status bärare
                                    "self.split_method_used is not None", "len(self.split_method_used) > 1", # Måste sättas
                                    "self.split is not None","len(self.split) > 0", # Måste sättas
                                    "Aktivitet(self.user_aktivitet_char) in {Aktivitet.P, Aktivitet.A, Aktivitet.E}" # Behöver en godkänd aktivitet
                                    ]
 
-    def ready_to_be_split(self) -> bool:
+    def ready_to_be_split(self, verbose:bool = False) -> bool:
         """ is row ready to be split? """
         for c in self.split_conditions:
             if eval(c) is False:
-                print()
-                print(F"{c} : {eval(c)}")
+                # print()
+                # print(F"{c} : {eval(c)}")
                 return False
         return True
 
@@ -291,7 +291,9 @@ class FakturaRad_dbo(Base):
         """ print status of split. """
         for c in self.split_conditions:
             print(F"{c} : {eval(c)}")
-
+    def print_split_status(self):
+        """ print status of split. """
+        print(F"self.split_status: {self.split_status=}")
     def success(self):
         """ Sammantaget, är delningen lyckad? """
         s = {self.split_status == FakturaRadState.SPLIT_BY_FASIT_USER_SUCCESSFUL,
@@ -321,7 +323,7 @@ class FakturaRadSplit_dbo(Base):
     anvandare: str = Column(String(length=150))  # i de fall användaren är känd
     split_summa: float = Column(Float)  # fakturans summans rad för denna enhet och aktivitet
     id_komplement_pa: str = Column(String(length=50))  # "655119", osv
-    split_method_used: str = Column(String(length=50))
+    split_method_used: str = Column(String(length=150))
     aktivitet: str = Column(String(length=50))  # "p": "410200" osv
     tjanst_kategori_lvl1: str = Column(String(length=45), default="ej kategoriserad")
     tjanst_kategori_lvl2: str = Column(String(length=45), default="ej kategoriserad")

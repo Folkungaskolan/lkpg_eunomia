@@ -6,10 +6,12 @@ from utils.EunomiaEnums import FakturaRadState, Aktivitet
 from utils.dbutil.fasit_db import get_user_id_for_fasit_user
 from utils.dbutil.staff_db import is_staff_old, gen_tjf_for_staff
 from utils.dbutil.student_db import calc_split_on_student_count
+from utils.faktura_utils._3_0_print_table import printfakturainfo
 from utils.faktura_utils._3_666_Insert_invoice_to_database import insert_split_into_database
+
 from utils.flatten import flatten_row
 
-
+@printfakturainfo
 def dela_enl_fasit_agare(faktura_rad: FakturaRad_dbo, verbose: bool = False) -> None:
     """ Dela enligt fasit ägare
     returnerar
@@ -74,21 +76,23 @@ def dela_enl_fasit_agare(faktura_rad: FakturaRad_dbo, verbose: bool = False) -> 
                 return
         else:
             faktura_rad.split_status = FakturaRadState.SPLIT_BY_FASIT_USER_SUCCESSFUL
-            faktura_rad.split_method_used = "Delad enligt gen tjf"
+            faktura_rad.split_method_used = "Delad enligt Persons tjf"
             try:
                 faktura_rad.split = gen_tjf_for_staff(user_id=faktura_rad.user_id, month_nr=faktura_rad.faktura_month)
+                insert_split_into_database(faktura_rad=faktura_rad)
+                return
             except NoTjfFoundError as e:
-                if is_staff_old(faktura_rad.user_id):
+                if is_staff_old(user_id=faktura_rad.user_id):
                     faktura_rad.split_status = FakturaRadState.SPLIT_BY_ELEVANTAL_SUCCESSFUL
-                    faktura_rad.split = calc_split_on_student_count(enheter_to_split_over=faktura_rad.dela_over_enheter, month=faktura_rad.faktura_month, year=faktura_rad.faktura_year)
                     faktura_rad.split_method_used = "Delad enligt elevantal"
+                    faktura_rad.split = calc_split_on_student_count(enheter_to_split_over=faktura_rad.dela_over_enheter, month=faktura_rad.faktura_month, year=faktura_rad.faktura_year)
                     insert_split_into_database(faktura_rad=faktura_rad)
                     return
                 else:
-                    raise NoTjfFoundError(f"Kunde inte hitta tjf för {faktura_rad.user_id} i {faktura_rad.faktura_month}") from e
-            else:
-                insert_split_into_database(faktura_rad=faktura_rad)
-                return
+                    # raise NoTjfFoundError(f"Kunde inte hitta tjf för {faktura_rad.user_id} i månad {faktura_rad.faktura_month}") from e
+                    faktura_rad.split_status = FakturaRadState.SPLIT_INCOMPLETE
+                    faktura_rad.split_method_used = "dela_enl_fasit_agare -> NoTjfFoundError"
+                    return
 
 
 if __name__ == '__main__':

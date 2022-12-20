@@ -114,8 +114,9 @@ def calc_split_on_student_count(*, year: int, month: int, enheter_to_split_over:
     """ Generera split på antal elever """
     s = MysqlDb().session()
     expanderad_enheter_to_split_over = expandera_enheter(enheter_to_split_over)
-    if any([True for enhet in expanderad_enheter_to_split_over if enhet not in ALLA_ENHETER]) or len(expanderad_enheter_to_split_over) == 0:  # Kollar att enheterna vi fick finns i alla enheter
-        raise ValueError("Enhet finns inte i alla enheter")
+    for enhet in expanderad_enheter_to_split_over:
+        if enhet not in ALLA_ENHETER:
+            raise ValueError(F"Enhet finns inte i alla enheter, {expanderad_enheter_to_split_over}")
 
     abs_distribution = {}  # Variabel initiering
     rel_distribution = {}  # Variabel initiering
