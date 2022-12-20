@@ -2,7 +2,7 @@
 from database.models import FasitCopy
 from database.mysql_db import MysqlDb
 from utils.EunomiaEnums import FakturaRadState
-from utils.faktura_utils.kontering import decode_kontering_in_fritext
+from utils.faktura_utils._3_1_kontering import decode_kontering_in_fritext
 
 
 def dela_enl_fasit_kontering(*, faktura_rad: FakturaRad_dbo, verbose: bool = False, manuell_kontering: str = None, notering: str = None) -> FakturaRadState:

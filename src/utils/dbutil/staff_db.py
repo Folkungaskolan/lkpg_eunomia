@@ -8,7 +8,7 @@ from database.models import Staff_dbo, Tjf_dbo
 from database.mysql_db import MysqlDb, init_db
 from statics.eunomia_date_helpers import MONTHS_NAMES, MONTHS_int_to_name
 from utils.EunomiaEnums import Months
-from utils.faktura_utils.normalize import normalize
+from utils.faktura_utils._3_4_normalize_split import normalize
 from utils.pnr_utils import pnr10_to_pnr12
 
 

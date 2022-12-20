@@ -10,126 +10,14 @@ from utils.EunomiaEnums import EnhetsAggregering, FakturaRadState, Aktivitet
 from utils.dbutil.fasit_db import get_user_id_for_fasit_user, get_fasit_row
 from utils.dbutil.staff_db import gen_tjf_for_staff, get_tjf_for_enhet, is_staff_old
 from utils.dbutil.student_db import calc_split_on_student_count
-from utils.faktura_utils.kontering import decode_kontering_in_fritext
-from utils.faktura_utils.print_table import print_headers, COL_WIDTHS, print_start
-from utils.faktura_utils.reset_rows import reset_faktura_row_id
+from utils.faktura_utils._3_666_Insert_invoice_to_database import insert_split_into_database
+from utils.faktura_utils._3_1_kontering import decode_kontering_in_fritext
+from utils.faktura_utils._3_0_print_table import print_headers, COL_WIDTHS, print_start
+from utils.faktura_utils._3_0_reset_rows import reset_faktura_row_id
 from utils.flatten import flatten_row
-from utils.faktura_utils.3. import dela_enl_fasit_kontering, FakturaRadState
-def dela_enl_fasit_agare(faktura_rad: FakturaRad_dbo, verbose: bool = False) -> (FakturaRadState):
-    """ Dela enligt fasit ägare
-    returnerar
-
-    Falskt om det inte går att dela på fasit ägare
-    Sant om metoden fungerade
-
-    om det ör någon ändring på metod kommer det tillbaka som en sträng
-    """
-    split_method_text = "fasit_ägare"
-    if verbose: print(f"Dela_enl_fasit_ägare start                  2022-11-21 12:34:00")
-    s = MysqlDb().session()
-    fasit_rad = s.query(FasitCopy).filter(FasitCopy.name == faktura_rad.avser).first()
-    if fasit_rad is None or fasit_rad.attribute_anvandare is None or len(fasit_rad.attribute_anvandare) < 2:
-        # raden finns inte i fasit, exv ärenden
-        #                     eller är inte kopplad till en användare
-        #                                                                eller är kopplad till en med för kort namn
-        #                                                                                                             mina ska alltid gå till konterings kontroll
-        faktura_rad.split_status = FakturaRadState.SPLIT_INCOMPLETE
-        faktura_rad.split_method_used = "dela_enl_fasit_agare ->  fasit_rad is None "
-        return faktura_rad.split_status
-    else:
-        if verbose:
-            print(f"{fasit_rad.attribute_anvandare:},                            2022-11-21 12:35:30")
-        try:
-            faktura_rad.user_id = get_user_id_for_fasit_user(fasit_rad.attribute_anvandare)
-        except NoUserFoundError:
-            return FakturaRadState.SPLIT_INCOMPLETE, "dela_enl_fasit_agare -> NoUserFoundError"
-        faktura_rad.user_aktivitet_char = Aktivitet(s.query(Staff_dbo.aktivitet_char).filter(Staff_dbo.user_id == faktura_rad.user_id).first()[0])
-        if faktura_rad.user_aktivitet_char is None or faktura_rad.user_aktivitet_char == Aktivitet.N:
-            faktura_rad.split_status = FakturaRadState.SPLIT_INCOMPLETE
-            faktura_rad.split_method_used = "dela_enl_fasit_agare -> user_aktivitet_char is None"
-            return
-        bibliotekarier = flatten_row(s.query(Staff_dbo.user_id).filter(Staff_dbo.titel.startswith("Biblio")).all())
-        janitors = flatten_row(s.query(Staff_dbo.user_id).filter(Staff_dbo.titel.startswith("Vaktm")).all())
-        if faktura_rad.user_id in bibliotekarier:  # ["tinasp", "magbro"]:  # bibliotekets kostnader går över hela skolan
-            faktura_rad.split = calc_split_on_student_count(enheter_to_split_over=faktura_rad.dela_over_enheter, month=faktura_rad.faktura_month, year=faktura_rad.faktura_year)
-            faktura_rad.split_method_used = "Kontering>Bibliotek"
-            faktura_rad.split_status = FakturaRadState.SPLIT_BY_FASIT_USER_SUCCESSFUL
-            insert_split_into_database(faktura_rad=faktura_rad)
-            return
-        elif faktura_rad.user_id in janitors:  # ["jonbjc", "kenchr"]:  # vaktmästarnas kostnader går över hela skolan
-
-            faktura_rad.split = calc_split_on_student_count(enheter_to_split_over=faktura_rad.dela_over_enheter, month=faktura_rad.faktura_month, year=faktura_rad.faktura_year)
-            faktura_rad.split_status = FakturaRadState.SPLIT_BY_FASIT_USER_SUCCESSFUL
-            faktura_rad.split_method_used = "Kontering>Vaktmästare"
-            insert_split_into_database(faktura_rad=faktura_rad)
-            return
-        elif faktura_rad.user_id == "lyadol":
-            if fasit_rad.eunomia_kontering is None or "Personlig utr" not in fasit_rad.eunomia_kontering:
-                faktura_rad.split = calc_split_on_student_count(enheter_to_split_over=["656", "655"], month=faktura_rad.faktura_month, year=faktura_rad.faktura_year)
-                faktura_rad.split_method_used = "Kontering>IT-Tekniker Buffert"
-                faktura_rad.user_aktivitet_char = Aktivitet.P  # Min buffert ska gå som pedagogisk kostnad
-                faktura_rad.split_status = FakturaRadState.SPLIT_BY_FASIT_USER_SUCCESSFUL
-                insert_split_into_database(faktura_rad=faktura_rad)
-                return
-            else:
-                faktura_rad.split = gen_tjf_for_staff(user_id=faktura_rad.user_id, month_nr=faktura_rad.faktura_month)
-                faktura_rad.split_status = FakturaRadState.SPLIT_BY_FASIT_KONTERING_SUCCESSFUL
-                faktura_rad.split_method_used = "Kontering>IT-Tekniker Personlig utr"
-                insert_split_into_database(faktura_rad=faktura_rad)
-                return
-        else:
-            faktura_rad.split_status = FakturaRadState.SPLIT_BY_FASIT_USER_SUCCESSFUL
-            faktura_rad.split_method_used = "Delad enligt gen tjf"
-            try:
-                faktura_rad.split = gen_tjf_for_staff(user_id=faktura_rad.user_id, month_nr=faktura_rad.faktura_month)
-            except NoTjfFoundError as e:
-                if is_staff_old(faktura_rad.user_id):
-                    faktura_rad.split_status = FakturaRadState.SPLIT_BY_ELEVANTAL_SUCCESSFUL
-                    faktura_rad.split = calc_split_on_student_count(enheter_to_split_over=faktura_rad.dela_over_enheter, month=faktura_rad.faktura_month, year=faktura_rad.faktura_year)
-                    faktura_rad.split_method_used = "Delad enligt elevantal"
-                    insert_split_into_database(faktura_rad=faktura_rad)
-                    return
-                else:
-                    raise NoTjfFoundError(f"Kunde inte hitta tjf för {faktura_rad.user_id} i {faktura_rad.faktura_month}") from e
-            else:
-                insert_split_into_database(faktura_rad=faktura_rad)
-                return
 
 
-def dela_enl_fasit_kontering(*, faktura_rad: FakturaRad_dbo, verbose: bool = False, manuell_kontering: str = None, notering: str = None) -> FakturaRadState:
-    """ Dela enligt fasit kontering
-    :param notering:        :type str: läggs längst bak i konteringen som information till sammanställningen
-    :param verbose:         :type bool: vill du att stack information ska skrivas ut
-    :param faktura_rad:     :type faktura_rad: faktura objektet som ska delas
-    :type manuell_kontering :type str : med manuell kontering i formatet  "Kontering>Elevantal<656;655|aktivitet:p"
-    """
-    if verbose:
-        print(f"Dela_enl_fasit_kontering start                         2022-11-21 12:55:46")
-    s = MysqlDb().session()
-    fasit_rad = s.query(FasitCopy).filter(FasitCopy.name == faktura_rad.avser).first()
-    faktura_rad.split_method_used = False
-    if fasit_rad is None or fasit_rad.eunomia_kontering is None or len(fasit_rad.eunomia_kontering) == 0:
-        return FakturaRadState.SPLIT_INCOMPLETE, "Fail dela_enl_fasit_kontering fail no kontering in fasit"
-    else:
-        if verbose:
-            print(f"{fasit_rad.eunomia_kontering:},                            2022-11-21 12:56:24")
-        if manuell_kontering is None:
-            decode_kontering_in_fritext(faktura_rad=faktura_rad, konterings_string=fasit_rad.eunomia_kontering)
-        else:
-            decode_kontering_in_fritext(faktura_rad=faktura_rad, konterings_string=F"Manuell kontering: |{manuell_kontering}")
-        if faktura_rad.split_method_used is False:  # betyder att vi inte ska köra på fasit kontering för denna rad, trots att det finns konterings info
-            faktura_rad.split_method_used = "Fail dela_enl_fasit_kontering fail no kontering in fasit"
-            faktura_rad.split_status = FakturaRadState.SPLIT_INCOMPLETE
-            return
-        faktura_rad.split_method_used += notering
-        success = insert_split_into_database(faktura_rad=faktura_rad)
-        if success:
-            faktura_rad.split_status = FakturaRadState.SPLIT_BY_FASIT_KONTERING_SUCCESSFUL
-            return
-        else:
-            faktura_rad.split_method_used = "Fail dela_enl_fasit_kontering fail no kontering in fasit"
-            faktura_rad.split_status = FakturaRadState.SPLIT_INCOMPLETE
-            return
+
 
 
 def split_row(months: list[str] = None, verbose: bool = False, avser: str = None, row_ids: list[int] = None) -> None:

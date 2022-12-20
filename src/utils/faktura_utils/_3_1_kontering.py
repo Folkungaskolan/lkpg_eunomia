@@ -6,7 +6,7 @@ from database.models import StudentCount_dbo, FakturaRad_dbo
 from database.mysql_db import MysqlDb
 from utils.EunomiaEnums import FakturaRadState
 from utils.dbutil.student_db import calc_split_on_student_count
-from utils.faktura_utils.normalize import normalize
+from utils.faktura_utils._3_4_normalize_split import normalize
 from utils.student.student import get_id_komplement_pa_for_student
 
 

@@ -9,7 +9,7 @@ from database.mysql_db import MysqlDb
 from settings.enhetsinfo import ALLA_ENHETER
 from utils.EunomiaEnums import EnhetsAggregering
 from utils.dbutil.expandera_enheter import expandera_enheter
-from utils.faktura_utils.normalize import normalize
+from utils.faktura_utils._3_4_normalize_split import normalize
 
 
 def copy_student_counts(from_month: int, to_month: int, from_year: int = 2022, to_year: int = 2022) -> None:

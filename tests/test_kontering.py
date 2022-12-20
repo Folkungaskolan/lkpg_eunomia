@@ -2,7 +2,7 @@ import pytest
 
 from conftest import FLOAT_TOLERANCE_IN_TESTS
 from database.models import FakturaRad_dbo
-from utils.faktura_utils.kontering import decode_kontering_in_fritext
+from utils.faktura_utils._3_1_kontering import decode_kontering_in_fritext
 
 
 def test_kontering_A513(base_student_numbers):
