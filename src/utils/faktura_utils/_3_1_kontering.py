@@ -4,7 +4,7 @@ import inspect
 from CustomErrors import AktivitetNotFoundError
 from database.models import StudentCount_dbo, FakturaRad_dbo
 from database.mysql_db import MysqlDb
-from utils.EunomiaEnums import FakturaRadState, Aktivitet
+from utils.EunomiaEnums import FakturaRadState, Aktivitet, EnhetsAggregering
 from utils.dbutil.student_db import calc_split_on_student_count
 from utils.faktura_utils._3_4_normalize_split import normalize
 from utils.student.student import get_id_komplement_pa_for_student
@@ -35,17 +35,17 @@ def decode_kontering_in_fritext(*, faktura_rad: FakturaRad_dbo, konterings_strin
             faktura_rad.split_method_used = code_segment
             remaining_code_segment = code_segment.split(">")[1]  # Enheter>656:0.1;655:0.9
             if remaining_code_segment == "A513":  # Delas över Gymnasiet
-                return calc_split_on_student_count(enheter_to_split_over=["655"],  # Delas över Gymnasiet
+                return calc_split_on_student_count(enheter_to_split_over=EnhetsAggregering.F_GY,  # Delas över Gymnasiet
                                                    month=faktura_rad.faktura_month,
                                                    year=faktura_rad.faktura_year), "p", "Kontering>A513"
             elif remaining_code_segment == "GruTeknik":  # Delas över grundskolans elever
-                return calc_split_on_student_count(enheter_to_split_over=["656"],  # Delas över Grundskolans elever
+                return calc_split_on_student_count(enheter_to_split_over=EnhetsAggregering.GRU,  # Delas över Grundskolans elever
                                                    month=faktura_rad.faktura_month,
                                                    year=faktura_rad.faktura_year), "p", "Kontering>GruTeknik"
             elif remaining_code_segment == "Musikproduktion":  # Delas över grundskolan
                 return {"656520": 1}, "p", "Kontering>Musikproduktion"  # generate_split_on_student_count(enheter=["656520"],  # Delas över Grundskolans 7-9 elever
             elif remaining_code_segment == "FolkungaBibliotek":  # Delas över grundskolan
-                return calc_split_on_student_count(enheter_to_split_over=["656", "655"],  # Delas över Gymnasiet och Grundskolan enligt antal elever
+                return calc_split_on_student_count(enheter_to_split_over=EnhetsAggregering.FOLKUNGA,  # Delas över Gymnasiet och Grundskolan enligt antal elever
                                                    month=faktura_rad.faktura_month,
                                                    year=faktura_rad.faktura_year), "p", "Kontering>FolkungaBibliotek"
             elif remaining_code_segment.startswith("DirektElev"):  # Delas över den enheten som en elev tillhör

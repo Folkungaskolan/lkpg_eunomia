@@ -20,7 +20,8 @@ def dela_enl_fasit_kontering(*, faktura_rad: FakturaRad_dbo, verbose: bool = Fal
     fasit_rad = s.query(FasitCopy).filter(FasitCopy.name == faktura_rad.avser).first()
     faktura_rad.split_method_used = ""
     if fasit_rad is None or fasit_rad.eunomia_kontering is None or len(fasit_rad.eunomia_kontering) == 0:
-        return FakturaRadState.SPLIT_INCOMPLETE, "Fail dela_enl_fasit_kontering fail no kontering in fasit"
+        faktura_rad.split_method_used = "Fail dela_enl_fasit_kontering fail no kontering in fasit"
+        return
     else:
         if verbose:
             print(f"{fasit_rad.eunomia_kontering:},                            2022-11-21 12:56:24")

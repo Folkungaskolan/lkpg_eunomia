@@ -4,7 +4,7 @@ STUDENT_USER_FOLDER_PATH = MAIN_INTALL_SAVE_FOLER + "Students/2.students/"
 
 CRED_FOLDER_PATH = MAIN_INTALL_SAVE_FOLER + "creds/"
 
-STAFF_USER_FOLDER_PATH = MAIN_INTALL_SAVE_FOLER + "Staff/"
+STAFF_USER_FOLDER_PATH = MAIN_INTALL_SAVE_FOLER + "staff_utils/"
 
 STAFF_USER_XLSX_FILEPATH = "H:/Min enhet/odbc_source/Personal.xlsx"
 STUDENT_USER_XLSX_FILEPATH = "H:/Min enhet/odbc_source/Elever.xlsx"
@@ -13,8 +13,7 @@ STUDENT_EDUROAM_GEN_FOLDER = MAIN_INTALL_SAVE_FOLER + "Students/1.GenEduroam/"
 
 STUDENT_PW_CSV_FILEPATH = MAIN_INTALL_SAVE_FOLER + "Students/long_uniqe_filname_student_pw_lvceq5mg5n8on4pj17i9zl779e1wnrx.csv"
 KLASSLISTA_CSV_FILEPATHS = [
-    "H:/Delade enheter/F - Folkungaskolan Vaktmästeri/long_uniqe_filname_klasslistorna_i_h4kuexqj3mgdxcke1iob4v6eyzm60c6.csv",
-    "H:/Delade enheter/F - Folkungaskolan GRU Omprov anmälningar/long_uniqe_filname_klasslistorna_i_w0ZHvnn4Udk06zZl7RKVKI9AVC4anMMbtOluxK.csv"
+    "H:/Delade enheter/F - Folkungaskolan Vaktmästeri/long_uniqe_filname_klasslistorna_i_h4kuexqj3mgdxcke1iob4v6eyzm60c6.csv"
 ]
 
 BASE_OBSIDIAN_PATH = r"H:/Min enhet/Obsidian Vault/Folkungaskolan/"

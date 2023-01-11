@@ -95,14 +95,8 @@ def printfakturainfo(func):
         func(faktura_rad=faktura_rad)
         print_faktura_tail(faktura_rad=faktura_rad, function_name=func.__name__)
         return
-
     return wrapper
 
 
 if __name__ == "__main__":
-    print_headers()
-    print_start(row_values={"ID": 1, "Period": "2022-9", "Tjänst": "Chromebooks", "Avser": "C12345", "Summa": 1012})
-    print_result(row_values={"Fasit ägare": False, "Fasit kontering": True, "Tot Tjf": False, "Elevantal": False, "Summary": "Success", "split_string": "bla bla bla bla bla bla 123"})
-
-    # print(colored('hello', 'red'), colored('world', 'green'))
-    # print('\033[2;31;43m CHEESY')
+    pass

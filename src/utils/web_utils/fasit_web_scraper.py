@@ -20,9 +20,18 @@ def download_fasit_csv_from_web() -> pd.DataFrame:
     else:
         raise ValueError("could not download csv")
 
+def set_gear_fasit_web_user_to(**kwargs)->None:
+    """ Set FASIT hos LKDATA till användare """
+    print(kwargs)
+    mitest(**kwargs)
+
+def mitest(gear_id:str,user_id:str)->None:
+    """ Set FASIT hos LKDATA till användare """
+    print(gear_id,user_id)
+
 
 # TODO Skriv hä
 
 if __name__ == "__main__":
     # download_fasit_csv_from_web()
-    print(test_csv_respons)
+    set_gear_fasit_web_user_to(gear_id="E52076", user_id="lyadol")

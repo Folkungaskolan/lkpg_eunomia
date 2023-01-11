@@ -7,31 +7,38 @@ from utils.faktura_utils._3_1_kontering import decode_kontering_in_fritext
 
 def test_kontering_A513(base_student_numbers):
     # Kontering>A513
-    actual = decode_kontering_in_fritext(konterings_string="Kontering>A513", faktura_rad=FakturaRad_dbo(faktura_month=13, faktura_year=1900))
-    exp = ({'655123': 0.20689655172413793,
-            '655125': 0.3793103448275862,
-            '655119': 0.1724137931034483,
-            '655122': 0.2413793103448276},
-           'p',
-           'Kontering>A513')
-    assert exp == actual
+    actual = decode_kontering_in_fritext(konterings_string="Kontering>A513",
+                                         faktura_rad=FakturaRad_dbo(faktura_month=13,
+                                                                    faktura_year=1900))
+    expected = ({'655123': 12 / (12 + 10 + 14),
+                 '655119': 10 / (12 + 10 + 14),
+                 '655122': 14 / (12 + 10 + 14)},
+                'p',
+                'Kontering>A513')
+    print(actual)
+    for key, value in expected[0].items():
+        assert key in actual[0].keys()
+        assert expected[0][key] == pytest.approx(actual[0][key], FLOAT_TOLERANCE_IN_TESTS)
+    assert len(actual[0].keys()) == len(expected[0].keys())
+    assert actual[1] == 'p'
+    assert actual[2] == 'Kontering>A513'
 
 
 def test_kontering_GruTeknik(base_student_numbers):
-    # Kontering>GruTeknik
-    test_dict = {'656310': 0.37037037037037035,
-                 '656510': 0.2962962962962963,
-                 '656520': 0.3333333333333333}
-
+    """Kontering>GruTeknik"""
+    expected = ({'656520': 16 / (16 + 18),
+                 '656510': 18 / (16 + 18)
+                 },
+                'p', 'Kontering>GruTeknik')
     actual = decode_kontering_in_fritext(konterings_string="Kontering>GruTeknik", faktura_rad=FakturaRad_dbo(faktura_month=13, faktura_year=1900))
-    # print(actual)
-    actual_dict = actual[0]
-    for key in test_dict.keys():
+    print(actual)
+    for key, value in expected[0].items():
         assert key in actual[0].keys()
-        assert actual_dict[key] == pytest.approx(test_dict[key], FLOAT_TOLERANCE_IN_TESTS)
+        assert expected[0][key] == pytest.approx(actual[0][key], FLOAT_TOLERANCE_IN_TESTS)
+    assert len(actual[0].keys()) == len(expected[0].keys())
+
     assert actual[1] == 'p'
     assert actual[2] == 'Kontering>GruTeknik'
-    assert len(actual[0].keys()) == 3
 
 
 def test_kontering_Musikproduktion(base_student_numbers):
@@ -62,9 +69,9 @@ def test_kontering_FolkungaBibliotek(base_student_numbers):
 def test_kontering_EnheterGiven(base_student_numbers):
     #     Kontering>Enheter<656:0.1;655:0.9     exv
     actual = decode_kontering_in_fritext(konterings_string='Kontering>Enheter<656:0.1;655:0.9|aktivitet:p',
-                                        faktura_rad=FakturaRad_dbo(faktura_month=13,
-                                                                   faktura_year=1900)
-                                        )
+                                         faktura_rad=FakturaRad_dbo(faktura_month=13,
+                                                                    faktura_year=1900)
+                                         )
     # print(actual) # ({'656': 0.1, '655': 0.9}, 'p', 'Kontering>Enheter<656:0.1;655:0.9')
     assert len(actual[0].keys()) == 2
 

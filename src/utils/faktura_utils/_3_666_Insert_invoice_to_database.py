@@ -11,7 +11,6 @@ from utils.dbutil.student_db import calc_split_on_student_count
 from utils.faktura_utils._3_0_print_table import print_faktura_tail, printfakturainfo
 
 
-@printfakturainfo
 def insert_failsafe_row(faktura_rad: FakturaRad_dbo) -> None:
     """ Om allt misslyckas så lägger vi in raden som en failsafe rad. """
     faktura_rad.split_method_used = "Failsafe elevantal Åtgärda"
@@ -21,10 +20,18 @@ def insert_failsafe_row(faktura_rad: FakturaRad_dbo) -> None:
     insert_split_into_database(faktura_rad=faktura_rad)
 
 @printfakturainfo
+def ins_fail_wrapper(faktura_rad: FakturaRad_dbo, verbose: bool = False) -> None:
+    """ Wrapper för insert_failsafe_row """
+    if verbose:
+        print(f"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
+        print()
+    insert_failsafe_row(faktura_rad=faktura_rad)
+
 def insert_split_into_database(faktura_rad: FakturaRad_dbo, verbose: bool = False) -> None:
     """ generera split raderna """
     s = MysqlDb().session()
     # print(f"insert_split_into_database start                         2022-11-21 12:57:00")
+    print(faktura_rad.split_status)
     if faktura_rad.ready_to_be_split(verbose=verbose):
         for enhet in faktura_rad.split.keys():
             if faktura_rad.split[enhet] == 0:  # vi sparar inte noll rader
@@ -54,9 +61,7 @@ def insert_split_into_database(faktura_rad: FakturaRad_dbo, verbose: bool = Fals
             s.commit()
         faktura_rad.split_done = 1
         s.commit()
-        print_faktura_tail(faktura_rad=faktura_rad)
     else:
-        pass
         if verbose:
             print(F"function start: {inspect.stack()[0][3]} called from {inspect.stack()[1][3]}")
             print()

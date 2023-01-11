@@ -2,7 +2,6 @@
 from datetime import datetime
 from time import time, sleep
 
-from database.models import RunTime_dbo
 from database.mysql_db import MysqlDb, init_db
 
 

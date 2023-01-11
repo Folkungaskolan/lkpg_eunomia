@@ -8,12 +8,11 @@ from database.mysql_db import MysqlDb
 from utils.EunomiaEnums import FakturaRadState
 from utils.dbutil.fasit_db import get_fasit_row
 from utils.faktura_utils._3_0_print_table import print_headers
-from utils.faktura_utils._3_0_reset_rows import reset_faktura_row_id
 from utils.faktura_utils._3_3_1_Split_by_user import dela_enl_fasit_agare
 from utils.faktura_utils._3_3_1_set_school_info import set_school_information
 from utils.faktura_utils._3_3_2_Split_by_fasit_database import dela_enl_fasit_kontering
-from utils.faktura_utils._3_3_3_Split_by_group import dela_elevantal, dela_gen_tjf_totaler
-from utils.faktura_utils._3_666_Insert_invoice_to_database import insert_split_into_database, insert_failsafe_row
+from utils.faktura_utils._3_3_3_Split_by_group import dela_gen_tjf_totaler, dela_elevantal, insert_pgm_adobe
+from utils.faktura_utils._3_666_Insert_invoice_to_database import insert_failsafe_row
 
 
 def split_row(months: list[str] = None, verbose: bool = False, avser: str = None, row_ids: list[int] = None) -> None:
@@ -49,9 +48,8 @@ def split_row(months: list[str] = None, verbose: bool = False, avser: str = None
 
         # Fasta delningar beroende på tjänst
         if faktura_rad.avser == "Pgm Adobe CC for EDU K12":  # A513
-            faktura_rad.split_method_text = F"Pgm Adobe CC"
-            faktura_rad.split_status = dela_enl_fasit_kontering(faktura_rad, manuell_kontering="Kontering>Elevantal<656;655|aktivitet:p")
-            insert_split_into_database(faktura_rad=faktura_rad)
+            insert_pgm_adobe()
+            continue
 
         # Databas beroende delningar
         if faktura_rad.split_status == FakturaRadState.SPLIT_INCOMPLETE:  # DELA PÅ FASIT ÄGARE
@@ -61,9 +59,9 @@ def split_row(months: list[str] = None, verbose: bool = False, avser: str = None
         if faktura_rad.split_status == FakturaRadState.SPLIT_INCOMPLETE:
             fasit_rad = get_fasit_row(name=faktura_rad.avser)
             if fasit_rad is not None:
-                if fasit_rad.dela_pa_elevantal():
+                if fasit_rad.ska_vi_standard_dela_pa_elevantal():
                     dela_elevantal(faktura_rad)
-                elif fasit_rad.dela_pa_gen_tjf():
+                elif fasit_rad.ska_vi_standard_dela_pa_gen_tjf():
                     dela_gen_tjf_totaler(faktura_rad)
         if faktura_rad.split_status == FakturaRadState.SPLIT_INCOMPLETE:
             insert_failsafe_row(faktura_rad)
@@ -78,8 +76,9 @@ if __name__ == "__main__":
     # reset_avser(gear_id)
     # split_row(months=["7", "8", "9", "10", "11", "12"], avser=gear_id)
     #
-    row_id = [13501]
-    reset_faktura_row_id(row_ids=row_id)
-    split_row(row_ids=row_id, verbose=False)
-
-    # split_row(months=["7", "8", "9", "10", "11", "12"])
+    # row_id = [13501]
+    # reset_faktura_row_id(row_ids=row_id)
+    # split_row(row_ids=row_id, verbose=False)
+    #
+    split_row(months=["12"])
+    # "V2482" ska ej betalas längre

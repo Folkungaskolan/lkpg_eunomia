@@ -4,7 +4,7 @@ from abc import abstractmethod
 class Person:
     """
     @abstractmethod
-    bygger skelett åt Student och Staff
+    bygger skelett åt Student och staff_utils
     """
 
     def __init__(self, account_user_name: str, verbose: bool = False):

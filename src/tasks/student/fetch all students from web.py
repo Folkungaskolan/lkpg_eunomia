@@ -1,5 +1,5 @@
 """ Hämta samtliga elever från weben """
-from utils.web_utils.student_web_scraper import import_all_student_from_web
+from utils.web_utils.qued_student_webscraper import fetch_all_students_from_web
 
 if __name__ == "__main__":
-    import_all_student_from_web()
+    fetch_all_students_from_web()

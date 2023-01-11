@@ -31,21 +31,23 @@ ENHETER_SOM_HAR_CBS = {"655119",  # Gy EK
                        "654100",  # Stlars Es Musik
                        "654200",  # Stlars Es Bild
                        "654300",  # Stlars NA
-                       "654400",  # Stlars IMA
+                       "654400"  # Stlars IMA
                        }
 
 FOLKUNGA_GY_ENHETER = {"655119",  # Gy EK
                        "655122",  # Gy ES
-                       "655123",  # Gy SA
+                       "655123"  # Gy SA
                        }
 
 FOLKUNGA_GRU_ENHETER = {"656510",  # 4-6
-                        "656520",  # 7-9
-                        "656310",  # Fritids
+                        "656520"  # 7-9
+                        # "656310" # Fritids har aldrig elever direkt
                         }
 STLARS_ENHETER = {"654100",  # St:Lars ES- Musik
                   "654200",  # St:Lars ES- bild
                   "654300",  # St:Lars NA
-                  "654400",  # St:Lars IMA
-                  "654500",  # St:Lars Slask ska inte användas
+                  "654400"  # St:Lars IMA
+                  # "654500" # St:Lars Slask ska inte användas
                   }
+
+

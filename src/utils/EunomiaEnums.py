@@ -58,6 +58,14 @@ class Aktivitet(Enum):
     P = "p"  # Pedagogiskt personal
 
 
+class TaskStatus(Enum):
+    """Enum for task status"""
+    NEW = "new"
+    IN_PROGRESS = "in_progress"
+    DONE = "done"
+    FAILED = "failed"
+
+
 if __name__ == '__main__':
     print(EnhetsAggregering.ALLA)
     print(EnhetsAggregering.ALLA.value)
